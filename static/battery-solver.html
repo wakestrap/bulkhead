@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>18650 Battery Pack Solver</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+  .controls {
+    width: 410px; background: #16213e; padding: 14px;
+    display: flex; flex-direction: column; gap: 8px;
+    border-right: 2px solid #0f3460; overflow-y: auto; flex-shrink: 0;
+  }
+  .controls h1 { font-size: 1.25em; color: #e94560; margin-bottom: 2px; }
+  .controls h1 span { font-size: 0.5em; color: #888; display: block; }
+  .param-group {
+    background: #1a1a2e; border-radius: 6px; padding: 8px 10px;
+    border: 1px solid #0f3460;
+  }
+  .param-group label {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.82em; color: #aaa; margin-bottom: 3px;
+  }
+  .param-group label span.val { color: #e94560; font-weight: bold; font-size: 1em; }
+  .param-group input[type=range] { width: 100%; accent-color: #e94560; }
+  .param-group .sub { display: flex; gap: 5px; margin-top: 2px; align-items: center; }
+  .param-group .sub input {
+    width: 52px; background: #0f3460; border: 1px solid #1a5276;
+    color: #e0e0e0; padding: 2px 4px; border-radius: 4px;
+    text-align: center; font-size: 0.78em;
+  }
+  .param-group .sub .hint { color: #666; font-size: 0.68em; }
+  .disabled-group { opacity: 0.4; pointer-events: none; }
+  .mode-row {
+    display: flex; gap: 6px; align-items: center; font-size: 0.8em; color: #aaa;
+  }
+  .mode-row input[type=radio] { accent-color: #e94560; margin-right: 3px; }
+  .mode-row label { cursor: pointer; display: flex; align-items: center; gap: 2px; }
+  .mode-row .radio-group {
+    display: flex; gap: 12px; flex-wrap: wrap;
+  }
+  .toggle-row {
+    display: flex; align-items: center; gap: 8px; font-size: 0.8em; color: #aaa;
+  }
+  .toggle-row input[type=checkbox] { accent-color: #e94560; width: 15px; height: 15px; }
+  .results {
+    background: #1a1a2e; border-radius: 6px; padding: 8px 10px;
+    border: 1px solid #0f3460; display: flex; flex-direction: column; gap: 4px;
+  }
+  .results .section-title {
+    font-size: 0.65em; color: #e94560; text-transform: uppercase;
+    letter-spacing: 1px; margin-top: 2px;
+  }
+  .results .row { display: flex; justify-content: space-between; font-size: 0.78em; }
+  .results .row .lbl { color: #aaa; }
+  .results .row .val { color: #4ecdc4; font-weight: bold; }
+  .results .warn {
+    color: #f39c12; font-size: 0.75em; text-align: center;
+    display: none; margin-top: 3px;
+  }
+  .results .warn.show { display: block; }
+  .view { flex: 1; display: flex; flex-direction: column; background: #1a1a2e; min-width: 0; }
+  .view-section {
+    flex: 1; display: flex; flex-direction: column;
+    border-bottom: 1px solid #0f3460; min-height: 0;
+  }
+  .view-section:last-child { border-bottom: none; }
+  .view-section h3 {
+    padding: 5px 14px; font-size: 0.78em; color: #888;
+    background: #16213e; flex-shrink: 0;
+  }
+  .canvas-wrap {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    position: relative; min-height: 0;
+  }
+  canvas { display: block; }
+  .legend {
+    position: absolute; bottom: 6px; right: 6px;
+    background: #16213ecc; border: 1px solid #0f3460;
+    border-radius: 4px; padding: 4px 8px; font-size: 0.68em;
+    display: flex; gap: 8px;
+  }
+  .legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 2px; }
+  .legend .dot.active { background: #4ecdc4; }
+  .legend .dot.spare { background: transparent; border: 1px dashed #666; }
+  .legend .dot.bound { background: transparent; border: 1.5px solid #e94560; }
+  .computed-badge {
+    font-size: 0.65em; color: #f39c12; font-style: italic; margin-left: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="controls">
+  <h1>18650 Pack Solver <span>Circle packing for cylindrical enclosures</span></h1>
+
+  <!-- ── Mode selectors ── -->
+  <div class="param-group">
+    <div class="mode-row">
+      <span style="color:#888;margin-right:6px;">Axial stack:</span>
+      <div class="radio-group">
+        <label><input type="radio" name="axialMode" value="series" checked onchange="onModeChange()"> Series cells</label>
+        <label><input type="radio" name="axialMode" value="parallel" onchange="onModeChange()"> Parallel strings</label>
+      </div>
+    </div>
+    <div class="toggle-row" style="margin-top:6px;">
+      <input type="checkbox" id="autoMode" onchange="onModeChange()">
+      <span>Auto-optimize S×P for minimum tube length</span>
+    </div>
+  </div>
+
+  <!-- ── Cell specs ── -->
+  <div class="param-group">
+    <label>Cell Diameter <span class="val" id="cellDiamVal">18.0 mm</span></label>
+    <input type="range" id="cellDiam" min="17" max="22" step="0.1" value="18">
+    <div class="sub"><span class="hint">18mm std — tweak for wrapper</span></div>
+  </div>
+
+  <div class="param-group">
+    <label>Cell Length <span class="val" id="cellLenVal">65.0 mm</span></label>
+    <input type="range" id="cellLen" min="64" max="72" step="0.1" value="65">
+    <div class="sub"><span class="hint">65mm std — 70mm protected</span></div>
+  </div>
+
+  <!-- ── S×P (always visible) ── -->
+  <div class="param-group">
+    <label>Cells in Series (S) <span class="val" id="seriesVal">5</span></label>
+    <input type="range" id="series" min="1" max="50" value="5">
+    <div class="sub"><input type="number" id="seriesNum" min="1" max="200" value="5" onchange="syncSlider('series')"></div>
+  </div>
+  <div class="param-group">
+    <label>Strings in Parallel (P) <span class="val" id="parallelVal">7</span></label>
+    <input type="range" id="parallel" min="1" max="100" value="7">
+    <div class="sub"><input type="number" id="parallelNum" min="1" max="500" value="7" onchange="syncSlider('parallel')"></div>
+  </div>
+  <div class="param-group" id="autoConfigGroup" style="display:none;">
+    <label>Optimized Config <span class="val computed-badge" id="autoConfigVal">—</span></label>
+    <div class="sub"><span class="hint" id="autoConfigDetail"></span></div>
+  </div>
+
+  <!-- ── Geometry ── -->
+  <div class="param-group">
+    <label>Buffer Between Cells <span class="val" id="bufferVal">2.0 mm</span></label>
+    <input type="range" id="buffer" min="0" max="10" step="0.1" value="2">
+    <div class="sub">
+      <input type="number" id="bufferNum" min="0" max="20" step="0.1" value="2" onchange="syncSlider('buffer')">
+      <span class="hint">cell holder walls</span>
+    </div>
+  </div>
+
+  <div class="param-group">
+    <label>Cylinder ID <span class="val" id="cylinderIDVal">60.0 mm</span></label>
+    <input type="range" id="cylinderID" min="20" max="300" step="0.5" value="60">
+    <div class="sub">
+      <input type="number" id="cylinderIDNum" min="10" max="500" step="0.5" value="60" onchange="syncSlider('cylinderID')">
+      <span class="hint">mm</span>
+    </div>
+  </div>
+
+  <div class="param-group">
+    <label>Axial Gap <span class="val" id="axialGapVal">1.0 mm</span></label>
+    <input type="range" id="axialGap" min="0" max="20" step="0.1" value="1">
+    <div class="sub">
+      <input type="number" id="axialGapNum" min="0" max="50" step="0.1" value="1" onchange="syncSlider('axialGap')">
+      <span class="hint">end-to-end spacing</span>
+    </div>
+  </div>
+
+  <div class="param-group">
+    <label>End Cap Margin <span class="val" id="endCapVal">5.0 mm</span></label>
+    <input type="range" id="endCap" min="0" max="50" step="0.5" value="5">
+    <div class="sub">
+      <input type="number" id="endCapNum" min="0" max="100" step="0.5" value="5" onchange="syncSlider('endCap')">
+      <span class="hint">each end</span>
+    </div>
+  </div>
+
+  <!-- ── Electrical ── -->
+  <div class="param-group">
+    <label>Cell Capacity <span class="val" id="cellCapVal">3500 mAh</span></label>
+    <input type="range" id="cellCapacity" min="500" max="6000" step="50" value="3500">
+    <div class="sub">
+      <input type="number" id="cellCapacityNum" min="100" max="10000" step="50" value="3500" onchange="syncSlider('cellCapacity')">
+      <span class="hint">mAh</span>
+    </div>
+  </div>
+
+  <div class="param-group">
+    <label>Max Cell Current <span class="val" id="cellCurrVal">10.0 A</span></label>
+    <input type="range" id="cellCurrent" min="1" max="50" step="0.5" value="10">
+    <div class="sub">
+      <input type="number" id="cellCurrentNum" min="0.5" max="100" step="0.5" value="10" onchange="syncSlider('cellCurrent')">
+      <span class="hint">A continuous</span>
+    </div>
+  </div>
+
+  <div class="results">
+    <div class="section-title">Mechanical</div>
+    <div class="row"><span class="lbl">Total Cells:</span><span class="val" id="resTotal">35</span></div>
+    <div class="row"><span class="lbl">Config:</span><span class="val" id="resConfig">5S7P</span></div>
+    <div class="row"><span class="lbl">Tube Length:</span><span class="val" id="resLength">—</span></div>
+    <div class="row"><span class="lbl">Cross-Section:</span><span class="val" id="resFit">—</span></div>
+    <div class="row"><span class="lbl">Pack Density:</span><span class="val" id="resDensity">—</span></div>
+
+    <div class="section-title">Electrical</div>
+    <div class="row"><span class="lbl">Nominal Voltage:</span><span class="val" id="resVoltage">—</span></div>
+    <div class="row"><span class="lbl">Pack Capacity:</span><span class="val" id="resCapacity">—</span></div>
+    <div class="row"><span class="lbl">Pack Energy:</span><span class="val" id="resEnergy">—</span></div>
+    <div class="row"><span class="lbl">Max Discharge:</span><span class="val" id="resCurrent">—</span></div>
+
+    <div class="warn" id="warnFit"></div>
+    <div class="warn" id="warnTight"></div>
+  </div>
+
+  <div style="font-size:0.6em;color:#555;text-align:center;margin-top:auto;padding-top:4px;">
+    Pan/zoom: scroll | Fit: double-click | Drag to pan
+  </div>
+</div>
+
+<div class="view">
+  <div class="view-section">
+    <h3>Cross-Section — <span style="color:#4ecdc4">■ selected</span> <span style="color:#555">□ available</span> <span style="color:#888" id="csHint"></span></h3>
+    <div class="canvas-wrap">
+      <canvas id="crossSection"></canvas>
+      <div class="legend">
+        <span><span class="dot active"></span> Used</span>
+        <span><span class="dot spare"></span> Spare</span>
+        <span><span class="dot bound"></span> Tube ID</span>
+      </div>
+    </div>
+  </div>
+  <div class="view-section" style="flex:0.4;">
+    <h3>Axial Stack <span style="color:#888;font-size:0.85em;" id="axHint"></span></h3>
+    <div class="canvas-wrap"><canvas id="axialView"></canvas></div>
+  </div>
+</div>
+
+<script>
+const state = {
+  cellDiam: 18, cellLen: 65,
+  series: 5, parallel: 7,
+  buffer: 2, cylinderID: 60,
+  axialGap: 1, endCap: 5,
+  cellCapacity: 3500, cellCurrent: 10,
+  axialMode: 'series',   // 'series' or 'parallel'
+  autoMode: false,
+  panX: 0, panY: 0, zoom: 1,
+  axialPanX: 0, axialPanY: 0, axialZoom: 1
+};
+
+// --- Which count is axial, which is in cross-section ---
+function axialCount() { return state.axialMode === 'series' ? state.series : state.parallel; }
+function csCount()     { return state.axialMode === 'series' ? state.parallel : state.series; }
+
+// --- Circle Packing ---
+function packCells(nCells, cellDiam, buffer, cylRadius) {
+  const spacing = cellDiam + buffer;
+  const cellR = cellDiam / 2;
+  const maxR = cylRadius - cellR;
+  if (maxR < 0) return { positions: [], allPositions: [], fits: false, maxFit: 0 };
+
+  const candidates = [];
+  const rowH = spacing * Math.sqrt(3) / 2;
+  const rows = Math.ceil(maxR / rowH) + 2;
+  const cols = Math.ceil(maxR / spacing) + 2;
+
+  for (let row = -rows; row <= rows; row++) {
+    const y = row * rowH;
+    const offset = (Math.abs(row) % 2) * (spacing / 2);
+    for (let col = -cols; col <= cols; col++) {
+      const x = col * spacing + offset;
+      if (Math.sqrt(x*x + y*y) <= maxR + 0.01) candidates.push({x, y, dist: Math.sqrt(x*x + y*y)});
+    }
+  }
+  candidates.sort((a, b) => a.dist - b.dist);
+
+  const maxFit = candidates.length;
+  const n = Math.min(nCells, maxFit);
+  const selected = candidates.slice(0, n).map(c => ({x: c.x, y: c.y}));
+  const allPositions = candidates.map(c => ({x: c.x, y: c.y}));
+  return { positions: selected, allPositions, fits: maxFit >= nCells, maxFit };
+}
+
+// --- Auto-optimize: pack total cells into minimum equal layers ---
+function autoOptimize(totalCells) {
+  const cylRadius = state.cylinderID / 2;
+  const cd = state.cellDiam, cl = state.cellLen;
+  const buf = state.buffer, gap = state.axialGap, ec = state.endCap;
+
+  const { maxFit } = packCells(999, cd, buf, cylRadius);
+  if (maxFit === 0) return { layers: 1, cellsPerLayer: totalCells, tubeLen: Infinity, maxFit: 0, fits: false };
+
+  for (let nLayers = 1; nLayers <= 100; nLayers++) {
+    const perLayer = Math.ceil(totalCells / nLayers);
+    if (perLayer <= maxFit) {
+      const tubeLen = nLayers * cl + (nLayers - 1) * gap + 2 * ec;
+      return { layers: nLayers, cellsPerLayer: perLayer, tubeLen, maxFit, fits: true };
+    }
+  }
+  return { layers: 100, cellsPerLayer: Math.ceil(totalCells / 100), tubeLen: Infinity, maxFit, fits: false };
+}
+
+function solve() {
+  const cylRadius = state.cylinderID / 2;
+  const cd = state.cellDiam, cl = state.cellLen, buf = state.buffer;
+
+  let S, P, axial, csN;
+
+  if (state.autoMode) {
+    const opt = autoOptimize(state.series * state.parallel);
+    S = state.series; P = state.parallel;  // electrical unchanged
+    axial = opt.layers;
+    csN = opt.cellsPerLayer;
+    var effAxialMode = 'auto';
+    var optFits = opt.fits;
+    var optMaxFit = opt.maxFit;
+  } else {
+    S = state.series; P = state.parallel;
+    axial = axialCount();
+    csN = csCount();
+    var effAxialMode = state.axialMode;
+    var optFits = null;
+    var optMaxFit = null;
+  }
+
+  const packing = packCells(csN, cd, buf, cylRadius);
+  const tubeLen = axial * cl + (axial - 1) * state.axialGap + 2 * state.endCap;
+
+  const totalCellArea = csN * Math.PI * (cd/2) ** 2;
+  const cylArea = Math.PI * cylRadius ** 2;
+  const density = cylArea > 0 ? (totalCellArea / cylArea * 100) : 0;
+
+  const packAh = (state.cellCapacity / 1000) * P;
+  const packWh = packAh * S * 3.7;
+  const maxA = state.cellCurrent * P;
+
+  return {
+    S, P, axial, csN, tubeLength: tubeLen, density, cylRadius, cellDiam: cd, cellLen: cl,
+    buffer: buf, axialGap: state.axialGap, endCap: state.endCap,
+    positions: packing.positions, allPositions: packing.allPositions,
+    fits: optFits != null ? optFits : packing.fits, maxFit: optMaxFit != null ? optMaxFit : packing.maxFit,
+    totalCells: S * P, config: `${S}S${P}P`,
+    voltage: (S * 3.7).toFixed(1),
+    packAh, packWh, maxA,
+    cellCapacity: state.cellCapacity, cellCurrent: state.cellCurrent,
+    axialMode: effAxialMode, autoMode: state.autoMode
+  };
+}
+
+// --- Cross-section canvas ---
+const csCanvas = document.getElementById('crossSection');
+const csCtx = csCanvas.getContext('2d');
+function resizeCS() {
+  const w = csCanvas.parentElement;
+  csCanvas.width = w.clientWidth; csCanvas.height = w.clientHeight;
+}
+function drawCrossSection() {
+  resizeCS();
+  const w = csCanvas.width, h = csCanvas.height;
+  csCtx.clearRect(0, 0, w, h);
+  const cx = w/2 + state.panX, cy = h/2 + state.panY;
+  const r = solve();
+  const cylR = r.cylRadius, cellR = r.cellDiam / 2;
+
+  const margin = 40;
+  const baseScale = Math.min((w-2*margin)/((cylR+cellR+r.buffer)*2), (h-2*margin)/((cylR+cellR+r.buffer)*2));
+  const scale = baseScale * state.zoom;
+
+  // Grid
+  csCtx.strokeStyle = '#0f3460'; csCtx.lineWidth = 0.5;
+  const gs = 10 * scale;
+  for (let x = ((cx%gs)+gs)%gs; x < w; x += gs) { csCtx.beginPath(); csCtx.moveTo(x,0); csCtx.lineTo(x,h); csCtx.stroke(); }
+  for (let y = ((cy%gs)+gs)%gs; y < h; y += gs) { csCtx.beginPath(); csCtx.moveTo(0,y); csCtx.lineTo(w,y); csCtx.stroke(); }
+
+  // Cylinder
+  csCtx.beginPath(); csCtx.arc(cx, cy, cylR*scale, 0, 2*Math.PI);
+  csCtx.strokeStyle = '#e94560'; csCtx.lineWidth = 2;
+  csCtx.setLineDash([6,3]); csCtx.stroke(); csCtx.setLineDash([]);
+
+  const selSet = new Set(r.positions.map(p => `${p.x.toFixed(4)},${p.y.toFixed(4)}`));
+  for (const pos of r.allPositions) {
+    const key = `${pos.x.toFixed(4)},${pos.y.toFixed(4)}`;
+    const isSel = selSet.has(key);
+    const px = cx + pos.x*scale, py = cy - pos.y*scale, rad = cellR*scale;
+    csCtx.beginPath(); csCtx.arc(px, py, rad, 0, 2*Math.PI);
+    if (isSel) {
+      csCtx.fillStyle = '#4ecdc4'; csCtx.fill();
+      csCtx.strokeStyle = '#2ecc71'; csCtx.lineWidth = 1; csCtx.stroke();
+      csCtx.beginPath(); csCtx.arc(px, py, rad*0.15, 0, 2*Math.PI);
+      csCtx.fillStyle = '#1a1a2e'; csCtx.fill();
+    } else {
+      csCtx.fillStyle = 'rgba(78,205,196,0.08)'; csCtx.fill();
+      csCtx.strokeStyle = '#333'; csCtx.lineWidth = 0.5;
+      csCtx.setLineDash([3,3]); csCtx.stroke(); csCtx.setLineDash([]);
+    }
+  }
+
+  csCtx.fillStyle = '#e94560'; csCtx.font = '11px monospace';
+  csCtx.fillText(`ID ${(cylR*2).toFixed(1)}mm`, cx+cylR*scale+8, cy-10);
+
+  const barMM = 10, barPx = barMM*scale;
+  csCtx.beginPath(); csCtx.moveTo(margin+10, h-margin-10); csCtx.lineTo(margin+10+barPx, h-margin-10);
+  csCtx.strokeStyle = '#888'; csCtx.lineWidth = 2; csCtx.stroke();
+  csCtx.fillStyle = '#888'; csCtx.font = '10px monospace';
+  csCtx.fillText(`${barMM}mm`, margin+10, h-margin-15);
+}
+
+// --- Axial view canvas ---
+const axCanvas = document.getElementById('axialView');
+const axCtx = axCanvas.getContext('2d');
+function resizeAxial() {
+  const w = axCanvas.parentElement;
+  axCanvas.width = w.clientWidth; axCanvas.height = w.clientHeight;
+}
+function drawAxialView() {
+  resizeAxial();
+  const w = axCanvas.width, h = axCanvas.height;
+  axCtx.clearRect(0, 0, w, h);
+  const r = solve();
+  const cylDiam = r.cylRadius * 2;
+  const margin = 30;
+  const availW = w-2*margin, availH = h-2*margin;
+  const scale = Math.min(availW/r.tubeLength, availH/(cylDiam*1.4)) * state.axialZoom;
+
+  const offX = w/2 - (r.tubeLength*scale)/2 + state.axialPanX;
+  const offY = h/2 + state.axialPanY;
+  const tubeH = cylDiam * scale;
+  const tubeTop = offY - tubeH/2, tubeBot = offY + tubeH/2;
+
+  // Grid
+  axCtx.strokeStyle = '#0f3460'; axCtx.lineWidth = 0.5;
+  const gs = 10*scale;
+  for (let x = ((offX%gs)+gs)%gs; x < w; x += gs) { axCtx.beginPath(); axCtx.moveTo(x,0); axCtx.lineTo(x,h); axCtx.stroke(); }
+  for (let y = ((offY%gs)+gs)%gs; y < h; y += gs) { axCtx.beginPath(); axCtx.moveTo(0,y); axCtx.lineTo(w,y); axCtx.stroke(); }
+
+  // Tube walls
+  axCtx.strokeStyle = '#e94560'; axCtx.lineWidth = 2;
+  axCtx.setLineDash([8,4]);
+  axCtx.beginPath(); axCtx.moveTo(offX, tubeTop); axCtx.lineTo(offX+r.tubeLength*scale, tubeTop); axCtx.stroke();
+  axCtx.beginPath(); axCtx.moveTo(offX, tubeBot); axCtx.lineTo(offX+r.tubeLength*scale, tubeBot); axCtx.stroke();
+  axCtx.setLineDash([]);
+
+  // End caps
+  axCtx.strokeStyle = '#e94560'; axCtx.lineWidth = 1.5;
+  axCtx.beginPath(); axCtx.moveTo(offX, tubeTop-4); axCtx.lineTo(offX, tubeBot+4); axCtx.stroke();
+  axCtx.beginPath(); axCtx.moveTo(offX+r.tubeLength*scale, tubeTop-4); axCtx.lineTo(offX+r.tubeLength*scale, tubeBot+4); axCtx.stroke();
+
+  // Cells
+  const cellW = r.cellDiam * scale, cellH = r.cellLen * scale;
+  const ecH = r.endCap * scale, gapH = r.axialGap * scale;
+  const axialN = r.axial;
+  const isAuto = r.axialMode === 'auto';
+  const isSeriesAxial = r.axialMode === 'series';
+  const labelPrefix = isAuto ? 'Layer ' : (isSeriesAxial ? 'S' : 'P');
+
+  for (let i = 0; i < axialN; i++) {
+    const cellX = offX + ecH + i * (cellH + gapH);
+    const cellMidY = offY;
+
+    axCtx.fillStyle = '#4ecdc4';
+    axCtx.fillRect(cellX, cellMidY - cellW/2, cellH, cellW);
+    axCtx.strokeStyle = '#2ecc71'; axCtx.lineWidth = 1;
+    axCtx.strokeRect(cellX, cellMidY - cellW/2, cellH, cellW);
+    axCtx.fillStyle = '#1a1a2e';
+    axCtx.fillRect(cellX + cellH - 4*scale, cellMidY - cellW*0.15, 3*scale, cellW*0.3);
+    axCtx.fillStyle = '#fff'; axCtx.font = `${Math.max(8, 9*scale)}px monospace`; axCtx.textAlign = 'center';
+    axCtx.fillText(`${labelPrefix}${i+1}`, cellX + cellH/2, cellMidY + cellW/2 + 12*scale);
+  }
+
+  // Dimension line
+  axCtx.strokeStyle = '#f39c12'; axCtx.lineWidth = 1;
+  axCtx.setLineDash([3,3]);
+  const dimY = tubeTop - 15*scale;
+  axCtx.beginPath(); axCtx.moveTo(offX, dimY); axCtx.lineTo(offX+r.tubeLength*scale, dimY); axCtx.stroke();
+  axCtx.beginPath(); axCtx.moveTo(offX, dimY-5); axCtx.lineTo(offX, dimY+5); axCtx.stroke();
+  axCtx.beginPath(); axCtx.moveTo(offX+r.tubeLength*scale, dimY-5); axCtx.lineTo(offX+r.tubeLength*scale, dimY+5); axCtx.stroke();
+  axCtx.fillStyle = '#f39c12'; axCtx.font = `${Math.max(8, 10*scale)}px monospace`; axCtx.textAlign = 'center';
+  axCtx.fillText(`${r.tubeLength.toFixed(0)} mm`, offX+r.tubeLength*scale/2, dimY-4);
+  axCtx.setLineDash([]);
+
+  // Cell length callout
+  axCtx.strokeStyle = '#f39c12'; axCtx.setLineDash([3,3]);
+  const calX = offX + ecH;
+  axCtx.beginPath(); axCtx.moveTo(calX, offY-cellW/2-10*scale); axCtx.lineTo(calX+cellH, offY-cellW/2-10*scale);
+  const midCalX = calX+cellH/2;
+  axCtx.beginPath(); axCtx.moveTo(calX, offY-cellW/2-13*scale); axCtx.lineTo(calX, offY-cellW/2-7*scale); axCtx.stroke();
+  axCtx.beginPath(); axCtx.moveTo(calX+cellH, offY-cellW/2-13*scale); axCtx.lineTo(calX+cellH, offY-cellW/2-7*scale); axCtx.stroke();
+  axCtx.fillStyle = '#f39c12'; axCtx.font = `${Math.max(8, 10*scale)}px monospace`; axCtx.textAlign = 'center';
+  axCtx.fillText(`${r.cellLen.toFixed(1)}mm`, midCalX, offY-cellW/2-16*scale);
+  axCtx.setLineDash([]);
+}
+
+// --- Combined draw + results ---
+function draw() { drawCrossSection(); drawAxialView(); updateResults(); }
+
+function updateResults() {
+  const r = solve();
+  document.getElementById('resTotal').textContent = r.totalCells;
+  document.getElementById('resConfig').textContent = r.config;
+  document.getElementById('resLength').textContent = `${r.tubeLength.toFixed(0)} mm`;
+  const csLabel = r.axialMode === 'auto' ? 'cells' : (r.axialMode === 'series' ? 'P' : 'S');
+  document.getElementById('resFit').textContent = r.fits
+    ? `${r.csN} ${csLabel} / ${r.maxFit} max`
+    : `⚠ ${r.csN} requested, only ${r.maxFit} fit`;
+  document.getElementById('resDensity').textContent = `${r.density.toFixed(1)}%`;
+  document.getElementById('resVoltage').textContent = `${r.voltage} V`;
+  document.getElementById('resCapacity').textContent = `${r.packAh.toFixed(1)} Ah`;
+  document.getElementById('resEnergy').textContent = `${r.packWh.toFixed(0)} Wh`;
+  document.getElementById('resCurrent').textContent = `${r.maxA.toFixed(1)} A`;
+
+  // Hints
+  document.getElementById('csHint').textContent = r.axialMode === 'auto'
+    ? `(${r.csN} cells/layer, ${r.axial} layers)` 
+    : (r.axialMode === 'series'
+      ? `(${r.csN} P-strings in cross-section)` : `(${r.csN} S-cells in cross-section)`);
+  document.getElementById('axHint').textContent = r.axialMode === 'auto'
+    ? `— ${r.axial} equal layers, ${r.csN} cells each`
+    : (r.axialMode === 'series'
+      ? `— ${r.axial} series cells stacked axially` : `— ${r.axial} parallel strings stacked axially`);
+
+  // Auto mode: update computed display
+  if (state.autoMode) {
+    document.getElementById('autoConfigVal').textContent = r.config;
+    document.getElementById('autoConfigDetail').textContent =
+      `${r.axial} layers × ${r.csN} cells/layer · ${r.maxFit} max per layer`;
+  }
+
+  const warnFit = document.getElementById('warnFit');
+  const warnTight = document.getElementById('warnTight');
+  if (!r.fits) {
+    warnFit.classList.add('show');
+    warnFit.textContent = `⚠ Only ${r.maxFit} cells fit in cross-section. Increase ID or reduce ${csLabel}.`;
+  } else { warnFit.classList.remove('show'); }
+  if (r.fits && r.density > 85) { warnTight.classList.add('show'); warnTight.textContent = '⚠ Tight fit — verify ID tolerance'; }
+  else { warnTight.classList.remove('show'); }
+}
+
+// --- Mode switching ---
+function onModeChange() {
+  state.axialMode = document.querySelector('input[name="axialMode"]:checked').value;
+  state.autoMode = document.getElementById('autoMode').checked;
+  document.getElementById('autoConfigGroup').style.display = state.autoMode ? '' : 'none';
+  // Disable axial mode radios in auto mode
+  document.querySelectorAll('input[name="axialMode"]').forEach(r => r.disabled = state.autoMode);
+  draw();
+}
+
+// --- Interactive: cross-section ---
+csCanvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  state.zoom = Math.max(0.3, Math.min(5, state.zoom * (e.deltaY < 0 ? 1.1 : 0.9)));
+  draw();
+});
+let csD = false, csDX, csDY, csPX, csPY;
+csCanvas.addEventListener('mousedown', e => {
+  csD = true; csDX = e.clientX; csDY = e.clientY; csPX = state.panX; csPY = state.panY;
+});
+csCanvas.addEventListener('mousemove', e => {
+  if (!csD) return;
+  state.panX = csPX + (e.clientX - csDX); state.panY = csPY + (e.clientY - csDY);
+  draw();
+});
+csCanvas.addEventListener('mouseup', () => { csD = false; });
+csCanvas.addEventListener('mouseleave', () => { csD = false; });
+csCanvas.addEventListener('dblclick', () => { state.panX=0; state.panY=0; state.zoom=1; draw(); });
+
+// --- Interactive: axial view ---
+axCanvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  state.axialZoom = Math.max(0.3, Math.min(5, state.axialZoom * (e.deltaY < 0 ? 1.1 : 0.9)));
+  draw();
+});
+let axD = false, axDX, axDY, axPX, axPY;
+axCanvas.addEventListener('mousedown', e => {
+  axD = true; axDX = e.clientX; axDY = e.clientY; axPX = state.axialPanX; axPY = state.axialPanY;
+});
+axCanvas.addEventListener('mousemove', e => {
+  if (!axD) return;
+  state.axialPanX = axPX + (e.clientX - axDX); state.axialPanY = axPY + (e.clientY - axDY);
+  draw();
+});
+axCanvas.addEventListener('mouseup', () => { axD = false; });
+axCanvas.addEventListener('mouseleave', () => { axD = false; });
+axCanvas.addEventListener('dblclick', () => { state.axialPanX=0; state.axialPanY=0; state.axialZoom=1; draw(); });
+
+// --- Slider sync ---
+function syncSlider(id) {
+  const numEl = document.getElementById(id + 'Num');
+  const rangeEl = document.getElementById(id);
+  if (!numEl || !rangeEl) return;
+  rangeEl.value = numEl.value;
+  updateState();
+}
+
+function updateState() {
+  state.cellDiam = parseFloat(document.getElementById('cellDiam').value);
+  state.cellLen = parseFloat(document.getElementById('cellLen').value);
+  state.series = parseInt(document.getElementById('series').value);
+  state.parallel = parseInt(document.getElementById('parallel').value);
+  state.buffer = parseFloat(document.getElementById('buffer').value);
+  state.cylinderID = parseFloat(document.getElementById('cylinderID').value);
+  state.axialGap = parseFloat(document.getElementById('axialGap').value);
+  state.endCap = parseFloat(document.getElementById('endCap').value);
+  state.cellCapacity = parseFloat(document.getElementById('cellCapacity').value);
+  state.cellCurrent = parseFloat(document.getElementById('cellCurrent').value);
+
+  // Sync labels
+  document.getElementById('cellDiamVal').textContent = state.cellDiam.toFixed(1) + ' mm';
+  document.getElementById('cellLenVal').textContent = state.cellLen.toFixed(1) + ' mm';
+  document.getElementById('seriesVal').textContent = state.series;
+  document.getElementById('parallelVal').textContent = state.parallel;
+  document.getElementById('bufferVal').textContent = state.buffer.toFixed(1);
+  document.getElementById('cylinderIDVal').textContent = state.cylinderID.toFixed(1);
+  document.getElementById('axialGapVal').textContent = state.axialGap.toFixed(1);
+  document.getElementById('endCapVal').textContent = state.endCap.toFixed(1);
+  document.getElementById('cellCapVal').textContent = state.cellCapacity + ' mAh';
+  document.getElementById('cellCurrVal').textContent = state.cellCurrent.toFixed(1) + ' A';
+
+  // Sync number inputs
+  ['series','parallel','buffer','cylinderID','axialGap','endCap','cellCapacity','cellCurrent'].forEach(id => {
+    const el = document.getElementById(id + 'Num');
+    if (el) el.value = document.getElementById(id).value;
+  });
+
+  draw();
+}
+
+// Wire sliders
+['cellDiam','cellLen','series','parallel','buffer','cylinderID','axialGap','endCap','cellCapacity','cellCurrent'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateState);
+});
+
+window.addEventListener('resize', draw);
+
+updateState();
+resizeCS(); resizeAxial();
+draw();
+</script>
+</body>
+</html>

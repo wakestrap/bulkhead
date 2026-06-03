@@ -1,0 +1,33 @@
+{
+  "tabs": {
+    "clock": true,
+    "depth": true,
+    "resistor": true,
+    "tv": true,
+    "pcb": true,
+    "geo": false,
+    "battery": true
+  },
+  "timezones": [
+    {
+      "city": "St. John's",
+      "label": "NDT",
+      "tz": "America/St_Johns"
+    },
+    {
+      "city": "Collingwood",
+      "label": "ET",
+      "tz": "America/Toronto"
+    },
+    {
+      "city": "UTC",
+      "label": "UTC",
+      "tz": "UTC"
+    },
+    {
+      "city": "London",
+      "label": "GMT",
+      "tz": "Europe/London"
+    }
+  ]
+}
