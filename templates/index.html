@@ -927,6 +927,7 @@ body {
   <button class="tab-btn" data-tab="pcb">🔌 PCB Trace</button>
   <button class="tab-btn" data-tab="geo">🌍 GeoGuessr</button>
   <button class="tab-btn" data-tab="battery">🔋 Battery Pack</button>
+  <button class="tab-btn" data-tab="gauge">🧮 Wire Gauge</button>
   <button class="tab-btn settings-btn" data-tab="settings">⚙️</button>
 </nav>
 
@@ -1153,6 +1154,13 @@ body {
      ════════════════════════════════════════════════════════════════ -->
 <div class="tab-content" id="tab-battery" style="height:calc(100vh - 160px);">
   <iframe src="/static/battery-solver.html" style="width:100%;height:100%;border:none;border-radius:8px;"></iframe>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     WIRE GAUGE CALCULATOR TAB
+     ════════════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-gauge" style="height:calc(100vh - 160px);">
+  <iframe src="/static/wire-gauge.html" style="width:100%;height:100%;border:none;border-radius:8px;"></iframe>
 </div>
 
 <!-- ════════════════════════════════════════════════════════════════
@@ -2131,7 +2139,7 @@ function populateSettings() {
   const tabNames = {
     clock: '🕐 World Clock', depth: '🌊 Depth ↔ Pressure',
     resistor: '⚡ Resistor Decoder', tv: '📺 TV Remote',
-    pcb: '🔌 PCB Trace', geo: '🌍 GeoGuessr', battery: '🔋 Battery Pack'
+    pcb: '🔌 PCB Trace', geo: '🌍 GeoGuessr', battery: '🔋 Battery Pack', gauge: '🧮 Wire Gauge'
   };
   togglesDiv.innerHTML = Object.entries(tabNames).map(([id, label]) => {
     const checked = (appConfig.tabs && appConfig.tabs[id] !== false) ? 'checked' : '';

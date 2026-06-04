@@ -92,6 +92,7 @@
   .legend .dot.active { background: #4ecdc4; }
   .legend .dot.spare { background: transparent; border: 1px dashed #666; }
   .legend .dot.bound { background: transparent; border: 1.5px solid #e94560; }
+  .legend .dot.blank { background: #f39c12; }
   .computed-badge {
     font-size: 0.65em; color: #f39c12; font-style: italic; margin-left: 6px;
   }
@@ -143,6 +144,16 @@
   <div class="param-group" id="autoConfigGroup" style="display:none;">
     <label>Optimized Config <span class="val computed-badge" id="autoConfigVal">—</span></label>
     <div class="sub"><span class="hint" id="autoConfigDetail"></span></div>
+  </div>
+
+  <!-- ── Blank cells ── -->
+  <div class="param-group">
+    <label>Blank Cells Per Layer <span class="val" id="blankCellsVal">0</span></label>
+    <input type="range" id="blankCells" min="0" max="50" value="0">
+    <div class="sub">
+      <input type="number" id="blankCellsNum" min="0" max="200" value="0" onchange="syncSlider('blankCells')">
+      <span class="hint">positions left empty in each layer</span>
+    </div>
   </div>
 
   <!-- ── Geometry ── -->
@@ -231,6 +242,7 @@
       <canvas id="crossSection"></canvas>
       <div class="legend">
         <span><span class="dot active"></span> Used</span>
+        <span><span class="dot blank"></span> Blank</span>
         <span><span class="dot spare"></span> Spare</span>
         <span><span class="dot bound"></span> Tube ID</span>
       </div>
@@ -249,6 +261,7 @@ const state = {
   buffer: 2, cylinderID: 60,
   axialGap: 1, endCap: 5,
   cellCapacity: 3500, cellCurrent: 10,
+  blankCells: 0,
   axialMode: 'series',   // 'series' or 'parallel'
   autoMode: false,
   panX: 0, panY: 0, zoom: 1,
@@ -299,7 +312,7 @@ function autoOptimize(totalCells) {
 
   for (let nLayers = 1; nLayers <= 100; nLayers++) {
     const perLayer = Math.ceil(totalCells / nLayers);
-    if (perLayer <= maxFit) {
+    if (perLayer + state.blankCells <= maxFit) {
       const tubeLen = nLayers * cl + (nLayers - 1) * gap + 2 * ec;
       return { layers: nLayers, cellsPerLayer: perLayer, tubeLen, maxFit, fits: true };
     }
@@ -330,7 +343,10 @@ function solve() {
     var optMaxFit = null;
   }
 
-  const packing = packCells(csN, cd, buf, cylRadius);
+  const packTotal = csN + state.blankCells;
+  const packing = packCells(packTotal, cd, buf, cylRadius);
+  const blankPositions = packing.positions.slice(csN); // the last blankCells positions
+  packing.positions = packing.positions.slice(0, csN);  // actual cells are first csN
   const tubeLen = axial * cl + (axial - 1) * state.axialGap + 2 * state.endCap;
 
   const totalCellArea = csN * Math.PI * (cd/2) ** 2;
@@ -345,6 +361,7 @@ function solve() {
     S, P, axial, csN, tubeLength: tubeLen, density, cylRadius, cellDiam: cd, cellLen: cl,
     buffer: buf, axialGap: state.axialGap, endCap: state.endCap,
     positions: packing.positions, allPositions: packing.allPositions,
+    blankPositions, blankCells: state.blankCells,
     fits: optFits != null ? optFits : packing.fits, maxFit: optMaxFit != null ? optMaxFit : packing.maxFit,
     totalCells: S * P, config: `${S}S${P}P`,
     voltage: (S * 3.7).toFixed(1),
@@ -385,12 +402,20 @@ function drawCrossSection() {
   csCtx.setLineDash([6,3]); csCtx.stroke(); csCtx.setLineDash([]);
 
   const selSet = new Set(r.positions.map(p => `${p.x.toFixed(4)},${p.y.toFixed(4)}`));
+  const blankSet = new Set((r.blankPositions || []).map(p => `${p.x.toFixed(4)},${p.y.toFixed(4)}`));
   for (const pos of r.allPositions) {
     const key = `${pos.x.toFixed(4)},${pos.y.toFixed(4)}`;
     const isSel = selSet.has(key);
+    const isBlank = blankSet.has(key);
     const px = cx + pos.x*scale, py = cy - pos.y*scale, rad = cellR*scale;
     csCtx.beginPath(); csCtx.arc(px, py, rad, 0, 2*Math.PI);
-    if (isSel) {
+    if (isBlank) {
+      csCtx.fillStyle = 'rgba(243,156,18,0.25)'; csCtx.fill();
+      csCtx.strokeStyle = '#f39c12'; csCtx.lineWidth = 1.5;
+      csCtx.setLineDash([4,2]); csCtx.stroke(); csCtx.setLineDash([]);
+      csCtx.fillStyle = '#f39c12'; csCtx.font = `${Math.max(8, 9*scale)}px monospace`;
+      csCtx.textAlign = 'center'; csCtx.fillText('✕', px, py + rad*0.3);
+    } else if (isSel) {
       csCtx.fillStyle = '#4ecdc4'; csCtx.fill();
       csCtx.strokeStyle = '#2ecc71'; csCtx.lineWidth = 1; csCtx.stroke();
       csCtx.beginPath(); csCtx.arc(px, py, rad*0.15, 0, 2*Math.PI);
@@ -506,9 +531,10 @@ function updateResults() {
   document.getElementById('resConfig').textContent = r.config;
   document.getElementById('resLength').textContent = `${r.tubeLength.toFixed(0)} mm`;
   const csLabel = r.axialMode === 'auto' ? 'cells' : (r.axialMode === 'series' ? 'P' : 'S');
+  const blankPart = r.blankCells > 0 ? ` +${r.blankCells} blank` : '';
   document.getElementById('resFit').textContent = r.fits
-    ? `${r.csN} ${csLabel} / ${r.maxFit} max`
-    : `⚠ ${r.csN} requested, only ${r.maxFit} fit`;
+    ? `${r.csN} ${csLabel}${blankPart} / ${r.maxFit} max`
+    : `⚠ ${r.csN}${blankPart} requested, only ${r.maxFit} fit`;
   document.getElementById('resDensity').textContent = `${r.density.toFixed(1)}%`;
   document.getElementById('resVoltage').textContent = `${r.voltage} V`;
   document.getElementById('resCapacity').textContent = `${r.packAh.toFixed(1)} Ah`;
@@ -610,6 +636,7 @@ function updateState() {
   state.endCap = parseFloat(document.getElementById('endCap').value);
   state.cellCapacity = parseFloat(document.getElementById('cellCapacity').value);
   state.cellCurrent = parseFloat(document.getElementById('cellCurrent').value);
+  state.blankCells = parseInt(document.getElementById('blankCells').value);
 
   // Sync labels
   document.getElementById('cellDiamVal').textContent = state.cellDiam.toFixed(1) + ' mm';
@@ -622,9 +649,10 @@ function updateState() {
   document.getElementById('endCapVal').textContent = state.endCap.toFixed(1);
   document.getElementById('cellCapVal').textContent = state.cellCapacity + ' mAh';
   document.getElementById('cellCurrVal').textContent = state.cellCurrent.toFixed(1) + ' A';
+  document.getElementById('blankCellsVal').textContent = state.blankCells;
 
   // Sync number inputs
-  ['series','parallel','buffer','cylinderID','axialGap','endCap','cellCapacity','cellCurrent'].forEach(id => {
+  ['series','parallel','buffer','cylinderID','axialGap','endCap','cellCapacity','cellCurrent','blankCells'].forEach(id => {
     const el = document.getElementById(id + 'Num');
     if (el) el.value = document.getElementById(id).value;
   });
@@ -633,7 +661,7 @@ function updateState() {
 }
 
 // Wire sliders
-['cellDiam','cellLen','series','parallel','buffer','cylinderID','axialGap','endCap','cellCapacity','cellCurrent'].forEach(id => {
+['cellDiam','cellLen','series','parallel','buffer','cylinderID','axialGap','endCap','cellCapacity','cellCurrent','blankCells'].forEach(id => {
   document.getElementById(id).addEventListener('input', updateState);
 });
 

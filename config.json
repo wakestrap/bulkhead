@@ -5,7 +5,7 @@
     "resistor": true,
     "tv": true,
     "pcb": true,
-    "geo": false,
+    "geo": true,
     "battery": true
   },
   "timezones": [
