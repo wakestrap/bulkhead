@@ -181,7 +181,7 @@ label {
 }
 .result-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 0.75rem;
 }
 .result-item {
@@ -254,6 +254,31 @@ const AWG_SIZES = [
   { n: "0",    label: "0 (1/0)" },
   ...Array.from({length:41}, (_,i) => ({ n: String(i), label: `${i} AWG` }))
 ];
+
+// Chassis wiring ampacity (amps) — integer AWG lookup, interpolated for fractional
+const CHASSIS_AMPS = {
+  "-3": 380, "-2": 328, "-1": 283, "0": 245,
+  "1": 211, "2": 181, "3": 158, "4": 135, "5": 118,
+  "6": 101, "7": 89, "8": 73, "9": 64, "10": 55,
+  "11": 47, "12": 41, "13": 35, "14": 32, "15": 28,
+  "16": 22, "17": 19, "18": 16, "19": 14, "20": 11,
+  "21": 9, "22": 7, "23": 4.7, "24": 3.5, "25": 2.7,
+  "26": 2.2, "27": 1.7, "28": 1.4, "29": 1.2, "30": 0.86,
+  "31": 0.70, "32": 0.53, "33": 0.43, "34": 0.33, "35": 0.27,
+  "36": 0.21, "37": 0.17, "38": 0.13, "39": 0.11, "40": 0.09
+};
+
+function chassisAmps(awg) {
+  if (isNaN(awg)) return NaN;
+  const lo = Math.floor(awg);
+  const hi = Math.ceil(awg);
+  if (lo === hi) return CHASSIS_AMPS[String(lo)] ?? NaN;
+  const aLo = CHASSIS_AMPS[String(lo)];
+  const aHi = CHASSIS_AMPS[String(hi)];
+  if (aLo == null || aHi == null) return NaN;
+  const frac = awg - lo;
+  return aLo + (aHi - aLo) * frac;
+}
 
 // AWG area in mm²
 function awgArea(awg) {
@@ -341,10 +366,15 @@ function renderResults() {
   const effAwg = areaToAwg(totalArea);
   const effAwgRounded = Math.round(effAwg * 2) / 2;
   const effDia = 2 * Math.sqrt(totalArea / Math.PI);
+  const chassisCurrent = chassisAmps(effAwg);
 
   // Summary line
   const parts = conductors.map(c => `${c.count}×${mode==='awg' ? c.gauge+'AWG' : c.gauge+'mm²'}`);
   const summary = parts.join(' + ');
+
+  const currentDisplay = !isNaN(chassisCurrent)
+    ? `${chassisCurrent >= 1 ? chassisCurrent.toFixed(1) : chassisCurrent.toFixed(2)} A`
+    : '—';
 
   el.innerHTML = `
     <div class="result-grid">
@@ -356,11 +386,16 @@ function renderResults() {
         <div class="result-label">Total Area</div>
         <div class="result-value">${totalArea.toFixed(3)} mm²</div>
       </div>
+      <div class="result-item">
+        <div class="result-label">Chassis Wiring</div>
+        <div class="result-value">${currentDisplay}</div>
+      </div>
     </div>
     <div class="result-derive">
       ${summary}<br>
       Total cross-section: ${totalArea.toFixed(4)} mm² → Ø ${effDia.toFixed(3)} mm → ${awgName(effAwg)}
-      ${effAwgRounded !== Math.round(effAwg) ? ` (closest half-gauge: ${awgName(effAwgRounded)})` : ''}
+      ${effAwgRounded !== Math.round(effAwg) ? ` (closest half-gauge: ${awgName(effAwgRounded)})` : ''}<br>
+      Chassis wiring ampacity: ${currentDisplay}
     </div>
   `;
 }

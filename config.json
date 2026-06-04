@@ -3,10 +3,11 @@
     "clock": true,
     "depth": true,
     "resistor": true,
-    "tv": true,
+    "tv": false,
     "pcb": true,
-    "geo": true,
-    "battery": true
+    "geo": false,
+    "battery": true,
+    "gauge": true
   },
   "timezones": [
     {
