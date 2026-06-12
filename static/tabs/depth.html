@@ -1,0 +1,191 @@
+<style>
+/* ── Depth Calculator ───────────────────────────────────────────── */
+.ref-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font);
+  font-size: 0.8rem;
+}
+.ref-table th {
+  text-align: right;
+  padding: 0.35rem 0.75rem;
+  color: var(--text-dim);
+  font-weight: normal;
+  border-bottom: 1px solid var(--border);
+}
+.ref-table td {
+  text-align: right;
+  padding: 0.3rem 0.75rem;
+  border-bottom: 1px solid rgba(48,54,61,0.5);
+}
+.ref-table tr:hover td { background: var(--bg-hover); }
+.ref-table .deep td { color: var(--red); }
+
+.calc-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.input-group label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.input-group input, .input-group select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 0.5rem 0.75rem;
+  font-family: var(--font);
+  font-size: 0.85rem;
+}
+.input-group input:focus, .input-group select:focus {
+  outline: none;
+  border-color: var(--cyan);
+}
+.input-group input { width: 140px; }
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.result-item {
+  background: var(--bg);
+  border-radius: 4px;
+  padding: 0.75rem;
+  text-align: center;
+}
+.result-label {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.result-value {
+  font-family: var(--font);
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-top: 0.25rem;
+}
+.result-value.cyan { color: var(--cyan); }
+
+.zone-tag {
+  font-size: 0.7rem;
+  color: var(--magenta);
+  margin-top: 0.5rem;
+  font-family: var(--font);
+}
+
+</style>
+
+<div class="tab-content" id="tab-depth">
+  <div class="card">
+    <h3>Quick Reference — Seawater at 4°C</h3>
+    <div style="overflow-x:auto;">
+      <table class="ref-table" id="ref-table">
+        <thead>
+          <tr>
+            <th>Depth</th><th>PSI</th><th>ATM</th><th>Bar</th><th>kPa</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p style="margin-top:0.5rem;font-size:0.7rem;color:var(--text-dim);">
+      Marianas Trench: ~11,000 m → ~16,000 psi → ~1,090 atm &nbsp;|&nbsp;
+      Typical AUV: 300–6,000 m
+    </p>
+  </div>
+
+  <div class="card">
+    <h3>Interactive Calculator</h3>
+    <div class="calc-row">
+      <div class="input-group">
+        <label>Depth (meters)</label>
+        <input type="number" id="depth-input" value="100" step="any" placeholder="e.g. 500">
+      </div>
+      <div class="input-group">
+        <label>Water Type</label>
+        <select id="water-type">
+          <option value="salt">Saltwater</option>
+          <option value="fresh">Freshwater</option>
+        </select>
+      </div>
+      <button class="btn primary" onclick="calculateDepth()">Calculate</button>
+    </div>
+    <div class="result-grid" id="depth-results"></div>
+    <div class="zone-tag" id="zone-tag"></div>
+  </div>
+</div>
+
+
+<script>
+// ── Depth Calculator ──────────────────────────────────────────────
+const SALT_PSI = 0.445, FRESH_PSI = 0.433, FT_PER_M = 3.28084;
+const REF_DEPTHS = [0, 10, 50, 100, 200, 500, 1000, 2000, 3000, 4000, 6000, 11000];
+
+function buildRefTable() {
+  const tbody = document.querySelector('#ref-table tbody');
+  tbody.innerHTML = REF_DEPTHS.map(d => {
+    const ft = d * FT_PER_M;
+    const psi = ft * SALT_PSI;
+    const atm = (psi / 14.6959) + 1;
+    const bar = psi * 0.0689476;
+    const kpa = bar * 100;
+    const cls = d >= 3000 ? ' class="deep"' : d === 0 ? ' style="opacity:0.4"' : '';
+    return `<tr${cls}>
+      <td>${d} m</td>
+      <td>${d===0?'0.0':psi.toFixed(0)} psi</td>
+      <td>${atm.toFixed(0)}</td>
+      <td>${d===0?'0.00':bar.toFixed(0)}</td>
+      <td>${d===0?'0.0':kpa.toFixed(0)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function calculateDepth() {
+  const meters = parseFloat(document.getElementById('depth-input').value) || 0;
+  const water = document.getElementById('water-type').value;
+  const psiPerFt = water === 'salt' ? SALT_PSI : FRESH_PSI;
+
+  const ft = meters * FT_PER_M;
+  const psi = ft * psiPerFt;
+  const atm = (psi / 14.6959) + 1;
+  const bar = psi * 0.0689476;
+  const kpa = bar * 100;
+
+  document.getElementById('depth-results').innerHTML = `
+    <div class="result-item"><div class="result-label">Pressure</div><div class="result-value cyan">${psi.toFixed(1)} psi</div></div>
+    <div class="result-item"><div class="result-label">Absolute ATM</div><div class="result-value">${atm.toFixed(1)}</div></div>
+    <div class="result-item"><div class="result-label">Gauge ΔP</div><div class="result-value">${(atm-1).toFixed(1)} atm</div></div>
+    <div class="result-item"><div class="result-label">Bar</div><div class="result-value">${bar.toFixed(2)}</div></div>
+    <div class="result-item"><div class="result-label">kPa</div><div class="result-value">${kpa.toFixed(1)}</div></div>
+  `;
+
+  let zone = '';
+  if (meters >= 11000) zone = 'Hadal Zone — deeper than the Marianas Trench. Your ROV is having a very bad day.';
+  else if (meters >= 6000) zone = 'Hadal Zone — only 2% of the ocean floor. Respect.';
+  else if (meters >= 4000) zone = 'Abyssopelagic Zone — no light, crushing pressure, eternal darkness.';
+  else if (meters >= 1000) zone = 'Bathypelagic Zone — midnight zone. No light penetrates.';
+  else if (meters >= 200) zone = 'Mesopelagic Zone — twilight zone. Light fades fast.';
+  else if (meters > 0) zone = 'Epipelagic Zone — sunlight zone. The easy life.';
+  document.getElementById('zone-tag').textContent = zone;
+
+  // Also fetch from API to validate
+  fetch(`/api/depth?meters=${meters}&water=${water}`)
+    .then(r => r.json())
+    .catch(() => {}); // silent
+}
+
+</script>

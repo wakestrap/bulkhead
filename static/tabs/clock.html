@@ -1,0 +1,247 @@
+<style>
+/* ── Clock Grid ─────────────────────────────────────────────────── */
+.clock-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+.clock-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  text-align: center;
+  transition: border-color 0.3s;
+}
+.clock-card.biz { border-color: var(--green); }
+.clock-card.fringe { border-color: var(--yellow); }
+.clock-card.off { border-color: var(--border); }
+
+.clock-city {
+  font-family: var(--font);
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  margin-bottom: 0.25rem;
+}
+.clock-tz {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-bottom: 0.5rem;
+}
+.clock-time {
+  font-family: var(--font);
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--text);
+}
+.clock-seconds {
+  font-family: var(--font);
+  font-size: 1rem;
+  color: var(--cyan);
+  margin-left: 2px;
+}
+.clock-date {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 0.25rem;
+}
+.clock-status {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+.clock-status.biz { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.clock-status.off { background: var(--text-dim); }
+
+.clock-bar {
+  display: flex;
+  gap: 1px;
+  margin-top: 0.5rem;
+  justify-content: center;
+}
+.clock-bar-seg {
+  width: 6px;
+  height: 10px;
+  border-radius: 1px;
+}
+.clock-bar-seg.biz { background: var(--green); }
+.clock-bar-seg.fringe { background: var(--yellow); opacity: 0.5; }
+.clock-bar-seg.off { background: var(--border); }
+
+/* ── Overlap ────────────────────────────────────────────────────── */
+.overlap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.5rem;
+}
+.overlap-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg);
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+.overlap-dot { margin-right: 0.5rem; }
+
+</style>
+
+<div class="tab-content active" id="tab-clock">
+  <div class="card">
+    <h3>Live Clocks</h3>
+    <div class="clock-grid" id="clocks"></div>
+  </div>
+  <div class="card">
+    <h3>Business Hour Overlap</h3>
+    <div class="overlap-grid" id="overlaps"></div>
+  </div>
+</div>
+
+
+<script>
+// ── Clock ─────────────────────────────────────────────────────────
+let TIMEZONES = [];
+
+// All available timezones for the picker
+const ALL_TIMEZONES = [
+  {city:"St. John's", tz:"America/St_Johns", label:"NDT"},
+  {city:"Halifax", tz:"America/Halifax", label:"AT"},
+  {city:"Collingwood", tz:"America/Toronto", label:"ET"},
+  {city:"Vancouver", tz:"America/Vancouver", label:"PT"},
+  {city:"Anchorage", tz:"America/Anchorage", label:"AKT"},
+  {city:"Honolulu", tz:"Pacific/Honolulu", label:"HT"},
+  {city:"UTC", tz:"UTC", label:"UTC"},
+  {city:"London", tz:"Europe/London", label:"GMT"},
+  {city:"Paris", tz:"Europe/Paris", label:"CET"},
+  {city:"Tokyo", tz:"Asia/Tokyo", label:"JST"},
+  {city:"Shanghai", tz:"Asia/Shanghai", label:"CST"},
+  {city:"Singapore", tz:"Asia/Singapore", label:"SGT"},
+  {city:"Sydney", tz:"Australia/Sydney", label:"AET"},
+  {city:"Auckland", tz:"Pacific/Auckland", label:"NZST"},
+  {city:"Dubai", tz:"Asia/Dubai", label:"GST"},
+  {city:"Mumbai", tz:"Asia/Kolkata", label:"IST"},
+  {city:"Moscow", tz:"Europe/Moscow", label:"MSK"},
+];
+
+function buildClocks() {
+  const container = document.getElementById('clocks');
+  container.innerHTML = TIMEZONES.map(t => `
+    <div class="clock-card" id="clock-${t.city.replace(/[^a-zA-Z]/g,'')}">
+      <div class="clock-city">${t.city}</div>
+      <div class="clock-tz">${t.label}</div>
+      <div class="clock-time">
+        <span class="clock-status" id="status-${t.city.replace(/[^a-zA-Z]/g,'')}"></span>
+        <span id="time-${t.city.replace(/[^a-zA-Z]/g,'')}">--:--</span><span class="clock-seconds" id="sec-${t.city.replace(/[^a-zA-Z]/g,'')}"></span>
+      </div>
+      <div class="clock-date" id="date-${t.city.replace(/[^a-zA-Z]/g,'')}"></div>
+      <div class="clock-bar" id="bar-${t.city.replace(/[^a-zA-Z]/g,'')}"></div>
+    </div>
+  `).join('');
+}
+
+function updateClocks() {
+  const now = new Date();
+  TIMEZONES.forEach(t => {
+    const id = t.city.replace(/[^a-zA-Z]/g,'');
+    const opts = {timeZone: t.tz, hour12: false, hour:'2-digit', minute:'2-digit'};
+    const secOpts = {timeZone: t.tz, hour12: false, hour:'2-digit', minute:'2-digit', second:'2-digit'};
+    const dateOpts = {timeZone: t.tz, weekday:'short', month:'short', day:'numeric'};
+
+    const timeStr = now.toLocaleString('en-US', opts);
+    const fullTimeStr = now.toLocaleString('en-US', secOpts);
+    const parts = fullTimeStr.match(/(\d{2}):(\d{2}):(\d{2})/);
+    const secStr = parts ? parts[3] : '00';
+    const dateStr = now.toLocaleString('en-US', dateOpts);
+    const hour = parseInt(now.toLocaleString('en-US', {timeZone:t.tz, hour12:false, hour:'2-digit'}));
+    const day = now.toLocaleString('en-US', {timeZone:t.tz, weekday:'short'});
+    const isWeekday = !['Sat','Sun'].includes(day);
+    const isBiz = isWeekday && hour >= 9 && hour < 17;
+    const isFringe = isWeekday && (hour >= 7 && hour < 9 || hour >= 17 && hour < 19);
+
+    const card = document.getElementById('clock-' + id);
+    if (card) {
+      card.className = 'clock-card ' + (isBiz ? 'biz' : isFringe ? 'fringe' : 'off');
+    }
+
+    const statusEl = document.getElementById('status-' + id);
+    if (statusEl) {
+      statusEl.className = 'clock-status ' + (isBiz ? 'biz' : 'off');
+    }
+
+    const timeEl = document.getElementById('time-' + id);
+    const secEl = document.getElementById('sec-' + id);
+    const dateEl = document.getElementById('date-' + id);
+    if (timeEl) timeEl.textContent = timeStr;
+    if (secEl) secEl.textContent = ':' + secStr;
+    if (dateEl) dateEl.textContent = dateStr;
+
+    // 24h bar
+    const barEl = document.getElementById('bar-' + id);
+    if (barEl) {
+      let html = '';
+      for (let h = 0; h < 24; h++) {
+        let cls = 'off';
+        if (isWeekday) {
+          if (h >= 9 && h <= 16) cls = 'biz';
+          else if (h === 7 || h === 8 || h === 17 || h === 18) cls = 'fringe';
+        }
+        if (h === hour) cls += '" style="outline:1px solid var(--cyan);outline-offset:1px;';
+        html += `<div class="clock-bar-seg ${cls}"></div>`;
+      }
+      barEl.innerHTML = html;
+    }
+  });
+
+  buildOverlaps(now);
+}
+
+function buildOverlaps(now) {
+  const container = document.getElementById('overlaps');
+  const pairs = [];
+  for (let i = 0; i < TIMEZONES.length; i++) {
+    for (let j = i + 1; j < TIMEZONES.length; j++) {
+      const a = TIMEZONES[i], b = TIMEZONES[j];
+      const ha = parseInt(now.toLocaleString('en-US', {timeZone:a.tz, hour12:false, hour:'2-digit'}));
+      const hb = parseInt(now.toLocaleString('en-US', {timeZone:b.tz, hour12:false, hour:'2-digit'}));
+      const overlap = Math.max(0, Math.min(ha >= 9 && ha < 17 ? 17 - ha : 0, hb >= 9 && hb < 17 ? 17 - hb : 0));
+      const totalOverlap = 8; // 9am-5pm = 8h window
+      pairs.push({a, b, overlap: totalOverlap}); // simplified: assume 8h overlap if both biz hours align
+    }
+  }
+
+  // Better overlap calc: find overlapping business hours
+  container.innerHTML = '';
+  for (let i = 0; i < TIMEZONES.length; i++) {
+    for (let j = i + 1; j < TIMEZONES.length; j++) {
+      const a = TIMEZONES[i], b = TIMEZONES[j];
+      // Get current hour in each TZ
+      const ha = parseInt(now.toLocaleString('en-US', {timeZone:a.tz, hour12:false, hour:'2-digit'}));
+      const hb = parseInt(now.toLocaleString('en-US', {timeZone:b.tz, hour12:false, hour:'2-digit'}));
+      const diff = ha - hb;
+
+      // Business hours for a: 9-17. For b: same. Offset by diff.
+      const aStart = 9, aEnd = 17;
+      const bStart = 9 + diff, bEnd = 17 + diff;
+      const overlapStart = Math.max(aStart, bStart);
+      const overlapEnd = Math.min(aEnd, bEnd);
+      const overlapHrs = Math.max(0, overlapEnd - overlapStart);
+
+      let color = 'var(--green)';
+      if (overlapHrs < 3) color = 'var(--red)';
+      else if (overlapHrs < 6) color = 'var(--yellow)';
+
+      const div = document.createElement('div');
+      div.className = 'overlap-item';
+      div.innerHTML = `
+        <span>${a.city} ↔ ${b.city}</span>
+        <span style="color:${color};font-family:var(--font);">
+          ${overlapHrs > 0 ? overlapHrs + 'h overlap' : 'no overlap'}
+        </span>`;
+      container.appendChild(div);
+    }
+  }
+}
+
+</script>

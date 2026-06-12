@@ -570,8 +570,23 @@ CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.j
 
 DEFAULT_CONFIG = {
     "tabs": {
-        "clock": True, "depth": True, "resistor": True,
-        "tv": True, "pcb": True, "geo": True, "battery": True, "gauge": True, "tline": True, "ohmslaw": True, "rcalc": True, "db": True, "freq": True
+        "clock":     {"enabled": True, "nav": "tools",       "label": "🕐 World Clock"},
+        "depth":     {"enabled": True,                       "label": "🌊 Depth ↔ Pressure"},
+        "resistor":  {"enabled": True, "nav": "electronics", "label": "⚡ Resistor Decoder"},
+        "tv":        {"enabled": True,                       "label": "📺 TV Remote"},
+        "pcb":       {"enabled": True, "nav": "tools",       "label": "🔌 PCB Trace"},
+        "geo":       {"enabled": True, "nav": "tools",       "label": "🌍 GeoGuessr"},
+        "battery":   {"enabled": True, "nav": "tools",       "label": "🔋 Battery Pack",     "iframe": "/static/battery-solver.html"},
+        "gauge":     {"enabled": True, "nav": "tools",       "label": "🧮 Wire Gauge",       "iframe": "/static/wire-gauge.html"},
+        "tline":     {"enabled": True, "nav": "electronics", "label": "〰️ T-Line Z"},
+        "ohmslaw":   {"enabled": True, "nav": "electronics", "label": "🔌 Ohm's Law"},
+        "rcalc":     {"enabled": True, "nav": "electronics", "label": "⫼ R / LED Calc"},
+        "db":        {"enabled": True, "nav": "electronics", "label": "📶 dB/dBm"},
+        "freq":      {"enabled": True, "nav": "electronics", "label": "∿ RC/LC/Freq"},
+    },
+    "navigation": {
+        "electronics": "⚡ Electronics",
+        "tools": "🛠️ Tools",
     },
     "timezones": [
         {"city": "St. John's", "tz": "America/St_Johns", "label": "NDT"},
@@ -583,20 +598,26 @@ DEFAULT_CONFIG = {
 
 def _load_config():
     if not os.path.exists(CONFIG_FILE):
-        return dict(DEFAULT_CONFIG)
+        return json.loads(json.dumps(DEFAULT_CONFIG))
     try:
         with open(CONFIG_FILE) as f:
             cfg = json.load(f)
-        # Merge with defaults so new keys don't break things
-        merged = dict(DEFAULT_CONFIG)
+        # Deep merge: preserve all default keys, overlay saved values
+        merged = json.loads(json.dumps(DEFAULT_CONFIG))
         if "tabs" in cfg:
-            for k, v in DEFAULT_CONFIG["tabs"].items():
-                merged["tabs"][k] = cfg["tabs"].get(k, v)
+            for k, v in cfg["tabs"].items():
+                if k in merged["tabs"]:
+                    if isinstance(v, dict):
+                        merged["tabs"][k].update(v)
+                    else:
+                        merged["tabs"][k]["enabled"] = bool(v)
         if "timezones" in cfg:
             merged["timezones"] = cfg["timezones"]
+        if "navigation" in cfg:
+            merged["navigation"].update(cfg["navigation"])
         return merged
     except Exception:
-        return dict(DEFAULT_CONFIG)
+        return json.loads(json.dumps(DEFAULT_CONFIG))
 
 def _save_config(cfg):
     os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
@@ -616,8 +637,9 @@ def api_set_config():
 
     current = _load_config()
     if "tabs" in new_cfg:
-        current["tabs"] = {k: bool(v) for k, v in new_cfg["tabs"].items()
-                           if k in DEFAULT_CONFIG["tabs"]}
+        for k, v in new_cfg["tabs"].items():
+            if k in current["tabs"]:
+                current["tabs"][k]["enabled"] = bool(v)
     if "timezones" in new_cfg:
         if isinstance(new_cfg["timezones"], list) and len(new_cfg["timezones"]) > 0:
             current["timezones"] = new_cfg["timezones"]

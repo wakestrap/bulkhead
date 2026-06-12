@@ -1,0 +1,244 @@
+<style>
+/* ── R Calc ─────────────────────────────────────────────────────── */
+.rc-solver { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.rc-parallel-inputs { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin-bottom: 0.5rem; }
+.rc-parallel-inputs input {
+  width: 80px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-family: var(--font);
+  font-size: 0.9rem; padding: 0.4rem 0.5rem;
+}
+.rc-parallel-inputs input:focus { outline: none; border-color: var(--cyan); }
+.rc-chip {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  padding: 0.3rem 0.6rem; font-family: var(--font); font-size: 0.85rem;
+}
+.rc-chip .remove {
+  cursor: pointer; color: var(--red); font-weight: bold; font-size: 1rem; line-height: 0.8;
+}
+.rc-chip .remove:hover { color: var(--text); }
+.led-colors { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-top: 0.3rem; }
+.led-color-chip {
+  padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; cursor: pointer;
+  border: 1px solid var(--border); transition: all 0.15s;
+}
+.led-color-chip:hover { border-color: var(--cyan); }
+.led-color-chip.active { border-color: var(--cyan); background: rgba(88,166,255,0.15); }
+
+</style>
+
+<div class="tab-content" id="tab-rcalc">
+  <!-- Parallel Resistance Card -->
+  <div class="card">
+    <h3>⫼ Parallel / Series Resistance</h3>
+    <div class="rc-solver">
+      <div>
+        <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;font-weight:600;margin-bottom:0.35rem;">Parallel Resistors</div>
+        <div class="rc-parallel-inputs" id="rc-parallel-chips"></div>
+        <div style="display:flex;gap:0.4rem;margin-top:0.35rem;">
+          <input type="number" id="rc-parallel-add" placeholder="Ω" style="width:90px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--font);font-size:0.85rem;padding:0.35rem 0.5rem;" onkeydown="if(event.key==='Enter') addParallelR()">
+          <button onclick="addParallelR()" style="background:var(--cyan);color:#fff;border:none;border-radius:4px;padding:0.35rem 0.75rem;font-size:0.8rem;cursor:pointer;font-family:var(--font-ui);">Add</button>
+        </div>
+        <div style="margin-top:0.5rem;font-family:var(--font);font-size:1.1rem;color:var(--cyan);" id="rc-parallel-result">—</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);" id="rc-parallel-nearest"></div>
+      </div>
+      <div>
+        <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;font-weight:600;margin-bottom:0.35rem;">Series Resistors</div>
+        <div class="rc-parallel-inputs" id="rc-series-chips"></div>
+        <div style="display:flex;gap:0.4rem;margin-top:0.35rem;">
+          <input type="number" id="rc-series-add" placeholder="Ω" style="width:90px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--font);font-size:0.85rem;padding:0.35rem 0.5rem;" onkeydown="if(event.key==='Enter') addSeriesR()">
+          <button onclick="addSeriesR()" style="background:var(--cyan);color:#fff;border:none;border-radius:4px;padding:0.35rem 0.75rem;font-size:0.8rem;cursor:pointer;font-family:var(--font-ui);">Add</button>
+        </div>
+        <div style="margin-top:0.5rem;font-family:var(--font);font-size:1.1rem;color:var(--cyan);" id="rc-series-result">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LED Resistor Card -->
+  <div class="card">
+    <h3>💡 LED Dropper Resistor</h3>
+    <div class="rc-solver">
+      <div>
+        <div class="ohms-field"><label>Supply Voltage (V)</label><input type="number" id="led-vsup" value="5" step="any" oninput="calcLED()"></div>
+        <div class="ohms-field"><label>LED Forward Voltage (Vf)</label><input type="number" id="led-vf" value="2.0" step="any" oninput="calcLED()"></div>
+        <div class="ohms-field"><label>LED Current (mA)</label><input type="number" id="led-if" value="20" step="any" oninput="calcLED()"></div>
+        <div class="led-colors">
+          <span class="led-color-chip active" onclick="setLED(2.0,20)" style="background:#ff000033;color:#ff4444;">🔴 Red 2.0V</span>
+          <span class="led-color-chip" onclick="setLED(2.1,20)" style="background:#ffaa0033;color:#ffaa00;">🟠 Amber 2.1V</span>
+          <span class="led-color-chip" onclick="setLED(2.2,20)" style="background:#ffff0033;color:#cccc00;">🟡 Yellow 2.2V</span>
+          <span class="led-color-chip" onclick="setLED(3.2,20)" style="background:#00ff0033;color:#44ff44;">🟢 Green 3.2V</span>
+          <span class="led-color-chip" onclick="setLED(3.3,20)" style="background:#0088ff33;color:#44aaff;">🔵 Blue 3.3V</span>
+          <span class="led-color-chip" onclick="setLED(3.4,20)" style="background:#ffffff33;color:#cccccc;">⚪ White 3.4V</span>
+          <span class="led-color-chip" onclick="setLED(1.7,20)" style="background:#ff000033;color:#ff6666;">🔴 IR 1.7V</span>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="background:var(--bg);">
+          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.5rem;">Result</div>
+          <div class="ohms-result-row"><span class="label">R</span><span class="value" id="led-r">—</span><span class="unit">Ω</span></div>
+          <div class="ohms-result-row"><span class="label">P<sub>R</sub></span><span class="value" id="led-pr">—</span><span class="unit">mW</span></div>
+          <div class="ohms-result-row"><span class="label">P<sub>LED</sub></span><span class="value" id="led-pled">—</span><span class="unit">mW</span></div>
+          <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.3rem;" id="led-nearest"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Current Divider Card -->
+  <div class="card">
+    <h3>⑂ Current Divider</h3>
+    <div class="rc-solver">
+      <div>
+        <div class="ohms-field"><label>Total Current (mA)</label><input type="number" id="cd-itotal" value="100" step="any" oninput="calcCurrentDiv()"></div>
+        <div class="ohms-field"><label>R1 (Ω)</label><input type="number" id="cd-r1" value="100" step="any" oninput="calcCurrentDiv()"></div>
+        <div class="ohms-field"><label>R2 (Ω)</label><input type="number" id="cd-r2" value="200" step="any" oninput="calcCurrentDiv()"></div>
+      </div>
+      <div>
+        <div class="card" style="background:var(--bg);">
+          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.5rem;">Branch Currents</div>
+          <div class="ohms-result-row"><span class="label">I₁</span><span class="value" id="cd-i1">—</span><span class="unit">mA</span></div>
+          <div class="ohms-result-row"><span class="label">I₂</span><span class="value" id="cd-i2">—</span><span class="unit">mA</span></div>
+          <div class="ohms-result-row"><span class="label">R<sub>eq</sub></span><span class="value" id="cd-req">—</span><span class="unit">Ω</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ── R Calc (Parallel/Series) ────────────────────────────────────
+
+const E12 = [1.0,1.2,1.5,1.8,2.2,2.7,3.3,3.9,4.7,5.6,6.8,8.2];
+let parallelValues = [];
+let seriesValues = [];
+
+function fmtR(v) {
+  if (v >= 1e6) return (v/1e6).toFixed(2) + ' MΩ';
+  if (v >= 1000) return (v/1000).toFixed(2) + ' kΩ';
+  return v.toFixed(2) + ' Ω';
+}
+
+function nearestE12(v) {
+  if (v <= 0) return '—';
+  const decade = Math.pow(10, Math.floor(Math.log10(v)));
+  const norm = v / decade;
+  let best = E12[0];
+  for (const e of E12) {
+    if (Math.abs(norm - e) < Math.abs(norm - best)) best = e;
+  }
+  return fmtR(best * decade);
+}
+
+function renderParallelChips() {
+  const div = document.getElementById('rc-parallel-chips');
+  div.innerHTML = parallelValues.map((v, i) =>
+    `<span class="rc-chip">${fmtR(v)}<span class="remove" onclick="removeParallel(${i})">×</span></span>`
+  ).join('');
+  calcParallel();
+}
+
+function addParallelR() {
+  const inp = document.getElementById('rc-parallel-add');
+  const v = parseFloat(inp.value);
+  if (!isNaN(v) && v > 0) { parallelValues.push(v); renderParallelChips(); }
+  inp.value = '';
+}
+
+function removeParallel(i) { parallelValues.splice(i,1); renderParallelChips(); }
+
+function calcParallel() {
+  if (parallelValues.length === 0) {
+    document.getElementById('rc-parallel-result').textContent = '—';
+    document.getElementById('rc-parallel-nearest').textContent = '';
+    return;
+  }
+  const invSum = parallelValues.reduce((s, v) => s + 1/v, 0);
+  const req = 1 / invSum;
+  document.getElementById('rc-parallel-result').textContent = 'Req = ' + fmtR(req);
+  document.getElementById('rc-parallel-nearest').textContent = 'Nearest E12: ' + nearestE12(req);
+}
+
+function renderSeriesChips() {
+  const div = document.getElementById('rc-series-chips');
+  div.innerHTML = seriesValues.map((v, i) =>
+    `<span class="rc-chip">${fmtR(v)}<span class="remove" onclick="removeSeries(${i})">×</span></span>`
+  ).join('');
+  calcSeries();
+}
+
+function addSeriesR() {
+  const inp = document.getElementById('rc-series-add');
+  const v = parseFloat(inp.value);
+  if (!isNaN(v) && v > 0) { seriesValues.push(v); renderSeriesChips(); }
+  inp.value = '';
+}
+
+function removeSeries(i) { seriesValues.splice(i,1); renderSeriesChips(); }
+
+function calcSeries() {
+  if (seriesValues.length === 0) {
+    document.getElementById('rc-series-result').textContent = '—';
+    return;
+  }
+  const req = seriesValues.reduce((s, v) => s + v, 0);
+  document.getElementById('rc-series-result').textContent = 'Req = ' + fmtR(req);
+}
+
+// ── LED Resistor ──────────────────────────────────────────────────
+
+function setLED(vf, ifMa) {
+  document.getElementById('led-vf').value = vf;
+  document.getElementById('led-if').value = ifMa;
+  document.querySelectorAll('.led-color-chip').forEach(c => c.classList.remove('active'));
+  event.target.classList.add('active');
+  calcLED();
+}
+
+function calcLED() {
+  const vsup = parseFloat(document.getElementById('led-vsup').value) || 0;
+  const vf = parseFloat(document.getElementById('led-vf').value) || 0;
+  const ifMa = parseFloat(document.getElementById('led-if').value) || 0;
+
+  if (vsup <= vf || ifMa <= 0) {
+    document.getElementById('led-r').textContent = vsup <= vf ? 'Vsup ≤ Vf!' : '—';
+    document.getElementById('led-pr').textContent = '—';
+    document.getElementById('led-pled').textContent = '—';
+    document.getElementById('led-nearest').textContent = '';
+    return;
+  }
+
+  const r = (vsup - vf) / (ifMa / 1000);
+  const pr = (vsup - vf) * (ifMa / 1000);
+  const pled = vf * (ifMa / 1000);
+
+  document.getElementById('led-r').textContent = fmtR(r);
+  document.getElementById('led-pr').textContent = (pr * 1000).toFixed(1) + ' mW';
+  document.getElementById('led-pled').textContent = (pled * 1000).toFixed(1) + ' mW';
+  document.getElementById('led-nearest').textContent = 'Nearest E12: ' + nearestE12(r) + ' (≥' + (pr*1000*2).toFixed(0) + 'mW rating)';
+}
+
+// ── Current Divider ───────────────────────────────────────────────
+
+function calcCurrentDiv() {
+  const itotal = parseFloat(document.getElementById('cd-itotal').value) || 0;
+  const r1 = parseFloat(document.getElementById('cd-r1').value) || 0;
+  const r2 = parseFloat(document.getElementById('cd-r2').value) || 0;
+
+  if (r1 <= 0 || r2 <= 0) {
+    document.getElementById('cd-i1').textContent = '—';
+    document.getElementById('cd-i2').textContent = '—';
+    document.getElementById('cd-req').textContent = '—';
+    return;
+  }
+
+  const req = (r1 * r2) / (r1 + r2);
+  const i1 = itotal * r2 / (r1 + r2);
+  const i2 = itotal * r1 / (r1 + r2);
+
+  document.getElementById('cd-i1').textContent = i1.toFixed(2) + ' mA';
+  document.getElementById('cd-i2').textContent = i2.toFixed(2) + ' mA';
+  document.getElementById('cd-req').textContent = fmtR(req);
+}
+
+</script>

@@ -1,0 +1,481 @@
+<style>
+/* ── TV Remote ───────────────────────────────────────────────────── */
+.tv-remote {
+  max-width: 340px;
+  margin: 0 auto;
+  padding: 0.25rem 0;
+}
+
+.tv-section-label {
+  font-family: var(--font);
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
+  margin: 1rem 0 0.4rem;
+}
+.tv-section-label:first-of-type { margin-top: 0.25rem; }
+
+.tv-row {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  align-items: center;
+}
+.tv-top-row { margin-bottom: 0.6rem; }
+
+.tv-spacer { flex: 1; }
+
+/* Base button */
+.tv-btn {
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.tv-btn:hover {
+  background: var(--border);
+  color: var(--text);
+  border-color: var(--text-dim);
+}
+
+/* Power — big red circle */
+.tv-power {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: rgba(248,81,73,0.12);
+  border-color: rgba(248,81,73,0.3);
+  color: var(--red);
+}
+.tv-power:hover {
+  background: rgba(248,81,73,0.22);
+  border-color: var(--red);
+  color: var(--red);
+  box-shadow: 0 0 16px rgba(248,81,73,0.25);
+}
+.tv-power:active {
+  background: var(--red);
+  color: #fff;
+}
+
+/* Small utility buttons */
+.tv-sm {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+}
+.tv-exit {
+  border-color: rgba(248,81,73,0.2);
+  color: var(--red);
+  opacity: 0.6;
+}
+.tv-exit:hover { opacity: 1; background: rgba(248,81,73,0.15); }
+
+/* ── D-Pad Ring ─────────────────────────────────────────────────── */
+.tv-dpad-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 0.75rem 0;
+}
+.tv-dpad-ring {
+  display: grid;
+  grid-template-columns: 56px 56px 56px;
+  grid-template-rows: 56px 56px 56px;
+  gap: 2px;
+}
+
+.tv-nav-up    { grid-column: 2; grid-row: 1; }
+.tv-nav-left  { grid-column: 1; grid-row: 2; }
+.tv-enter     { grid-column: 2; grid-row: 2; }
+.tv-nav-right { grid-column: 3; grid-row: 2; }
+.tv-nav-down  { grid-column: 2; grid-row: 3; }
+
+.tv-nav {
+  width: 54px; height: 54px;
+  border-radius: 10px;
+  background: var(--bg);
+  border-color: var(--border);
+}
+.tv-nav:hover {
+  background: var(--bg-hover);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+/* Center Enter button */
+.tv-enter {
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  background: rgba(88,166,255,0.08);
+  border-color: rgba(88,166,255,0.25);
+  color: var(--cyan);
+  font-weight: 700;
+}
+.tv-enter:hover {
+  background: var(--cyan);
+  color: #000;
+  border-color: var(--cyan);
+  box-shadow: 0 0 14px rgba(88,166,255,0.35);
+}
+
+/* Media buttons */
+.tv-media {
+  width: 52px; height: 44px;
+  border-radius: 10px;
+  background: var(--bg);
+}
+.tv-media:hover { border-color: var(--text-dim); }
+
+.tv-mute {
+  color: var(--yellow);
+  border-color: rgba(210,153,29,0.2);
+}
+.tv-mute:hover {
+  border-color: var(--yellow);
+  color: var(--yellow);
+  background: rgba(210,153,29,0.1);
+}
+
+.tv-play {
+  width: 64px;
+  background: rgba(88,166,255,0.08);
+  border-color: rgba(88,166,255,0.2);
+  color: var(--cyan);
+}
+.tv-play:hover {
+  background: var(--cyan);
+  color: #000;
+  border-color: var(--cyan);
+}
+
+/* Number pad */
+.tv-numpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+  max-width: 200px;
+  margin: 0 auto;
+}
+.tv-num {
+  width: 56px; height: 40px;
+  border-radius: 8px;
+  font-family: var(--font);
+  font-size: 0.9rem;
+  background: var(--bg);
+  color: var(--text-dim);
+}
+.tv-num:hover {
+  color: var(--text);
+  border-color: var(--text-dim);
+}
+
+/* App grid */
+.tv-app-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  max-width: 280px;
+  margin: 0 auto;
+}
+.tv-app-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  transition: all 0.12s;
+  color: var(--text-dim);
+}
+.tv-app-btn:hover { transform: translateY(-1px); }
+.tv-app-name { white-space: nowrap; }
+
+/* App-specific styling */
+.tv-app-btn.netflix { background: #141414; border-color: #831010; color: #e50914; }
+.tv-app-btn.netflix:hover { background: #831010; color: #fff; }
+.tv-app-btn.netflix .tv-app-letter {
+  font-family: var(--font);
+  font-size: 1.2rem;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+
+.tv-app-btn.youtube { background: #0d0d0d; border-color: #cc0000; color: #ff0000; }
+.tv-app-btn.youtube:hover { background: #cc0000; color: #fff; }
+
+.tv-app-btn.prime { background: #0a1628; border-color: #00a8e1; color: #00a8e1; }
+.tv-app-btn.prime:hover { background: #00a8e1; color: #000; }
+
+.tv-app-btn.disney { background: #0f1224; border-color: #113ccf; color: #4d7cff; }
+.tv-app-btn.disney:hover { background: #113ccf; color: #fff; }
+
+/* Feedback toast */
+.tv-feedback {
+  font-family: var(--font);
+  font-size: 0.75rem;
+  color: var(--cyan);
+  margin-top: 0.25rem;
+  min-height: 1.2em;
+  text-align: center;
+  transition: opacity 0.3s;
+}
+
+/* Responsive */
+@media (max-width: 400px) {
+  .tv-dpad-ring {
+    grid-template-columns: 48px 48px 48px;
+    grid-template-rows: 48px 48px 48px;
+  }
+  .tv-nav { width: 46px; height: 46px; }
+  .tv-enter { width: 46px; height: 46px; }
+  .tv-media { width: 44px; height: 38px; }
+  .tv-power { width: 44px; height: 44px; }
+  .tv-num { width: 48px; height: 36px; }
+}
+
+</style>
+
+<div class="tab-content" id="tab-tv">
+  <div class="card">
+    <h3>TV Status</h3>
+    <div id="tv-status" style="font-family:var(--font);font-size:0.85rem;color:var(--text-dim);">
+      Checking...
+    </div>
+    <div style="margin-top:0.5rem;display:none;" id="tv-wake-row">
+      <button class="btn primary" onclick="tvWake()" style="font-size:0.8rem;">
+        <svg width="14" height="14" style="vertical-align:middle;margin-right:4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Wake TV
+      </button>
+      <span style="font-size:0.7rem;color:var(--text-dim);margin-left:0.5rem;">Wake-on-LAN</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Remote Control</h3>
+    <div class="tv-remote">
+      <!-- Power & Nav row -->
+      <div class="tv-row tv-top-row">
+        <button class="tv-btn tv-power" onclick="tvSendKey('POWER')" title="Power">
+          <svg width="22" height="22"><use href="#icon-power"/></svg>
+        </button>
+        <div class="tv-spacer"></div>
+        <button class="tv-btn tv-sm" onclick="tvSendKey('SETTINGS')" title="Settings">
+          <svg width="16" height="16"><use href="#icon-settings"/></svg>
+        </button>
+        <button class="tv-btn tv-sm" onclick="tvSendKey('HOME')" title="Home">
+          <svg width="16" height="16"><use href="#icon-home"/></svg>
+        </button>
+        <button class="tv-btn tv-sm" onclick="tvSendKey('RETURN')" title="Back">
+          <svg width="16" height="16"><use href="#icon-back"/></svg>
+        </button>
+      </div>
+
+      <!-- D-Pad -->
+      <div class="tv-dpad-wrap">
+        <div class="tv-dpad-ring">
+          <button class="tv-btn tv-nav tv-nav-up" onclick="tvSendKey('UP')" title="Up">
+            <svg width="18" height="18"><use href="#icon-up"/></svg>
+          </button>
+          <button class="tv-btn tv-nav tv-nav-left" onclick="tvSendKey('LEFT')" title="Left">
+            <svg width="18" height="18"><use href="#icon-left"/></svg>
+          </button>
+          <button class="tv-btn tv-enter" onclick="tvSendKey('ENTER')" title="OK">
+            <svg width="16" height="16"><use href="#icon-enter"/></svg>
+          </button>
+          <button class="tv-btn tv-nav tv-nav-right" onclick="tvSendKey('RIGHT')" title="Right">
+            <svg width="18" height="18"><use href="#icon-right"/></svg>
+          </button>
+          <button class="tv-btn tv-nav tv-nav-down" onclick="tvSendKey('DOWN')" title="Down">
+            <svg width="18" height="18"><use href="#icon-down"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Volume -->
+      <div class="tv-section-label">VOLUME</div>
+      <div class="tv-row">
+        <button class="tv-btn tv-media" onclick="tvSendKey('VOLUP')" title="Volume Up">
+          <svg width="20" height="20"><use href="#icon-volup"/></svg>
+        </button>
+        <button class="tv-btn tv-media tv-mute" onclick="tvSendKey('MUTE')" title="Mute">
+          <svg width="20" height="20"><use href="#icon-mute"/></svg>
+        </button>
+        <button class="tv-btn tv-media" onclick="tvSendKey('VOLDOWN')" title="Volume Down">
+          <svg width="20" height="20"><use href="#icon-voldown"/></svg>
+        </button>
+      </div>
+
+      <!-- Media -->
+      <div class="tv-section-label">MEDIA</div>
+      <div class="tv-row">
+        <button class="tv-btn tv-media" onclick="tvSendKey('REW')" title="Rewind">
+          <svg width="20" height="20"><use href="#icon-rew"/></svg>
+        </button>
+        <button class="tv-btn tv-media tv-play" onclick="tvSendKey('PLAY')" title="Play / Pause">
+          <svg width="20" height="20"><use href="#icon-play"/></svg>
+        </button>
+        <button class="tv-btn tv-media" onclick="tvSendKey('FF')" title="Fast Forward">
+          <svg width="20" height="20"><use href="#icon-ff"/></svg>
+        </button>
+        <button class="tv-btn tv-media" onclick="tvSendKey('STOP')" title="Stop">
+          <svg width="16" height="16"><use href="#icon-stop"/></svg>
+        </button>
+      </div>
+
+      <!-- App launchers -->
+      <div class="tv-section-label">APPS</div>
+      <div class="tv-app-grid">
+        <button class="tv-app-btn netflix" onclick="tvSendKey('NETFLIX')">
+          <span class="tv-app-letter">N</span>
+          <span class="tv-app-name">Netflix</span>
+        </button>
+        <button class="tv-app-btn youtube" onclick="tvSendKey('YOUTUBE')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+          <span class="tv-app-name">YouTube</span>
+        </button>
+        <button class="tv-app-btn prime" onclick="tvSendKey('AMAZON')">
+          <span class="tv-app-name">Prime</span>
+        </button>
+        <button class="tv-app-btn disney" onclick="tvSendKey('DISNEY')">
+          <span class="tv-app-name">Disney+</span>
+        </button>
+      </div>
+
+      <!-- Bottom row -->
+      <div class="tv-section-label">INPUT</div>
+      <div class="tv-row">
+        <button class="tv-btn tv-sm" onclick="tvSendKey('SOURCE')" title="Source">
+          <svg width="16" height="16"><use href="#icon-source"/></svg>
+          <span style="margin-left:4px;font-size:0.65rem;">Src</span>
+        </button>
+        <button class="tv-btn tv-sm" onclick="tvSendKey('HDMI')" title="HDMI">
+          <svg width="16" height="16"><use href="#icon-hdmi"/></svg>
+          <span style="margin-left:4px;font-size:0.65rem;">HDMI</span>
+        </button>
+        <button class="tv-btn tv-sm tv-exit" onclick="tvSendKey('EXIT')" title="Exit">
+          <svg width="14" height="14"><use href="#icon-exit"/></svg>
+        </button>
+      </div>
+
+      <!-- Number pad -->
+      <div class="tv-section-label">CHANNELS</div>
+      <div class="tv-numpad">
+        <button class="tv-btn tv-num" onclick="tvSendKey('1')">1</button>
+        <button class="tv-btn tv-num" onclick="tvSendKey('2')">2</button>
+        <button class="tv-btn tv-num" onclick="tvSendKey('3')">3</button>
+        <button class="tv-btn tv-num" onclick="tvSendKey('4')">4</button>
+        <button class="tv-btn tv-num" onclick="tvSendKey('5')">5</button>
+        <button class="tv-btn tv-num" onclick="tvSendKey('6')">6</button>
+        <button class="tv-btn tv-num" onclick="tvSendKey('7')">7</button>
+        <button class="tv-btn tv-num" onclick="tvSendKey('8')">8</button>
+        <button class="tv-btn tv-num" onclick="tvSendKey('9')">9</button>
+        <div></div>
+        <button class="tv-btn tv-num" onclick="tvSendKey('0')">0</button>
+        <div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ── TV Remote ─────────────────────────────────────────────────────
+function tvSendKey(key) {
+  const feedback = document.getElementById('tv-feedback');
+  fetch('/api/tv/key', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({key: key})
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        flashFeedback('Sent: ' + key);
+      } else {
+        flashFeedback('Error: ' + (data.error || 'unknown'), true);
+      }
+      updateTVStatus();
+    })
+    .catch(err => {
+      flashFeedback('Network error', true);
+    });
+}
+
+function flashFeedback(msg, isError) {
+  let el = document.getElementById('tv-feedback');
+  if (!el) {
+    const card = document.querySelector('#tab-tv .card:last-child');
+    el = document.createElement('div');
+    el.id = 'tv-feedback';
+    el.className = 'tv-feedback';
+    card.appendChild(el);
+  }
+  el.style.color = isError ? 'var(--red)' : 'var(--cyan)';
+  el.textContent = msg;
+  el.style.opacity = '1';
+  setTimeout(() => { el.style.opacity = '0'; }, 2000);
+}
+
+function updateTVStatus() {
+  fetch('/api/tv/status')
+    .then(r => r.json())
+    .then(data => {
+      const el = document.getElementById('tv-status');
+      const wakeRow = document.getElementById('tv-wake-row');
+      if (data.error) {
+        el.innerHTML = `<span style="color:var(--red);">⚠ ${data.error}</span>`;
+        wakeRow.style.display = 'none';
+        return;
+      }
+      const powerColor = data.power === 'on' ? 'var(--green)' : 'var(--text-dim)';
+      const powerIcon = data.power === 'on' ? '🟢' : '⭕';
+      const connColor = data.connected ? 'var(--green)' : 'var(--red)';
+      let pairingNote = '';
+      if (data.pairing) {
+        pairingNote = ' <span style="color:var(--yellow);">⚠ Waiting for TV prompt acceptance...</span>';
+      }
+      el.innerHTML = `
+        ${powerIcon} <strong style="color:${powerColor};">${data.power.toUpperCase()}</strong>
+        &nbsp;|&nbsp; ${data.model}
+        &nbsp;|&nbsp; WS: <span style="color:${connColor};">${data.connected ? 'connected' : 'disconnected'}</span>
+        ${pairingNote}
+      `;
+      // Show wake button only when in standby
+      wakeRow.style.display = data.power === 'standby' ? 'block' : 'none';
+    })
+    .catch(err => {
+      document.getElementById('tv-status').innerHTML =
+        `<span style="color:var(--red);">⚠ TV unreachable</span>`;
+    });
+}
+
+function tvWake() {
+  fetch('/api/tv/wake', { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        flashFeedback('Wake packet sent — TV waking up...');
+        // Start polling more frequently while waking
+        setTimeout(updateTVStatus, 2000);
+        setTimeout(updateTVStatus, 5000);
+        setTimeout(updateTVStatus, 10000);
+      } else {
+        flashFeedback('Wake failed: ' + data.error, true);
+      }
+    })
+    .catch(err => flashFeedback('Wake failed', true));
+}
+
+</script>

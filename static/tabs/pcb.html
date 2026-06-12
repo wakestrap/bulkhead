@@ -1,0 +1,190 @@
+<style>
+/* ── Depth Calculator ───────────────────────────────────────────── */
+.ref-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font);
+  font-size: 0.8rem;
+}
+.ref-table th {
+  text-align: right;
+  padding: 0.35rem 0.75rem;
+  color: var(--text-dim);
+  font-weight: normal;
+  border-bottom: 1px solid var(--border);
+}
+.ref-table td {
+  text-align: right;
+  padding: 0.3rem 0.75rem;
+  border-bottom: 1px solid rgba(48,54,61,0.5);
+}
+.ref-table tr:hover td { background: var(--bg-hover); }
+.ref-table .deep td { color: var(--red); }
+
+.calc-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.input-group label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.input-group input, .input-group select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 0.5rem 0.75rem;
+  font-family: var(--font);
+  font-size: 0.85rem;
+}
+.input-group input:focus, .input-group select:focus {
+  outline: none;
+  border-color: var(--cyan);
+}
+.input-group input { width: 140px; }
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.result-item {
+  background: var(--bg);
+  border-radius: 4px;
+  padding: 0.75rem;
+  text-align: center;
+}
+.result-label {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.result-value {
+  font-family: var(--font);
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-top: 0.25rem;
+}
+.result-value.cyan { color: var(--cyan); }
+
+.zone-tag {
+  font-size: 0.7rem;
+  color: var(--magenta);
+  margin-top: 0.5rem;
+  font-family: var(--font);
+}
+
+</style>
+
+<div class="tab-content" id="tab-pcb">
+  <div class="card">
+    <h3>IPC-2221 Trace Width Calculator</h3>
+    <p style="font-size:0.7rem;color:var(--text-dim);margin-bottom:1rem;">
+      Calculates minimum trace width for a given current and temperature rise.
+      External = outer layers (better cooling), Internal = inner layers.
+    </p>
+
+    <div class="calc-row" style="align-items:flex-end;">
+      <div class="input-group">
+        <label>Current (A)</label>
+        <input type="number" id="pcb-current" value="1" step="0.1" min="0.1" style="width:100px;">
+      </div>
+      <div class="input-group">
+        <label>Temp Rise (°C)</label>
+        <input type="number" id="pcb-temp" value="10" step="1" min="1" max="100" style="width:100px;">
+      </div>
+      <div class="input-group">
+        <label>Copper (oz/ft²)</label>
+        <select id="pcb-copper" style="width:100px;">
+          <option value="0.5">0.5 oz</option>
+          <option value="1" selected>1 oz</option>
+          <option value="2">2 oz</option>
+          <option value="3">3 oz</option>
+          <option value="4">4 oz</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Layer</label>
+        <select id="pcb-layer" style="width:110px;">
+          <option value="external" selected>External</option>
+          <option value="internal">Internal</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="pcb-results" style="margin-top:1rem;"></div>
+
+    <div class="result-grid" id="pcb-grid" style="margin-top:1rem;">
+      <div class="result-item">
+        <div class="result-label">Trace Width</div>
+        <div class="result-value cyan" id="pcb-width-mils">—</div>
+        <div style="font-size:0.65rem;color:var(--text-dim);">mils</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">Width (mm)</div>
+        <div class="result-value" id="pcb-width-mm">—</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">Resistance</div>
+        <div class="result-value" id="pcb-resistance">—</div>
+        <div style="font-size:0.65rem;color:var(--text-dim);">mΩ/inch</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">Voltage Drop</div>
+        <div class="result-value" id="pcb-vdrop">—</div>
+        <div style="font-size:0.65rem;color:var(--text-dim);">mV/inch</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1rem;background:var(--bg);">
+      <h3>Quick Reference <span style="font-weight:normal;font-size:0.65rem;color:var(--text-dim);">(same copper &amp; temp rise)</span></h3>
+      <table class="ref-table" style="margin-top:0.5rem;" id="pcb-ref-table">
+        <thead><tr><th>Current</th><th>Width (mils)</th><th>Width (mm)</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ── PCB Trace Calculator ──────────────────────────────────────────
+function calcPCB() {
+  const current = parseFloat(document.getElementById('pcb-current').value) || 0;
+  const tempRise = parseFloat(document.getElementById('pcb-temp').value) || 10;
+  const copper = parseFloat(document.getElementById('pcb-copper').value) || 1;
+  const layer = document.getElementById('pcb-layer').value;
+
+  if (current <= 0) return;
+
+  fetch(`/api/pcb/trace?current=${current}&temp_rise=${tempRise}&copper=${copper}&layer=${layer}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) return;
+      document.getElementById('pcb-width-mils').textContent = data.width_mils;
+      document.getElementById('pcb-width-mm').textContent = data.width_mm;
+      document.getElementById('pcb-resistance').textContent = data.resistance_per_inch;
+      document.getElementById('pcb-vdrop').textContent = data.v_drop_per_inch;
+
+      // Quick reference table
+      const tbody = document.querySelector('#pcb-ref-table tbody');
+      tbody.innerHTML = Object.entries(data.recommended).map(([label, width]) =>
+        `<tr><td>${label}</td><td>${width} mil</td><td>${(width * 0.0254).toFixed(3)} mm</td></tr>`
+      ).join('');
+    });
+}
+
+</script>

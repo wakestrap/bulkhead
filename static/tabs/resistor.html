@@ -1,0 +1,327 @@
+<style>
+/* ── Resistor ───────────────────────────────────────────────────── */
+.color-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+.color-swatch {
+  width: 40px; height: 30px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  font-size: 0.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+  font-family: var(--font);
+  font-weight: bold;
+}
+.color-swatch:hover { transform: scale(1.1); }
+.color-swatch.selected { border-color: var(--cyan); box-shadow: 0 0 8px rgba(88,166,255,0.5); }
+.color-swatch.disabled { opacity: 0.25; cursor: not-allowed; }
+.color-swatch.disabled:hover { transform: none; }
+
+.band-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.band-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  min-width: 100px;
+  text-transform: uppercase;
+}
+.band-pick {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.band-pick .color-swatch { width: 32px; height: 24px; font-size: 0.5rem; }
+
+.result-bar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 1rem 0;
+}
+.result-swatch {
+  width: 50px; height: 30px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  font-family: var(--font);
+  font-weight: bold;
+}
+
+.result-detail {
+  font-family: var(--font);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+.result-detail .val { color: var(--cyan); font-size: 1.4rem; font-weight: bold; }
+.result-detail .good { color: var(--green); }
+.result-detail .warn { color: var(--yellow); }
+
+/* ── Button ─────────────────────────────────────────────────────── */
+.btn {
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  transition: all 0.15s;
+}
+.btn:hover { background: var(--border); border-color: var(--text-dim); }
+.btn.primary { background: var(--cyan); border-color: var(--cyan); color: #000; font-weight: 600; }
+.btn.primary:hover { background: #79b8ff; }
+
+</style>
+
+<div class="tab-content" id="tab-resistor">
+  <div class="card">
+    <h3>Color Code Reference</h3>
+    <div class="color-grid" id="color-ref"></div>
+    <table class="ref-table" style="margin-top:0.5rem;" id="color-ref-table">
+      <thead><tr><th>Color</th><th>Digit</th><th>Multiplier</th><th>Tolerance</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Decode Resistor</h3>
+    <div style="display:flex;gap:1rem;margin-bottom:1rem;">
+      <button class="btn" id="btn-4band" onclick="setBands(4)" style="background:var(--cyan);color:#000;">4 Band</button>
+      <button class="btn" id="btn-5band" onclick="setBands(5)">5 Band</button>
+      <button class="btn" id="btn-6band" onclick="setBands(6)">6 Band</button>
+    </div>
+    <div id="band-selectors"></div>
+    <div class="result-bar" id="result-bar"></div>
+    <div class="result-detail" id="result-detail"></div>
+  </div>
+
+  <div class="card">
+    <h3>Reverse Lookup (Value → Colors)</h3>
+    <div class="calc-row">
+      <div class="input-group">
+        <label>Resistance</label>
+        <input type="text" id="lookup-value" placeholder="e.g. 4.7k, 220, 1M">
+      </div>
+      <button class="btn primary" onclick="reverseLookup()">Find Colors</button>
+    </div>
+    <div id="lookup-result"></div>
+  </div>
+
+  <div class="card">
+    <h3>E-Series Standard Values <span style="font-weight:normal;font-size:0.65rem;color:var(--text-dim);">Resistors &amp; Capacitors</span></h3>
+    <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+      <div style="flex:1;min-width:280px;">
+        <h4 style="font-size:0.72rem;color:var(--green);margin-bottom:0.5rem;">E96 — 1% Tolerance</h4>
+        <div id="e96-table" style="font-family:var(--font);font-size:0.7rem;display:grid;grid-template-columns:repeat(8,1fr);gap:2px 6px;"></div>
+      </div>
+      <div style="flex:1;min-width:180px;">
+        <h4 style="font-size:0.72rem;color:var(--yellow);margin-bottom:0.5rem;">E24 — 5% Tolerance</h4>
+        <div id="e24-table" style="font-family:var(--font);font-size:0.72rem;display:grid;grid-template-columns:repeat(6,1fr);gap:2px 6px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ── Resistor Decoder ──────────────────────────────────────────────
+let selectedBands = 4;
+let pickedColors = [];
+
+function setBands(n) {
+  selectedBands = n;
+  pickedColors = [];
+  document.querySelectorAll('#btn-4band, #btn-5band, #btn-6band').forEach(b => {
+    b.style.background = '';
+    b.style.color = '';
+  });
+  document.getElementById('btn-' + n + 'band').style.background = 'var(--cyan)';
+  document.getElementById('btn-' + n + 'band').style.color = '#000';
+  buildBandSelectors();
+  updateResult();
+}
+
+function buildColorRef() {
+  const grid = document.getElementById('color-ref');
+  const tbody = document.querySelector('#color-ref-table tbody');
+
+  grid.innerHTML = COLOR_BANDS.map(c =>
+    `<div class="color-swatch" style="background:${c.hex};color:${c.text};" title="${c.name}">${c.name.substring(0,3)}</div>`
+  ).join('');
+
+  tbody.innerHTML = COLOR_BANDS.map(c => {
+    const multStr = c.mult >= 1e9 ? (c.mult/1e9).toFixed(1)+'G' :
+                    c.mult >= 1e6 ? (c.mult/1e6).toFixed(1)+'M' :
+                    c.mult >= 1e3 ? (c.mult/1e3).toFixed(1)+'k' :
+                    c.mult < 1 ? '×'+c.mult : c.mult.toString();
+    return `<tr>
+      <td><span style="display:inline-block;width:14px;height:14px;border-radius:2px;background:${c.hex};vertical-align:middle;margin-right:6px;"></span>${c.name}</td>
+      <td>${c.digit >= 0 ? c.digit : '—'}</td>
+      <td>${multStr}Ω</td>
+      <td>${c.tol !== null ? '±'+c.tol+'%' : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function buildESeriesTables() {
+  // E96 — 1% tolerance
+  const e96 = [1.00,1.02,1.05,1.07,1.10,1.13,1.15,1.18,1.21,1.24,1.27,1.30,1.33,1.37,1.40,1.43,1.47,1.50,1.54,1.58,1.62,1.65,1.69,1.74,1.78,1.82,1.87,1.91,1.96,2.00,2.05,2.10,2.15,2.21,2.26,2.32,2.37,2.43,2.49,2.55,2.61,2.67,2.74,2.80,2.87,2.94,3.01,3.09,3.16,3.24,3.32,3.40,3.48,3.57,3.65,3.74,3.83,3.92,4.02,4.12,4.22,4.32,4.42,4.53,4.64,4.75,4.87,4.99,5.11,5.23,5.36,5.49,5.62,5.76,5.90,6.04,6.19,6.34,6.49,6.65,6.81,6.98,7.15,7.32,7.50,7.68,7.87,8.06,8.25,8.45,8.66,8.87,9.09,9.31,9.53,9.76];
+  // E24 — 5% tolerance
+  const e24 = [1.0,1.1,1.2,1.3,1.5,1.6,1.8,2.0,2.2,2.4,2.7,3.0,3.3,3.6,3.9,4.3,4.7,5.1,5.6,6.2,6.8,7.5,8.2,9.1];
+
+  document.getElementById('e96-table').innerHTML = e96.map(v =>
+    `<span>${v.toFixed(2).replace(/0+$/,'').replace(/\.$/,'')}</span>`
+  ).join('');
+
+  document.getElementById('e24-table').innerHTML = e24.map(v =>
+    `<span>${v.toFixed(1)}</span>`
+  ).join('');
+}
+
+function buildBandSelectors() {
+  const container = document.getElementById('band-selectors');
+  const labels = selectedBands === 4
+    ? ['Band 1 — 1st Digit', 'Band 2 — 2nd Digit', 'Band 3 — Multiplier', 'Band 4 — Tolerance']
+    : selectedBands === 5
+    ? ['Band 1 — 1st Digit', 'Band 2 — 2nd Digit', 'Band 3 — 3rd Digit', 'Band 4 — Multiplier', 'Band 5 — Tolerance']
+    : ['Band 1 — 1st Digit', 'Band 2 — 2nd Digit', 'Band 3 — 3rd Digit', 'Band 4 — Multiplier', 'Band 5 — Tolerance', 'Band 6 — TCR'];
+
+  let html = '';
+  for (let i = 0; i < selectedBands; i++) {
+    const isDigit = i < (selectedBands === 4 ? 2 : 3);
+    const isTol = i === (selectedBands === 4 ? 3 : 4);
+    const isTcr = i === 5;
+    let allowed = COLOR_BANDS;
+    if (isDigit) allowed = COLOR_BANDS.filter(c => c.digit >= 0);
+    else if (isTol) allowed = COLOR_BANDS.filter(c => c.tol !== null);
+    else if (isTcr) allowed = COLOR_BANDS.filter(c => c.tcr !== null);
+
+    html += `<div class="band-row">
+      <div class="band-label">${labels[i]}</div>
+      <div class="band-pick">`;
+    allowed.forEach(c => {
+      const sel = pickedColors[i] === c.name ? ' selected' : '';
+      html += `<div class="color-swatch${sel}" style="background:${c.hex};color:${c.text};"
+               onclick="pickColor(${i},'${c.name}')" title="${c.name}">${c.name.substring(0,3)}</div>`;
+    });
+    html += `</div></div>`;
+  }
+  container.innerHTML = html;
+}
+
+function pickColor(idx, name) {
+  while (pickedColors.length < selectedBands) pickedColors.push(null);
+  pickedColors[idx] = name;
+  buildBandSelectors();
+  updateResult();
+}
+
+function updateResult() {
+  const detail = document.getElementById('result-detail');
+  const bar = document.getElementById('result-bar');
+  if (pickedColors.filter(Boolean).length !== selectedBands) {
+    detail.innerHTML = '<span style="color:var(--text-dim);">Pick all bands to see the result</span>';
+    bar.innerHTML = '';
+    return;
+  }
+
+  // Calculate value
+  let value, tol, tcr = null;
+  const lookup = {};
+  COLOR_BANDS.forEach(c => { lookup[c.name] = c; });
+
+  if (selectedBands === 4) {
+    const d1 = lookup[pickedColors[0]].digit;
+    const d2 = lookup[pickedColors[1]].digit;
+    const mult = lookup[pickedColors[2]].mult;
+    tol = lookup[pickedColors[3]].tol || 20;
+    value = (d1 * 10 + d2) * mult;
+  } else {
+    const d1 = lookup[pickedColors[0]].digit;
+    const d2 = lookup[pickedColors[1]].digit;
+    const d3 = lookup[pickedColors[2]].digit;
+    const mult = lookup[pickedColors[3]].mult;
+    tol = lookup[pickedColors[4]].tol || 20;
+    value = (d1 * 100 + d2 * 10 + d3) * mult;
+    if (selectedBands === 6) tcr = lookup[pickedColors[5]].tcr;
+  }
+
+  // E-series check
+  const e24 = [1.0,1.1,1.2,1.3,1.5,1.6,1.8,2.0,2.2,2.4,2.7,3.0,3.3,3.6,3.9,4.3,4.7,5.1,5.6,6.2,6.8,7.5,8.2,9.1];
+  const e12 = [1.0,1.2,1.5,1.8,2.2,2.7,3.3,3.9,4.7,5.6,6.8,8.2];
+  let norm = value;
+  while (norm >= 10) norm /= 10;
+  while (norm < 1) norm *= 10;
+  norm = Math.round(norm * 100) / 100;
+  let eseries = '';
+  if (e24.includes(norm)) eseries = '<span class="good">✓ E24 standard value</span>';
+  else if (e12.includes(norm)) eseries = '<span class="good">✓ E12 standard value</span>';
+  else eseries = '<span class="warn">⚠ Non-standard value</span>';
+
+  // Format
+  let valStr;
+  if (value >= 1e9) valStr = (value/1e9).toFixed(1) + ' GΩ';
+  else if (value >= 1e6) valStr = (value/1e6).toFixed(2) + ' MΩ';
+  else if (value >= 1e3) valStr = (value/1e3).toFixed(2) + ' kΩ';
+  else valStr = value.toFixed(1) + ' Ω';
+
+  bar.innerHTML = pickedColors.map(c => {
+    const clr = lookup[c];
+    return `<div class="result-swatch" style="background:${clr.hex};color:${clr.text};">${c.substring(0,3)}</div>`;
+  }).join('');
+
+  detail.innerHTML = `
+    <span class="val">${valStr}</span><br>
+    Tolerance: ±${tol}% &nbsp; Range: ${(value*(1-tol/100)).toFixed(1)} – ${(value*(1+tol/100)).toFixed(1)} Ω<br>
+    ${tcr ? 'TCR: '+tcr+' ppm/°C<br>' : ''}
+    ${eseries}
+  `;
+}
+
+function reverseLookup() {
+  const valStr = document.getElementById('lookup-value').value.trim();
+  if (!valStr) return;
+
+  fetch('/api/resistor/lookup?value=' + encodeURIComponent(valStr))
+    .then(r => r.json())
+    .then(data => {
+      const container = document.getElementById('lookup-result');
+      if (data.error) {
+        container.innerHTML = `<p style="color:var(--red);">${data.error}</p>`;
+        return;
+      }
+      container.innerHTML = `
+        <div class="result-bar" style="margin-top:1rem;">
+          ${data.colors_4band.map(c => {
+            const clr = COLOR_BANDS.find(x => x.name === c);
+            return `<div class="result-swatch" style="background:${clr.hex};color:${clr.text};">${c.substring(0,3)}</div>`;
+          }).join('')}
+        </div>
+        <div class="result-detail">
+          <span class="val">${data.value_display}</span> (4-band, ±${COLOR_BANDS.find(c=>c.name===data.colors_4band[3]).tol}%)<br>
+          ${data.error_pct > 0.5 ? '<span class="warn">Closest match: '+data.actual_value+' (off by '+data.error_pct+'%)</span>' : ''}
+        </div>
+      `;
+    })
+    .catch(err => {
+      document.getElementById('lookup-result').innerHTML =
+        `<p style="color:var(--red);">Error: ${err.message}</p>`;
+    });
+}
+
+</script>

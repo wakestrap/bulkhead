@@ -1,0 +1,356 @@
+<style>
+/* ── GeoGuessr Solver ──────────────────────────────────────────── */
+.geo-mode-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+.geo-mode-btn {
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  transition: all 0.15s;
+}
+.geo-mode-btn:hover { background: var(--bg-hover); color: var(--text); }
+.geo-mode-btn.active { background: var(--cyan); color: #000; border-color: var(--cyan); font-weight: 600; }
+
+.geo-guess-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.geo-guess-row select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 0.5rem 0.75rem;
+  font-family: var(--font);
+  font-size: 0.85rem;
+  min-width: 200px;
+  max-width: 260px;
+}
+.geo-guess-row select:focus { outline: none; border-color: var(--cyan); }
+.geo-guess-row input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 0.5rem 0.75rem;
+  font-family: var(--font);
+  font-size: 0.85rem;
+  width: 120px;
+}
+.geo-guess-row input:focus { outline: none; border-color: var(--cyan); }
+.geo-tolerance-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+.geo-tolerance-row input[type=range] { width: 140px; accent-color: var(--cyan); }
+
+.geo-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font);
+  font-size: 0.8rem;
+  margin-bottom: 0.75rem;
+}
+.geo-history-table th {
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  color: var(--text-dim);
+  font-weight: normal;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+.geo-history-table td {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid rgba(48,54,61,0.4);
+}
+.geo-history-table .del-btn {
+  background: none;
+  border: none;
+  color: var(--red);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 0.3rem;
+  opacity: 0.5;
+}
+.geo-history-table .del-btn:hover { opacity: 1; }
+
+.geo-results {
+  max-height: 500px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.geo-result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid rgba(48,54,61,0.3);
+  font-family: var(--font);
+  font-size: 0.8rem;
+}
+.geo-result-row:hover { background: var(--bg-hover); }
+.geo-result-row:last-child { border-bottom: none; }
+.geo-result-rank {
+  color: var(--text-dim);
+  min-width: 30px;
+  font-size: 0.7rem;
+}
+.geo-result-name { flex: 1; }
+.geo-result-error {
+  color: var(--green);
+  min-width: 70px;
+  text-align: right;
+  font-size: 0.75rem;
+}
+.geo-result-error.bad { color: var(--yellow); }
+.geo-result-error.worst { color: var(--red); }
+.geo-result-count {
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  min-width: 50px;
+  text-align: right;
+}
+.geo-no-results {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+</style>
+
+<div class="tab-content" id="tab-geo">
+  <div class="card">
+    <h3>GeoGuessr / GeoTemp Solver</h3>
+    <p style="font-size:0.7rem;color:var(--text-dim);margin-bottom:1rem;">
+      Enter your guess country and the distance (km) the game shows you.
+      The tool finds all countries whose center is within tolerance of that distance.
+      Add multiple guesses to narrow down. Toggle between country centroids and capital cities.
+    </p>
+
+    <div class="geo-mode-row">
+      <button class="geo-mode-btn active" id="geo-mode-country" onclick="geoSetMode('country')">🗺 Country Centroids</button>
+      <button class="geo-mode-btn" id="geo-mode-capital" onclick="geoSetMode('capital')">🏛 Capital Cities</button>
+      <span style="margin-left:auto;font-size:0.7rem;color:var(--text-dim);">Final round → Capital mode</span>
+    </div>
+
+    <div class="geo-guess-row">
+      <div class="input-group">
+        <label>Your Guess</label>
+        <select id="geo-guess-country"></select>
+      </div>
+      <div class="input-group">
+        <label>Distance (km)</label>
+        <input type="number" id="geo-guess-dist" placeholder="e.g. 2260" step="1" min="0">
+      </div>
+      <button class="btn primary" onclick="geoAddGuess()">Add Guess</button>
+    </div>
+
+    <div class="geo-tolerance-row">
+      <span>Tolerance: ±<strong id="geo-tol-label">50</strong> km</span>
+      <input type="range" id="geo-tolerance" min="5" max="500" value="50" oninput="geoTolChange()">
+      <button class="btn" onclick="geoReset()" style="margin-left:auto;">Reset All</button>
+    </div>
+
+    <div id="geo-history-container" style="display:none;">
+      <table class="geo-history-table">
+        <thead><tr><th>#</th><th>Country</th><th>Distance (km)</th><th></th></tr></thead>
+        <tbody id="geo-history-tbody"></tbody>
+      </table>
+    </div>
+
+    <div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.5rem;" id="geo-summary"></div>
+    <div class="geo-results" id="geo-results">
+      <div class="geo-no-results">Add a guess to see possible countries</div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ── GeoGuessr / GeoTemp Solver ────────────────────────────────────
+// Country dataset: centroids and capital cities
+const GEO_COUNTRIES = [{"name":"Afghanistan","lat":33.9391,"lon":67.7100,"capital":"Kabul","cap_lat":34.5553,"cap_lon":69.2075},{"name":"Albania","lat":41.1533,"lon":20.1683,"capital":"Tirana","cap_lat":41.3275,"cap_lon":19.8187},{"name":"Algeria","lat":28.0339,"lon":1.6596,"capital":"Algiers","cap_lat":36.7538,"cap_lon":3.0588},{"name":"Andorra","lat":42.5063,"lon":1.5218,"capital":"Andorra la Vella","cap_lat":42.5063,"cap_lon":1.5218},{"name":"Angola","lat":-11.2027,"lon":17.8739,"capital":"Luanda","cap_lat":-8.8390,"cap_lon":13.2894},{"name":"Antigua and Barbuda","lat":17.0608,"lon":-61.7964,"capital":"St. John's","cap_lat":17.1274,"cap_lon":-61.8468},{"name":"Argentina","lat":-38.4161,"lon":-63.6167,"capital":"Buenos Aires","cap_lat":-34.6037,"cap_lon":-58.3816},{"name":"Armenia","lat":40.0691,"lon":45.0382,"capital":"Yerevan","cap_lat":40.1792,"cap_lon":44.4991},{"name":"Australia","lat":-25.2744,"lon":133.7751,"capital":"Canberra","cap_lat":-35.2809,"cap_lon":149.1300},{"name":"Austria","lat":47.5162,"lon":14.5501,"capital":"Vienna","cap_lat":48.2082,"cap_lon":16.3738},{"name":"Azerbaijan","lat":40.1431,"lon":47.5769,"capital":"Baku","cap_lat":40.4093,"cap_lon":49.8671},{"name":"Bahamas","lat":25.0343,"lon":-77.3963,"capital":"Nassau","cap_lat":25.0443,"cap_lon":-77.3504},{"name":"Bahrain","lat":26.0275,"lon":50.5500,"capital":"Manama","cap_lat":26.2235,"cap_lon":50.5876},{"name":"Bangladesh","lat":23.6850,"lon":90.3563,"capital":"Dhaka","cap_lat":23.8103,"cap_lon":90.4125},{"name":"Barbados","lat":13.1939,"lon":-59.5432,"capital":"Bridgetown","cap_lat":13.1132,"cap_lon":-59.5988},{"name":"Belarus","lat":53.7098,"lon":27.9534,"capital":"Minsk","cap_lat":53.9006,"cap_lon":27.5590},{"name":"Belgium","lat":50.5039,"lon":4.4699,"capital":"Brussels","cap_lat":50.8503,"cap_lon":4.3517},{"name":"Belize","lat":17.1899,"lon":-88.4976,"capital":"Belmopan","cap_lat":17.2510,"cap_lon":-88.7590},{"name":"Benin","lat":9.3077,"lon":2.3158,"capital":"Porto-Novo","cap_lat":6.4969,"cap_lon":2.6289},{"name":"Bhutan","lat":27.5142,"lon":90.4336,"capital":"Thimphu","cap_lat":27.4712,"cap_lon":89.6419},{"name":"Bolivia","lat":-16.2902,"lon":-63.5887,"capital":"Sucre","cap_lat":-19.0196,"cap_lon":-65.2619},{"name":"Bosnia and Herzegovina","lat":43.9159,"lon":17.6791,"capital":"Sarajevo","cap_lat":43.8563,"cap_lon":18.4131},{"name":"Botswana","lat":-22.3285,"lon":24.6849,"capital":"Gaborone","cap_lat":-24.6282,"cap_lon":25.9231},{"name":"Brazil","lat":-14.2350,"lon":-51.9253,"capital":"Brasilia","cap_lat":-15.7939,"cap_lon":-47.8828},{"name":"Brunei","lat":4.5353,"lon":114.7277,"capital":"Bandar Seri Begawan","cap_lat":4.9031,"cap_lon":114.9398},{"name":"Bulgaria","lat":42.7339,"lon":25.4858,"capital":"Sofia","cap_lat":42.6977,"cap_lon":23.3219},{"name":"Burkina Faso","lat":12.2383,"lon":-1.5616,"capital":"Ouagadougou","cap_lat":12.3714,"cap_lon":-1.5197},{"name":"Burundi","lat":-3.3731,"lon":29.9189,"capital":"Gitega","cap_lat":-3.4264,"cap_lon":29.9306},{"name":"Cambodia","lat":12.5657,"lon":104.9910,"capital":"Phnom Penh","cap_lat":11.5564,"cap_lon":104.9282},{"name":"Cameroon","lat":7.3697,"lon":12.3547,"capital":"Yaounde","cap_lat":3.8480,"cap_lon":11.5021},{"name":"Canada","lat":56.1304,"lon":-106.3468,"capital":"Ottawa","cap_lat":45.4215,"cap_lon":-75.6972},{"name":"Cape Verde","lat":16.5388,"lon":-23.0418,"capital":"Praia","cap_lat":14.9330,"cap_lon":-23.5133},{"name":"Central African Republic","lat":6.6111,"lon":20.9394,"capital":"Bangui","cap_lat":4.3947,"cap_lon":18.5582},{"name":"Chad","lat":15.4542,"lon":18.7322,"capital":"N'Djamena","cap_lat":12.1348,"cap_lon":15.0557},{"name":"Chile","lat":-35.6751,"lon":-71.5430,"capital":"Santiago","cap_lat":-33.4489,"cap_lon":-70.6693},{"name":"China","lat":35.8617,"lon":104.1954,"capital":"Beijing","cap_lat":39.9042,"cap_lon":116.4074},{"name":"Colombia","lat":4.5709,"lon":-74.2973,"capital":"Bogota","cap_lat":4.7110,"cap_lon":-74.0721},{"name":"Comoros","lat":-11.6455,"lon":43.3333,"capital":"Moroni","cap_lat":-11.7022,"cap_lon":43.2551},{"name":"Congo","lat":-0.2280,"lon":15.8277,"capital":"Brazzaville","cap_lat":-4.2634,"cap_lon":15.2429},{"name":"Costa Rica","lat":9.7489,"lon":-83.7534,"capital":"San Jose","cap_lat":9.9281,"cap_lon":-84.0907},{"name":"Croatia","lat":45.1000,"lon":15.2000,"capital":"Zagreb","cap_lat":45.8150,"cap_lon":15.9819},{"name":"Cuba","lat":21.5218,"lon":-77.7812,"capital":"Havana","cap_lat":23.1136,"cap_lon":-82.3666},{"name":"Cyprus","lat":35.1264,"lon":33.4299,"capital":"Nicosia","cap_lat":35.1856,"cap_lon":33.3823},{"name":"Czech Republic","lat":49.8175,"lon":15.4730,"capital":"Prague","cap_lat":50.0755,"cap_lon":14.4378},{"name":"Denmark","lat":56.2639,"lon":9.5018,"capital":"Copenhagen","cap_lat":55.6761,"cap_lon":12.5683},{"name":"Djibouti","lat":11.8251,"lon":42.5903,"capital":"Djibouti","cap_lat":11.5721,"cap_lon":43.1456},{"name":"Dominica","lat":15.4150,"lon":-61.3710,"capital":"Roseau","cap_lat":15.3011,"cap_lon":-61.3870},{"name":"Dominican Republic","lat":18.7357,"lon":-70.1627,"capital":"Santo Domingo","cap_lat":18.4861,"cap_lon":-69.9312},{"name":"DR Congo","lat":-4.0383,"lon":21.7587,"capital":"Kinshasa","cap_lat":-4.4419,"cap_lon":15.2663},{"name":"Ecuador","lat":-1.8312,"lon":-78.1834,"capital":"Quito","cap_lat":-0.1807,"cap_lon":-78.4678},{"name":"Egypt","lat":26.8206,"lon":30.8025,"capital":"Cairo","cap_lat":30.0444,"cap_lon":31.2357},{"name":"El Salvador","lat":13.7942,"lon":-88.8965,"capital":"San Salvador","cap_lat":13.6929,"cap_lon":-89.2182},{"name":"Equatorial Guinea","lat":1.6508,"lon":10.2679,"capital":"Malabo","cap_lat":3.7500,"cap_lon":8.7833},{"name":"Eritrea","lat":15.1794,"lon":39.7823,"capital":"Asmara","cap_lat":15.3229,"cap_lon":38.9251},{"name":"Estonia","lat":58.5953,"lon":25.0136,"capital":"Tallinn","cap_lat":59.4370,"cap_lon":24.7536},{"name":"Eswatini","lat":-26.5225,"lon":31.4659,"capital":"Mbabane","cap_lat":-26.3054,"cap_lon":31.1367},{"name":"Ethiopia","lat":9.1450,"lon":40.4897,"capital":"Addis Ababa","cap_lat":9.0320,"cap_lon":38.7469},{"name":"Fiji","lat":-17.7134,"lon":178.0650,"capital":"Suva","cap_lat":-18.1248,"cap_lon":178.4501},{"name":"Finland","lat":61.9241,"lon":25.7482,"capital":"Helsinki","cap_lat":60.1699,"cap_lon":24.9384},{"name":"France","lat":46.6034,"lon":1.8883,"capital":"Paris","cap_lat":48.8566,"cap_lon":2.3522},{"name":"Gabon","lat":-0.8037,"lon":11.6094,"capital":"Libreville","cap_lat":0.4162,"cap_lon":9.4673},{"name":"Gambia","lat":13.4432,"lon":-15.3101,"capital":"Banjul","cap_lat":13.4549,"cap_lon":-16.5790},{"name":"Georgia","lat":42.3154,"lon":43.3569,"capital":"Tbilisi","cap_lat":41.7151,"cap_lon":44.8271},{"name":"Germany","lat":51.1657,"lon":10.4515,"capital":"Berlin","cap_lat":52.5200,"cap_lon":13.4050},{"name":"Ghana","lat":7.9465,"lon":-1.0232,"capital":"Accra","cap_lat":5.6037,"cap_lon":-0.1870},{"name":"Greece","lat":39.0742,"lon":21.8243,"capital":"Athens","cap_lat":37.9838,"cap_lon":23.7275},{"name":"Grenada","lat":12.1165,"lon":-61.6790,"capital":"St. George's","cap_lat":12.0561,"cap_lon":-61.7488},{"name":"Guatemala","lat":15.7835,"lon":-90.2308,"capital":"Guatemala City","cap_lat":14.6349,"cap_lon":-90.5069},{"name":"Guinea","lat":9.9456,"lon":-9.6966,"capital":"Conakry","cap_lat":9.6412,"cap_lon":-13.5784},{"name":"Guinea-Bissau","lat":11.8037,"lon":-15.1804,"capital":"Bissau","cap_lat":11.8817,"cap_lon":-15.6170},{"name":"Guyana","lat":4.8604,"lon":-58.9302,"capital":"Georgetown","cap_lat":6.8013,"cap_lon":-58.1551},{"name":"Haiti","lat":18.9712,"lon":-72.2852,"capital":"Port-au-Prince","cap_lat":18.5944,"cap_lon":-72.3074},{"name":"Honduras","lat":14.7456,"lon":-86.2383,"capital":"Tegucigalpa","cap_lat":14.0723,"cap_lon":-87.1921},{"name":"Hungary","lat":47.1625,"lon":19.5033,"capital":"Budapest","cap_lat":47.4979,"cap_lon":19.0402},{"name":"Iceland","lat":64.9631,"lon":-19.0208,"capital":"Reykjavik","cap_lat":64.1466,"cap_lon":-21.9426},{"name":"India","lat":20.5937,"lon":78.9629,"capital":"New Delhi","cap_lat":28.6139,"cap_lon":77.2090},{"name":"Indonesia","lat":-0.7893,"lon":113.9213,"capital":"Jakarta","cap_lat":-6.2088,"cap_lon":106.8456},{"name":"Iran","lat":32.4279,"lon":53.6880,"capital":"Tehran","cap_lat":35.6892,"cap_lon":51.3890},{"name":"Iraq","lat":33.2232,"lon":43.6793,"capital":"Baghdad","cap_lat":33.3152,"cap_lon":44.3661},{"name":"Ireland","lat":53.1424,"lon":-7.6921,"capital":"Dublin","cap_lat":53.3498,"cap_lon":-6.2603},{"name":"Israel","lat":31.0461,"lon":34.8516,"capital":"Jerusalem","cap_lat":31.7683,"cap_lon":35.2137},{"name":"Italy","lat":41.8719,"lon":12.5674,"capital":"Rome","cap_lat":41.9028,"cap_lon":12.4964},{"name":"Ivory Coast","lat":7.5400,"lon":-5.5471,"capital":"Yamoussoukro","cap_lat":6.8276,"cap_lon":-5.2893},{"name":"Jamaica","lat":18.1096,"lon":-77.2975,"capital":"Kingston","cap_lat":17.9712,"cap_lon":-76.7936},{"name":"Japan","lat":36.2048,"lon":138.2529,"capital":"Tokyo","cap_lat":35.6762,"cap_lon":139.6503},{"name":"Jordan","lat":30.5852,"lon":36.2384,"capital":"Amman","cap_lat":31.9454,"cap_lon":35.9284},{"name":"Kazakhstan","lat":48.0196,"lon":66.9237,"capital":"Astana","cap_lat":51.1605,"cap_lon":71.4704},{"name":"Kenya","lat":-0.0236,"lon":37.9062,"capital":"Nairobi","cap_lat":-1.2921,"cap_lon":36.8219},{"name":"Kiribati","lat":-3.3704,"lon":-168.7340,"capital":"Tarawa","cap_lat":1.3280,"cap_lon":172.9770},{"name":"Kosovo","lat":42.6026,"lon":20.9030,"capital":"Pristina","cap_lat":42.6629,"cap_lon":21.1655},{"name":"Kuwait","lat":29.3117,"lon":47.4818,"capital":"Kuwait City","cap_lat":29.3759,"cap_lon":47.9774},{"name":"Kyrgyzstan","lat":41.2044,"lon":74.7661,"capital":"Bishkek","cap_lat":42.8746,"cap_lon":74.5698},{"name":"Laos","lat":19.8563,"lon":102.4955,"capital":"Vientiane","cap_lat":17.9757,"cap_lon":102.6331},{"name":"Latvia","lat":56.8796,"lon":24.6032,"capital":"Riga","cap_lat":56.9496,"cap_lon":24.1052},{"name":"Lebanon","lat":33.8547,"lon":35.8623,"capital":"Beirut","cap_lat":33.8938,"cap_lon":35.5018},{"name":"Lesotho","lat":-29.6100,"lon":28.2336,"capital":"Maseru","cap_lat":-29.3167,"cap_lon":27.4833},{"name":"Liberia","lat":6.4281,"lon":-9.4295,"capital":"Monrovia","cap_lat":6.3004,"cap_lon":-10.7969},{"name":"Libya","lat":26.3351,"lon":17.2283,"capital":"Tripoli","cap_lat":32.8872,"cap_lon":13.1913},{"name":"Liechtenstein","lat":47.1660,"lon":9.5554,"capital":"Vaduz","cap_lat":47.1410,"cap_lon":9.5215},{"name":"Lithuania","lat":55.1694,"lon":23.8813,"capital":"Vilnius","cap_lat":54.6872,"cap_lon":25.2797},{"name":"Luxembourg","lat":49.8153,"lon":6.1296,"capital":"Luxembourg City","cap_lat":49.6117,"cap_lon":6.1300},{"name":"Madagascar","lat":-18.7669,"lon":46.8691,"capital":"Antananarivo","cap_lat":-18.8792,"cap_lon":47.5079},{"name":"Malawi","lat":-13.2543,"lon":34.3015,"capital":"Lilongwe","cap_lat":-13.9626,"cap_lon":33.7741},{"name":"Malaysia","lat":4.2105,"lon":101.9758,"capital":"Kuala Lumpur","cap_lat":3.1390,"cap_lon":101.6869},{"name":"Maldives","lat":3.2028,"lon":73.2207,"capital":"Male","cap_lat":4.1755,"cap_lon":73.5093},{"name":"Mali","lat":17.5707,"lon":-3.9962,"capital":"Bamako","cap_lat":12.6392,"cap_lon":-8.0029},{"name":"Malta","lat":35.9375,"lon":14.3754,"capital":"Valletta","cap_lat":35.8997,"cap_lon":14.5147},{"name":"Marshall Islands","lat":7.1315,"lon":171.1845,"capital":"Majuro","cap_lat":7.1164,"cap_lon":171.1950},{"name":"Mauritania","lat":21.0079,"lon":-10.9408,"capital":"Nouakchott","cap_lat":18.0735,"cap_lon":-15.9582},{"name":"Mauritius","lat":-20.3484,"lon":57.5522,"capital":"Port Louis","cap_lat":-20.1609,"cap_lon":57.5012},{"name":"Mexico","lat":23.6345,"lon":-102.5528,"capital":"Mexico City","cap_lat":19.4326,"cap_lon":-99.1332},{"name":"Micronesia","lat":7.4256,"lon":150.5508,"capital":"Palikir","cap_lat":6.9177,"cap_lon":158.1850},{"name":"Moldova","lat":47.4116,"lon":28.3699,"capital":"Chisinau","cap_lat":47.0105,"cap_lon":28.8638},{"name":"Monaco","lat":43.7384,"lon":7.4246,"capital":"Monaco","cap_lat":43.7384,"cap_lon":7.4246},{"name":"Mongolia","lat":46.8625,"lon":103.8467,"capital":"Ulaanbaatar","cap_lat":47.8864,"cap_lon":106.9057},{"name":"Montenegro","lat":42.7087,"lon":19.3744,"capital":"Podgorica","cap_lat":42.4304,"cap_lon":19.2594},{"name":"Morocco","lat":31.7917,"lon":-7.0926,"capital":"Rabat","cap_lat":34.0209,"cap_lon":-6.8416},{"name":"Mozambique","lat":-18.6657,"lon":35.5296,"capital":"Maputo","cap_lat":-25.9692,"cap_lon":32.5732},{"name":"Myanmar","lat":21.9162,"lon":95.9560,"capital":"Naypyidaw","cap_lat":19.7633,"cap_lon":96.0785},{"name":"Namibia","lat":-22.9576,"lon":18.4904,"capital":"Windhoek","cap_lat":-22.5609,"cap_lon":17.0658},{"name":"Nauru","lat":-0.5228,"lon":166.9315,"capital":"Yaren","cap_lat":-0.5477,"cap_lon":166.9209},{"name":"Nepal","lat":28.3949,"lon":84.1240,"capital":"Kathmandu","cap_lat":27.7172,"cap_lon":85.3240},{"name":"Netherlands","lat":52.1326,"lon":5.2913,"capital":"Amsterdam","cap_lat":52.3676,"cap_lon":4.9041},{"name":"New Zealand","lat":-40.9006,"lon":174.8860,"capital":"Wellington","cap_lat":-41.2866,"cap_lon":174.7756},{"name":"Nicaragua","lat":12.8654,"lon":-85.2072,"capital":"Managua","cap_lat":12.1149,"cap_lon":-86.2362},{"name":"Niger","lat":17.6078,"lon":8.0817,"capital":"Niamey","cap_lat":13.5127,"cap_lon":2.1126},{"name":"Nigeria","lat":9.0820,"lon":8.6753,"capital":"Abuja","cap_lat":9.0579,"cap_lon":7.4951},{"name":"North Korea","lat":40.3399,"lon":127.5101,"capital":"Pyongyang","cap_lat":39.0392,"cap_lon":125.7625},{"name":"North Macedonia","lat":41.6086,"lon":21.7453,"capital":"Skopje","cap_lat":41.9981,"cap_lon":21.4254},{"name":"Norway","lat":60.4720,"lon":8.4689,"capital":"Oslo","cap_lat":59.9139,"cap_lon":10.7522},{"name":"Oman","lat":21.4735,"lon":55.9754,"capital":"Muscat","cap_lat":23.5880,"cap_lon":58.3829},{"name":"Pakistan","lat":30.3753,"lon":69.3451,"capital":"Islamabad","cap_lat":33.6844,"cap_lon":73.0479},{"name":"Palau","lat":7.5150,"lon":134.5825,"capital":"Ngerulmud","cap_lat":7.5004,"cap_lon":134.6242},{"name":"Palestine","lat":31.9474,"lon":35.2272,"capital":"Ramallah","cap_lat":31.8996,"cap_lon":35.2043},{"name":"Panama","lat":8.5380,"lon":-80.7821,"capital":"Panama City","cap_lat":8.9824,"cap_lon":-79.5199},{"name":"Papua New Guinea","lat":-6.3150,"lon":143.9555,"capital":"Port Moresby","cap_lat":-9.4780,"cap_lon":147.1507},{"name":"Paraguay","lat":-23.4425,"lon":-58.4438,"capital":"Asuncion","cap_lat":-25.2637,"cap_lon":-57.5759},{"name":"Peru","lat":-9.1900,"lon":-75.0152,"capital":"Lima","cap_lat":-12.0464,"cap_lon":-77.0428},{"name":"Philippines","lat":12.8797,"lon":121.7740,"capital":"Manila","cap_lat":14.5995,"cap_lon":120.9842},{"name":"Poland","lat":51.9194,"lon":19.1451,"capital":"Warsaw","cap_lat":52.2297,"cap_lon":21.0122},{"name":"Portugal","lat":39.3999,"lon":-8.2245,"capital":"Lisbon","cap_lat":38.7223,"cap_lon":-9.1393},{"name":"Qatar","lat":25.3548,"lon":51.1839,"capital":"Doha","cap_lat":25.2854,"cap_lon":51.5310},{"name":"Romania","lat":45.9432,"lon":24.9668,"capital":"Bucharest","cap_lat":44.4268,"cap_lon":26.1025},{"name":"Russia","lat":61.5240,"lon":105.3188,"capital":"Moscow","cap_lat":55.7558,"cap_lon":37.6173},{"name":"Rwanda","lat":-1.9403,"lon":29.8739,"capital":"Kigali","cap_lat":-1.9441,"cap_lon":30.0619},{"name":"Saint Kitts and Nevis","lat":17.3578,"lon":-62.7830,"capital":"Basseterre","cap_lat":17.3026,"cap_lon":-62.7177},{"name":"Saint Lucia","lat":13.9094,"lon":-60.9789,"capital":"Castries","cap_lat":13.9972,"cap_lon":-61.0015},{"name":"Saint Vincent and the Grenadines","lat":13.2528,"lon":-61.1971,"capital":"Kingstown","cap_lat":13.1572,"cap_lon":-61.2249},{"name":"Samoa","lat":-13.7590,"lon":-172.1046,"capital":"Apia","cap_lat":-13.8333,"cap_lon":-171.7667},{"name":"San Marino","lat":43.9424,"lon":12.4578,"capital":"San Marino","cap_lat":43.9424,"cap_lon":12.4578},{"name":"Sao Tome and Principe","lat":0.1864,"lon":6.6131,"capital":"Sao Tome","cap_lat":0.3360,"cap_lon":6.7311},{"name":"Saudi Arabia","lat":23.8859,"lon":45.0792,"capital":"Riyadh","cap_lat":24.7136,"cap_lon":46.6753},{"name":"Senegal","lat":14.4974,"lon":-14.4524,"capital":"Dakar","cap_lat":14.7167,"cap_lon":-17.4677},{"name":"Serbia","lat":44.0165,"lon":21.0059,"capital":"Belgrade","cap_lat":44.7866,"cap_lon":20.4489},{"name":"Seychelles","lat":-4.6796,"lon":55.4920,"capital":"Victoria","cap_lat":-4.6191,"cap_lon":55.4513},{"name":"Sierra Leone","lat":8.4606,"lon":-11.7799,"capital":"Freetown","cap_lat":8.4844,"cap_lon":-13.2344},{"name":"Singapore","lat":1.3521,"lon":103.8198,"capital":"Singapore","cap_lat":1.3521,"cap_lon":103.8198},{"name":"Slovakia","lat":48.6690,"lon":19.6990,"capital":"Bratislava","cap_lat":48.1486,"cap_lon":17.1077},{"name":"Slovenia","lat":46.1512,"lon":14.9955,"capital":"Ljubljana","cap_lat":46.0569,"cap_lon":14.5058},{"name":"Solomon Islands","lat":-9.6457,"lon":160.1562,"capital":"Honiara","cap_lat":-9.4333,"cap_lon":159.9500},{"name":"Somalia","lat":5.1521,"lon":46.1996,"capital":"Mogadishu","cap_lat":2.0469,"cap_lon":45.3182},{"name":"South Africa","lat":-30.5595,"lon":22.9375,"capital":"Pretoria","cap_lat":-25.7479,"cap_lon":28.2293},{"name":"South Korea","lat":35.9078,"lon":127.7669,"capital":"Seoul","cap_lat":37.5665,"cap_lon":126.9780},{"name":"South Sudan","lat":6.8770,"lon":31.3070,"capital":"Juba","cap_lat":4.8517,"cap_lon":31.5825},{"name":"Spain","lat":40.4637,"lon":-3.7492,"capital":"Madrid","cap_lat":40.4168,"cap_lon":-3.7038},{"name":"Sri Lanka","lat":7.8731,"lon":80.7718,"capital":"Sri Jayawardenepura Kotte","cap_lat":6.8941,"cap_lon":79.9016},{"name":"Sudan","lat":12.8628,"lon":30.2176,"capital":"Khartoum","cap_lat":15.5007,"cap_lon":32.5599},{"name":"Suriname","lat":3.9193,"lon":-56.0278,"capital":"Paramaribo","cap_lat":5.8520,"cap_lon":-55.2038},{"name":"Sweden","lat":60.1282,"lon":18.6435,"capital":"Stockholm","cap_lat":59.3293,"cap_lon":18.0686},{"name":"Switzerland","lat":46.8182,"lon":8.2275,"capital":"Bern","cap_lat":46.9480,"cap_lon":7.4474},{"name":"Syria","lat":34.8021,"lon":38.9968,"capital":"Damascus","cap_lat":33.5138,"cap_lon":36.2765},{"name":"Taiwan","lat":23.6978,"lon":120.9605,"capital":"Taipei","cap_lat":25.0330,"cap_lon":121.5654},{"name":"Tajikistan","lat":38.8610,"lon":71.2761,"capital":"Dushanbe","cap_lat":38.5598,"cap_lon":68.7870},{"name":"Tanzania","lat":-6.3690,"lon":34.8888,"capital":"Dodoma","cap_lat":-6.1620,"cap_lon":35.7516},{"name":"Thailand","lat":15.8700,"lon":100.9925,"capital":"Bangkok","cap_lat":13.7563,"cap_lon":100.5018},{"name":"Timor-Leste","lat":-8.8742,"lon":125.7275,"capital":"Dili","cap_lat":-8.5569,"cap_lon":125.5603},{"name":"Togo","lat":8.6195,"lon":0.8248,"capital":"Lome","cap_lat":6.1319,"cap_lon":1.2228},{"name":"Tonga","lat":-21.1790,"lon":-175.1982,"capital":"Nuku'alofa","cap_lat":-21.1393,"cap_lon":-175.2049},{"name":"Trinidad and Tobago","lat":10.6918,"lon":-61.2225,"capital":"Port of Spain","cap_lat":10.6601,"cap_lon":-61.5086},{"name":"Tunisia","lat":33.8869,"lon":9.5375,"capital":"Tunis","cap_lat":36.8065,"cap_lon":10.1815},{"name":"Turkey","lat":38.9637,"lon":35.2433,"capital":"Ankara","cap_lat":39.9334,"cap_lon":32.8597},{"name":"Turkmenistan","lat":38.9697,"lon":59.5563,"capital":"Ashgabat","cap_lat":37.9601,"cap_lon":58.3261},{"name":"Tuvalu","lat":-7.1095,"lon":177.6493,"capital":"Funafuti","cap_lat":-8.5201,"cap_lon":179.1980},{"name":"Uganda","lat":1.3733,"lon":32.2903,"capital":"Kampala","cap_lat":0.3476,"cap_lon":32.5825},{"name":"Ukraine","lat":48.3794,"lon":31.1656,"capital":"Kyiv","cap_lat":50.4501,"cap_lon":30.5234},{"name":"United Arab Emirates","lat":23.4241,"lon":53.8478,"capital":"Abu Dhabi","cap_lat":24.4539,"cap_lon":54.3773},{"name":"United Kingdom","lat":55.3781,"lon":-3.4360,"capital":"London","cap_lat":51.5074,"cap_lon":-0.1278},{"name":"United States","lat":39.8283,"lon":-98.5795,"capital":"Washington DC","cap_lat":38.9072,"cap_lon":-77.0369},{"name":"Uruguay","lat":-32.5228,"lon":-55.7658,"capital":"Montevideo","cap_lat":-34.9011,"cap_lon":-56.1645},{"name":"Uzbekistan","lat":41.3775,"lon":64.5853,"capital":"Tashkent","cap_lat":41.2995,"cap_lon":69.2401},{"name":"Vanuatu","lat":-15.3767,"lon":166.9592,"capital":"Port Vila","cap_lat":-17.7333,"cap_lon":168.3167},{"name":"Vatican City","lat":41.9029,"lon":12.4534,"capital":"Vatican City","cap_lat":41.9029,"cap_lon":12.4534},{"name":"Venezuela","lat":6.4238,"lon":-66.5897,"capital":"Caracas","cap_lat":10.4806,"cap_lon":-66.9036},{"name":"Vietnam","lat":14.0583,"lon":108.2772,"capital":"Hanoi","cap_lat":21.0278,"cap_lon":105.8342},{"name":"Yemen","lat":15.5527,"lon":48.5164,"capital":"Sanaa","cap_lat":15.3694,"cap_lon":44.1910},{"name":"Zambia","lat":-13.1339,"lon":27.8493,"capital":"Lusaka","cap_lat":-15.3875,"cap_lon":28.3228},{"name":"Zimbabwe","lat":-19.0154,"lon":29.1549,"capital":"Harare","cap_lat":-17.8252,"cap_lon":31.0335}];
+
+// GeoGuessr state
+let geoMode = 'country';  // 'country' or 'capital'
+let geoGuesses = [];      // [{name, lat, lon, dist}]
+let geoTolerance = 50;
+
+function geoHaversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function geoBuildDropdown() {
+  const sel = document.getElementById('geo-guess-country');
+  sel.innerHTML = '<option value="">-- Select country --</option>' +
+    GEO_COUNTRIES.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+}
+
+function geoSetMode(mode) {
+  geoMode = mode;
+  document.getElementById('geo-mode-country').classList.toggle('active', mode === 'country');
+  document.getElementById('geo-mode-capital').classList.toggle('active', mode === 'capital');
+  geoSolve();
+}
+
+function geoAddGuess() {
+  const sel = document.getElementById('geo-guess-country');
+  const distInput = document.getElementById('geo-guess-dist');
+  const name = sel.value;
+  const dist = parseFloat(distInput.value);
+
+  if (!name) return;
+  if (isNaN(dist) || dist < 0) return;
+
+  const country = GEO_COUNTRIES.find(c => c.name === name);
+  if (!country) return;
+
+  const lat = geoMode === 'capital' ? country.cap_lat : country.lat;
+  const lon = geoMode === 'capital' ? country.cap_lon : country.lon;
+
+  geoGuesses.push({name, lat, lon, dist});
+  distInput.value = '';
+  sel.value = '';
+  geoRenderHistory();
+  geoSolve();
+}
+
+function geoRemoveGuess(idx) {
+  geoGuesses.splice(idx, 1);
+  geoRenderHistory();
+  geoSolve();
+}
+
+function geoRenderHistory() {
+  const container = document.getElementById('geo-history-container');
+  const tbody = document.getElementById('geo-history-tbody');
+
+  if (geoGuesses.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+  container.style.display = 'block';
+  tbody.innerHTML = geoGuesses.map((g, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${g.name}</td>
+      <td>${g.dist.toFixed(0)} km</td>
+      <td><button class="del-btn" onclick="geoRemoveGuess(${i})">✕</button></td>
+    </tr>
+  `).join('');
+}
+
+function geoTolChange() {
+  geoTolerance = parseInt(document.getElementById('geo-tolerance').value);
+  document.getElementById('geo-tol-label').textContent = geoTolerance;
+  geoSolve();
+}
+
+function geoReset() {
+  geoGuesses = [];
+  document.getElementById('geo-guess-dist').value = '';
+  document.getElementById('geo-guess-country').value = '';
+  geoRenderHistory();
+  geoSolve();
+}
+
+function geoSolve() {
+  const resultsDiv = document.getElementById('geo-results');
+  const summaryDiv = document.getElementById('geo-summary');
+
+  if (geoGuesses.length === 0) {
+    resultsDiv.innerHTML = '<div class="geo-no-results">Add a guess to see possible countries</div>';
+    summaryDiv.textContent = '';
+    return;
+  }
+
+  // For each country in dataset, check if it passes all guess constraints
+  const candidates = [];
+  for (const c of GEO_COUNTRIES) {
+    const cLat = geoMode === 'capital' ? c.cap_lat : c.lat;
+    const cLon = geoMode === 'capital' ? c.cap_lon : c.lon;
+    let totalErr = 0;
+    let passes = true;
+
+    for (const g of geoGuesses) {
+      const actualDist = geoHaversine(g.lat, g.lon, cLat, cLon);
+      const err = Math.abs(actualDist - g.dist);
+      if (err > geoTolerance) {
+        passes = false;
+        break;
+      }
+      totalErr += err;
+    }
+
+    if (passes) {
+      // Calculate average error per guess
+      const avgErr = totalErr / geoGuesses.length;
+      // Also calculate best single-guess match
+      let minSingleErr = Infinity;
+      for (const g of geoGuesses) {
+        const actualDist = geoHaversine(g.lat, g.lon, cLat, cLon);
+        const err = Math.abs(actualDist - g.dist);
+        if (err < minSingleErr) minSingleErr = err;
+      }
+      candidates.push({
+        name: c.name,
+        capital: c.capital || '',
+        avgErr,
+        minErr: minSingleErr,
+        totalErr
+      });
+    }
+  }
+
+  // Sort by average error (best match first)
+  candidates.sort((a, b) => a.avgErr - b.avgErr);
+
+  summaryDiv.textContent = `${candidates.length} of ${GEO_COUNTRIES.length} countries match (${geoMode === 'capital' ? 'capital' : 'centroid'} mode, ±${geoTolerance} km)`;
+
+  if (candidates.length === 0) {
+    resultsDiv.innerHTML = '<div class="geo-no-results">No countries match. Try increasing tolerance or check your distance values.</div>';
+    return;
+  }
+
+  // Find max avgErr for coloring
+  const maxAvgErr = candidates.length > 0 ? candidates[candidates.length - 1].avgErr : 1;
+
+  resultsDiv.innerHTML = candidates.map((c, i) => {
+    let cls = '';
+    if (c.avgErr > maxAvgErr * 0.75) cls = ' worst';
+    else if (c.avgErr > maxAvgErr * 0.4) cls = ' bad';
+    const label = geoMode === 'capital' ? `${c.name} (${c.capital})` : c.name;
+    return `
+      <div class="geo-result-row">
+        <span class="geo-result-rank">${i + 1}.</span>
+        <span class="geo-result-name">${label}</span>
+        <span class="geo-result-count" title="Closest single guess">min ${c.minErr.toFixed(0)} km</span>
+        <span class="geo-result-error${cls}">avg ${c.avgErr.toFixed(0)} km</span>
+      </div>`;
+  }).join('');
+}
+
+</script>

@@ -1,0 +1,3642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bulkhead</title>
+<link rel="icon" type="image/png" href="/static/favicon.png">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   BULKHEAD — Dark Theme
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --bg:        #0d1117;
+  --bg-card:   #161b22;
+  --bg-hover:  #21262d;
+  --border:    #30363d;
+  --text:      #c9d1d9;
+  --text-dim:  #8b949e;
+  --cyan:      #58a6ff;
+  --green:     #3fb950;
+  --yellow:    #d2991d;
+  --red:       #f85149;
+  --magenta:   #bc8cff;
+  --orange:    #f0883e;
+  --seafoam:   #79c0ff;
+  --accent:    #58a6ff;
+  --radius:    8px;
+  --font:      'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace;
+  --font-ui:   -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ── Header ─────────────────────────────────────────────────────── */
+.header {
+  text-align: center;
+  padding: 2rem 1rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.header h1 {
+  font-family: var(--font);
+  font-size: 2rem;
+  color: var(--cyan);
+  letter-spacing: 1px;
+}
+.header p {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+/* ── Navbar ──────────────────────────────────────────────────────── */
+.navbar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav-group {
+  display: flex;
+  align-items: center;
+}
+.tab-btn, .nav-dropdown-toggle {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.tab-btn:hover, .nav-dropdown-toggle:hover { color: var(--text); background: var(--bg-hover); }
+.tab-btn.active, .nav-dropdown-toggle.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+/* ── Dropdown ───────────────────────────────────────────────────── */
+.nav-dropdown { position: relative; }
+.nav-dropdown-toggle { padding-right: 0.4rem; }
+.nav-dropdown-toggle::after {
+  content: ' ▾';
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  margin-left: 0.15rem;
+}
+.nav-dropdown-toggle.active::after { color: var(--cyan); }
+.nav-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 200px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  z-index: 101;
+  padding: 0.35rem 0;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.nav-dropdown.open .nav-dropdown-menu { display: block; }
+.nav-dropdown-menu .tab-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 1rem;
+  border-bottom: none;
+  font-size: 0.82rem;
+}
+.nav-dropdown-menu .tab-btn:hover { background: var(--bg-hover); }
+.nav-dropdown-menu .tab-btn.active {
+  color: var(--cyan);
+  background: rgba(88,166,255,0.08);
+  border-bottom: none;
+}
+.nav-dropdown-menu .dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.35rem 0.5rem;
+}
+.settings-btn {
+  margin-left: auto;
+  font-size: 1.1rem !important;
+  padding: 0.5rem 0.75rem !important;
+}
+
+/* ── Mobile Nav ─────────────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .navbar { justify-content: flex-start; overflow-x: visible; flex-wrap: wrap; }
+  .tab-btn, .nav-dropdown-toggle { font-size: 0.76rem; padding: 0.55rem 0.6rem; }
+  .nav-dropdown { position: static; }
+  .nav-dropdown-menu {
+    position: fixed;
+    top: auto;
+    left: 0.5rem;
+    right: 0.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+    z-index: 200;
+  }
+  .nav-dropdown.open .nav-dropdown-toggle {
+    background: var(--bg-hover);
+  }
+}
+
+/* ── Tab Content (unchanged) ───────────────────────────────────── */
+.tab-content { display: none; padding: 1.5rem; max-width: 960px; margin: 0 auto; }
+.tab-content.active { display: block; }
+
+/* ── Cards ──────────────────────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+.card h3 {
+  font-family: var(--font);
+  font-size: 0.85rem;
+  color: var(--cyan);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 0.75rem;
+}
+
+/* ── Clock Grid ─────────────────────────────────────────────────── */
+.clock-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+.clock-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  text-align: center;
+  transition: border-color 0.3s;
+}
+.clock-card.biz { border-color: var(--green); }
+.clock-card.fringe { border-color: var(--yellow); }
+.clock-card.off { border-color: var(--border); }
+
+.clock-city {
+  font-family: var(--font);
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  margin-bottom: 0.25rem;
+}
+.clock-tz {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-bottom: 0.5rem;
+}
+.clock-time {
+  font-family: var(--font);
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--text);
+}
+.clock-seconds {
+  font-family: var(--font);
+  font-size: 1rem;
+  color: var(--cyan);
+  margin-left: 2px;
+}
+.clock-date {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 0.25rem;
+}
+.clock-status {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+.clock-status.biz { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.clock-status.off { background: var(--text-dim); }
+
+.clock-bar {
+  display: flex;
+  gap: 1px;
+  margin-top: 0.5rem;
+  justify-content: center;
+}
+.clock-bar-seg {
+  width: 6px;
+  height: 10px;
+  border-radius: 1px;
+}
+.clock-bar-seg.biz { background: var(--green); }
+.clock-bar-seg.fringe { background: var(--yellow); opacity: 0.5; }
+.clock-bar-seg.off { background: var(--border); }
+
+/* ── Overlap ────────────────────────────────────────────────────── */
+.overlap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.5rem;
+}
+.overlap-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg);
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+.overlap-dot { margin-right: 0.5rem; }
+
+/* ── Depth Calculator ───────────────────────────────────────────── */
+.ref-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font);
+  font-size: 0.8rem;
+}
+.ref-table th {
+  text-align: right;
+  padding: 0.35rem 0.75rem;
+  color: var(--text-dim);
+  font-weight: normal;
+  border-bottom: 1px solid var(--border);
+}
+.ref-table td {
+  text-align: right;
+  padding: 0.3rem 0.75rem;
+  border-bottom: 1px solid rgba(48,54,61,0.5);
+}
+.ref-table tr:hover td { background: var(--bg-hover); }
+.ref-table .deep td { color: var(--red); }
+
+.calc-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.input-group label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.input-group input, .input-group select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 0.5rem 0.75rem;
+  font-family: var(--font);
+  font-size: 0.85rem;
+}
+.input-group input:focus, .input-group select:focus {
+  outline: none;
+  border-color: var(--cyan);
+}
+.input-group input { width: 140px; }
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.result-item {
+  background: var(--bg);
+  border-radius: 4px;
+  padding: 0.75rem;
+  text-align: center;
+}
+.result-label {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.result-value {
+  font-family: var(--font);
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-top: 0.25rem;
+}
+.result-value.cyan { color: var(--cyan); }
+
+.zone-tag {
+  font-size: 0.7rem;
+  color: var(--magenta);
+  margin-top: 0.5rem;
+  font-family: var(--font);
+}
+
+/* ── Resistor ───────────────────────────────────────────────────── */
+.color-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+.color-swatch {
+  width: 40px; height: 30px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  font-size: 0.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+  font-family: var(--font);
+  font-weight: bold;
+}
+.color-swatch:hover { transform: scale(1.1); }
+.color-swatch.selected { border-color: var(--cyan); box-shadow: 0 0 8px rgba(88,166,255,0.5); }
+.color-swatch.disabled { opacity: 0.25; cursor: not-allowed; }
+.color-swatch.disabled:hover { transform: none; }
+
+.band-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.band-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  min-width: 100px;
+  text-transform: uppercase;
+}
+.band-pick {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.band-pick .color-swatch { width: 32px; height: 24px; font-size: 0.5rem; }
+
+.result-bar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 1rem 0;
+}
+.result-swatch {
+  width: 50px; height: 30px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  font-family: var(--font);
+  font-weight: bold;
+}
+
+.result-detail {
+  font-family: var(--font);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+.result-detail .val { color: var(--cyan); font-size: 1.4rem; font-weight: bold; }
+.result-detail .good { color: var(--green); }
+.result-detail .warn { color: var(--yellow); }
+
+/* ── Button ─────────────────────────────────────────────────────── */
+.btn {
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  transition: all 0.15s;
+}
+.btn:hover { background: var(--border); border-color: var(--text-dim); }
+.btn.primary { background: var(--cyan); border-color: var(--cyan); color: #000; font-weight: 600; }
+.btn.primary:hover { background: #79b8ff; }
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .clock-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .clock-card { padding: 0.75rem; }
+  .clock-time { font-size: 1.4rem; }
+  .clock-seconds { font-size: 0.8rem; }
+  .clock-city { font-size: 0.8rem; }
+  .clock-tz { font-size: 0.62rem; }
+  .clock-date { font-size: 0.7rem; }
+  .clock-bar-seg { width: 4px; height: 7px; }
+  .overlap-grid { grid-template-columns: 1fr 1fr; }
+  .tabs { overflow-x: auto; }
+  .tab-btn { padding: 0.6rem 0.9rem; font-size: 0.8rem; }
+  .ref-table { font-size: 0.7rem; }
+  .ref-table th, .ref-table td { padding: 0.25rem 0.4rem; }
+}
+
+@media (max-width: 420px) {
+  .clock-grid { grid-template-columns: 1fr; }
+  .clock-card { padding: 0.6rem 0.75rem; }
+  .clock-time { font-size: 1.25rem; }
+  .clock-seconds { font-size: 0.75rem; }
+  .clock-city { font-size: 0.82rem; }
+  .clock-bar-seg { width: 3px; height: 6px; }
+  .clock-bar { gap: 0; }
+  .overlap-grid { grid-template-columns: 1fr; }
+  .tab-content { padding: 0.75rem; }
+}
+
+/* ── Animations ─────────────────────────────────────────────────── */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.clock-seconds { animation: pulse 1s infinite; }
+
+/* ── Scrollbar ──────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── TV Remote ───────────────────────────────────────────────────── */
+.tv-remote {
+  max-width: 340px;
+  margin: 0 auto;
+  padding: 0.25rem 0;
+}
+
+.tv-section-label {
+  font-family: var(--font);
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
+  margin: 1rem 0 0.4rem;
+}
+.tv-section-label:first-of-type { margin-top: 0.25rem; }
+
+.tv-row {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  align-items: center;
+}
+.tv-top-row { margin-bottom: 0.6rem; }
+
+.tv-spacer { flex: 1; }
+
+/* Base button */
+.tv-btn {
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.tv-btn:hover {
+  background: var(--border);
+  color: var(--text);
+  border-color: var(--text-dim);
+}
+
+/* Power — big red circle */
+.tv-power {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: rgba(248,81,73,0.12);
+  border-color: rgba(248,81,73,0.3);
+  color: var(--red);
+}
+.tv-power:hover {
+  background: rgba(248,81,73,0.22);
+  border-color: var(--red);
+  color: var(--red);
+  box-shadow: 0 0 16px rgba(248,81,73,0.25);
+}
+.tv-power:active {
+  background: var(--red);
+  color: #fff;
+}
+
+/* Small utility buttons */
+.tv-sm {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+}
+.tv-exit {
+  border-color: rgba(248,81,73,0.2);
+  color: var(--red);
+  opacity: 0.6;
+}
+.tv-exit:hover { opacity: 1; background: rgba(248,81,73,0.15); }
+
+/* ── D-Pad Ring ─────────────────────────────────────────────────── */
+.tv-dpad-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 0.75rem 0;
+}
+.tv-dpad-ring {
+  display: grid;
+  grid-template-columns: 56px 56px 56px;
+  grid-template-rows: 56px 56px 56px;
+  gap: 2px;
+}
+
+.tv-nav-up    { grid-column: 2; grid-row: 1; }
+.tv-nav-left  { grid-column: 1; grid-row: 2; }
+.tv-enter     { grid-column: 2; grid-row: 2; }
+.tv-nav-right { grid-column: 3; grid-row: 2; }
+.tv-nav-down  { grid-column: 2; grid-row: 3; }
+
+.tv-nav {
+  width: 54px; height: 54px;
+  border-radius: 10px;
+  background: var(--bg);
+  border-color: var(--border);
+}
+.tv-nav:hover {
+  background: var(--bg-hover);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+/* Center Enter button */
+.tv-enter {
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  background: rgba(88,166,255,0.08);
+  border-color: rgba(88,166,255,0.25);
+  color: var(--cyan);
+  font-weight: 700;
+}
+.tv-enter:hover {
+  background: var(--cyan);
+  color: #000;
+  border-color: var(--cyan);
+  box-shadow: 0 0 14px rgba(88,166,255,0.35);
+}
+
+/* Media buttons */
+.tv-media {
+  width: 52px; height: 44px;
+  border-radius: 10px;
+  background: var(--bg);
+}
+.tv-media:hover { border-color: var(--text-dim); }
+
+.tv-mute {
+  color: var(--yellow);
+  border-color: rgba(210,153,29,0.2);
+}
+.tv-mute:hover {
+  border-color: var(--yellow);
+  color: var(--yellow);
+  background: rgba(210,153,29,0.1);
+}
+
+.tv-play {
+  width: 64px;
+  background: rgba(88,166,255,0.08);
+  border-color: rgba(88,166,255,0.2);
+  color: var(--cyan);
+}
+.tv-play:hover {
+  background: var(--cyan);
+  color: #000;
+  border-color: var(--cyan);
+}
+
+/* Number pad */
+.tv-numpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+  max-width: 200px;
+  margin: 0 auto;
+}
+.tv-num {
+  width: 56px; height: 40px;
+  border-radius: 8px;
+  font-family: var(--font);
+  font-size: 0.9rem;
+  background: var(--bg);
+  color: var(--text-dim);
+}
+.tv-num:hover {
+  color: var(--text);
+  border-color: var(--text-dim);
+}
+
+/* App grid */
+.tv-app-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  max-width: 280px;
+  margin: 0 auto;
+}
+.tv-app-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  transition: all 0.12s;
+  color: var(--text-dim);
+}
+.tv-app-btn:hover { transform: translateY(-1px); }
+.tv-app-name { white-space: nowrap; }
+
+/* App-specific styling */
+.tv-app-btn.netflix { background: #141414; border-color: #831010; color: #e50914; }
+.tv-app-btn.netflix:hover { background: #831010; color: #fff; }
+.tv-app-btn.netflix .tv-app-letter {
+  font-family: var(--font);
+  font-size: 1.2rem;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+
+.tv-app-btn.youtube { background: #0d0d0d; border-color: #cc0000; color: #ff0000; }
+.tv-app-btn.youtube:hover { background: #cc0000; color: #fff; }
+
+.tv-app-btn.prime { background: #0a1628; border-color: #00a8e1; color: #00a8e1; }
+.tv-app-btn.prime:hover { background: #00a8e1; color: #000; }
+
+.tv-app-btn.disney { background: #0f1224; border-color: #113ccf; color: #4d7cff; }
+.tv-app-btn.disney:hover { background: #113ccf; color: #fff; }
+
+/* Feedback toast */
+.tv-feedback {
+  font-family: var(--font);
+  font-size: 0.75rem;
+  color: var(--cyan);
+  margin-top: 0.25rem;
+  min-height: 1.2em;
+  text-align: center;
+  transition: opacity 0.3s;
+}
+
+/* Responsive */
+@media (max-width: 400px) {
+  .tv-dpad-ring {
+    grid-template-columns: 48px 48px 48px;
+    grid-template-rows: 48px 48px 48px;
+  }
+  .tv-nav { width: 46px; height: 46px; }
+  .tv-enter { width: 46px; height: 46px; }
+  .tv-media { width: 44px; height: 38px; }
+  .tv-power { width: 44px; height: 44px; }
+  .tv-num { width: 48px; height: 36px; }
+}
+
+/* ── GeoGuessr Solver ──────────────────────────────────────────── */
+.geo-mode-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+.geo-mode-btn {
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  transition: all 0.15s;
+}
+.geo-mode-btn:hover { background: var(--bg-hover); color: var(--text); }
+.geo-mode-btn.active { background: var(--cyan); color: #000; border-color: var(--cyan); font-weight: 600; }
+
+.geo-guess-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.geo-guess-row select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 0.5rem 0.75rem;
+  font-family: var(--font);
+  font-size: 0.85rem;
+  min-width: 200px;
+  max-width: 260px;
+}
+.geo-guess-row select:focus { outline: none; border-color: var(--cyan); }
+.geo-guess-row input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 0.5rem 0.75rem;
+  font-family: var(--font);
+  font-size: 0.85rem;
+  width: 120px;
+}
+.geo-guess-row input:focus { outline: none; border-color: var(--cyan); }
+.geo-tolerance-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+.geo-tolerance-row input[type=range] { width: 140px; accent-color: var(--cyan); }
+
+.geo-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font);
+  font-size: 0.8rem;
+  margin-bottom: 0.75rem;
+}
+.geo-history-table th {
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  color: var(--text-dim);
+  font-weight: normal;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+.geo-history-table td {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid rgba(48,54,61,0.4);
+}
+.geo-history-table .del-btn {
+  background: none;
+  border: none;
+  color: var(--red);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 0.3rem;
+  opacity: 0.5;
+}
+.geo-history-table .del-btn:hover { opacity: 1; }
+
+.geo-results {
+  max-height: 500px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.geo-result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid rgba(48,54,61,0.3);
+  font-family: var(--font);
+  font-size: 0.8rem;
+}
+.geo-result-row:hover { background: var(--bg-hover); }
+.geo-result-row:last-child { border-bottom: none; }
+.geo-result-rank {
+  color: var(--text-dim);
+  min-width: 30px;
+  font-size: 0.7rem;
+}
+.geo-result-name { flex: 1; }
+.geo-result-error {
+  color: var(--green);
+  min-width: 70px;
+  text-align: right;
+  font-size: 0.75rem;
+}
+.geo-result-error.bad { color: var(--yellow); }
+.geo-result-error.worst { color: var(--red); }
+.geo-result-count {
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  min-width: 50px;
+  text-align: right;
+}
+.geo-no-results {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+/* ── Settings ──────────────────────────────────────────────────── */
+.settings-grid {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+.settings-grid h3 { font-size: 1.3rem; margin-bottom: 1.5rem; }
+.settings-grid h4 {
+  font-size: 0.9rem;
+  color: var(--cyan);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.settings-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Toggle switches */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+}
+.toggle-label {
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--bg-hover);
+  border-radius: 24px;
+  transition: 0.2s;
+  border: 1px solid var(--border);
+}
+.toggle-slider:before {
+  content: "";
+  position: absolute;
+  height: 18px; width: 18px;
+  left: 2px; bottom: 2px;
+  background: var(--text-dim);
+  border-radius: 50%;
+  transition: 0.2s;
+}
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--cyan);
+  border-color: var(--cyan);
+}
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+  background: #fff;
+}
+
+/* Timezone editor */
+.tz-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.5rem;
+  margin: 0.2rem 0;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+}
+.tz-remove {
+  background: none;
+  border: none;
+  color: var(--red);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0 0.3rem;
+  opacity: 0.6;
+}
+.tz-remove:hover { opacity: 1; }
+.tz-add-row { margin-top: 0.5rem; }
+.tz-add-row select {
+  width: 100%;
+  padding: 0.5rem;
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+}
+
+/* Settings actions */
+.settings-actions {
+  display: flex;
+  align-items: center;
+}
+.settings-save {
+  padding: 0.6rem 1.5rem;
+  background: var(--cyan);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+.settings-save:hover { opacity: 0.9; }
+.settings-btn { font-size: 1.2rem !important; padding: 0.5rem 0.75rem !important; }
+
+/* ── T-Line Impedance ──────────────────────────────────────────── */
+.tline-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.tline-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.tline-input-group { display: flex; flex-direction: column; gap: 0.25rem; }
+.tline-input-group label {
+  font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase;
+  letter-spacing: 0.5px; font-weight: 600;
+}
+.tline-input-group input, .tline-input-group select {
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text); font-family: var(--font); font-size: 0.9rem; padding: 0.5rem 0.75rem;
+}
+.tline-input-group input:focus, .tline-input-group select:focus {
+  outline: none; border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(88,166,255,0.15);
+}
+.tline-results {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;
+}
+.tline-result {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 0.75rem;
+}
+.tline-result .label { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.3px; }
+.tline-result .value { font-family: var(--font); font-size: 1.3rem; color: var(--cyan); margin-top: 0.2rem; }
+.tline-result .unit { font-size: 0.65rem; color: var(--text-dim); }
+.tline-diagram {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 300px;
+}
+.tline-presets {
+  display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.35rem;
+}
+.tline-preset {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text-dim); font-size: 0.7rem; padding: 0.25rem 0.5rem;
+  cursor: pointer; transition: all 0.15s; font-family: var(--font-ui);
+}
+.tline-preset:hover { border-color: var(--cyan); color: var(--cyan); }
+.tline-preset.active { border-color: var(--cyan); color: var(--cyan); background: rgba(88,166,255,0.1); }
+.tline-structure-tabs {
+  display: flex; gap: 0; margin-bottom: 1rem;
+}
+.tline-structure-btn {
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--text-dim); font-size: 0.8rem; padding: 0.45rem 1rem;
+  cursor: pointer; transition: all 0.15s; font-family: var(--font-ui);
+}
+.tline-structure-btn:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+.tline-structure-btn:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+.tline-structure-btn:not(:first-child) { border-left: none; }
+.tline-structure-btn.active { background: var(--cyan); color: #fff; border-color: var(--cyan); }
+.tline-impulse { display: flex; gap: 0.5rem; align-items: center; }
+.tline-impulse .badge {
+  padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 700;
+  font-family: var(--font); letter-spacing: 0.5px;
+}
+.tline-impulse .badge.good { background: rgba(63,185,80,0.15); color: var(--green); }
+.tline-impulse .badge.warn { background: rgba(210,153,29,0.15); color: var(--yellow); }
+.tline-impulse .badge.bad { background: rgba(248,81,73,0.15); color: var(--red); }
+
+@media (max-width: 600px) {
+  .tline-grid { grid-template-columns: 1fr; }
+  .tline-inputs { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 420px) {
+  .tline-inputs { grid-template-columns: 1fr; }
+  .tline-results { grid-template-columns: 1fr; }
+}
+
+/* ── Ohm's Law ─────────────────────────────────────────────────── */
+.ohms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.ohms-field { margin-bottom: 0.75rem; }
+.ohms-field label {
+  display: block; font-size: 0.7rem; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 0.2rem;
+}
+.ohms-field input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-family: var(--font);
+  font-size: 1.1rem; padding: 0.5rem 0.75rem;
+}
+.ohms-field input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(88,166,255,0.15); }
+.ohms-field input.locked { background: var(--bg-hover); color: var(--cyan); cursor: default; }
+.ohms-result-row {
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.ohms-result-row:last-child { border-bottom: none; }
+.ohms-result-row .label { width: 30px; color: var(--text-dim); font-size: 0.75rem; text-align: center; }
+.ohms-result-row .value { font-family: var(--font); font-size: 1.1rem; color: var(--cyan); }
+.ohms-result-row .unit { color: var(--text-dim); font-size: 0.7rem; margin-left: 0.25rem; }
+.ohms-result-row .derived { color: var(--cyan); font-family: var(--font); font-size: 0.85rem; }
+
+.awg-select {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text); font-family: var(--font); font-size: 0.9rem; padding: 0.5rem 0.75rem;
+  width: 100%;
+}
+.awg-select:focus { outline: none; border-color: var(--cyan); }
+
+.divider-visual {
+  display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0;
+  font-family: var(--font); font-size: 0.85rem;
+}
+.divider-visual .wire { height: 2px; background: var(--text-dim); flex: 1; }
+.divider-visual .resistor-box {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  padding: 0.3rem 0.6rem; min-width: 45px; text-align: center;
+}
+.divider-visual .vout-point {
+  color: var(--green); font-weight: bold; font-size: 1rem; margin: 0 0.5rem;
+}
+.divider-visual .gnd { color: var(--text-dim); font-size: 0.7rem; }
+
+@media (max-width: 700px) {
+  .ohms-grid { grid-template-columns: 1fr; }
+}
+
+/* ── dB Converter ───────────────────────────────────────────────── */
+.db-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.db-input-row { display: flex; gap: 0.5rem; align-items: flex-end; margin-bottom: 0.75rem; }
+.db-input-row select {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text); font-family: var(--font); font-size: 0.85rem; padding: 0.5rem;
+  width: 80px;
+}
+.db-cascade-inputs { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.35rem; }
+.db-cascade-inputs input {
+  width: 70px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-family: var(--font);
+  font-size: 0.85rem; padding: 0.35rem 0.5rem; text-align: center;
+}
+.db-cascade-inputs input:focus { outline: none; border-color: var(--cyan); }
+
+/* ── R Calc ─────────────────────────────────────────────────────── */
+.rc-solver { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.rc-parallel-inputs { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin-bottom: 0.5rem; }
+.rc-parallel-inputs input {
+  width: 80px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-family: var(--font);
+  font-size: 0.9rem; padding: 0.4rem 0.5rem;
+}
+.rc-parallel-inputs input:focus { outline: none; border-color: var(--cyan); }
+.rc-chip {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  padding: 0.3rem 0.6rem; font-family: var(--font); font-size: 0.85rem;
+}
+.rc-chip .remove {
+  cursor: pointer; color: var(--red); font-weight: bold; font-size: 1rem; line-height: 0.8;
+}
+.rc-chip .remove:hover { color: var(--text); }
+.led-colors { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-top: 0.3rem; }
+.led-color-chip {
+  padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; cursor: pointer;
+  border: 1px solid var(--border); transition: all 0.15s;
+}
+.led-color-chip:hover { border-color: var(--cyan); }
+.led-color-chip.active { border-color: var(--cyan); background: rgba(88,166,255,0.15); }
+
+/* ── Freq Calc ──────────────────────────────────────────────────── */
+.freq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.freq-field { margin-bottom: 0.5rem; }
+.freq-field label {
+  display: block; font-size: 0.7rem; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 0.15rem;
+}
+.freq-field input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-family: var(--font);
+  font-size: 0.95rem; padding: 0.45rem 0.65rem;
+}
+.freq-field input:focus { outline: none; border-color: var(--cyan); }
+.freq-result {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  padding: 0.5rem 0.75rem; margin-bottom: 0.35rem;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.freq-result .freq-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; }
+.freq-result .freq-value { font-family: var(--font); font-size: 1rem; color: var(--cyan); }
+
+@media (max-width: 700px) {
+  .db-grid, .rc-solver, .freq-grid { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────── -->
+<div class="header">
+  <img src="/static/logo.png" alt="Bulkhead" style="width:80px;height:80px;margin-bottom:0.5rem;">
+  <h1>Bulkhead</h1>
+  <p>Subsea tools &amp; timezone sanity for the North Atlantic EE</p>
+</div>
+
+<!-- ── Navbar ────────────────────────────────────────────────────── -->
+<nav class="navbar">
+  <div class="nav-group">
+    <div class="nav-dropdown">
+      <button class="nav-dropdown-toggle">⚡ Electronics ▾</button>
+      <div class="nav-dropdown-menu">
+        <button class="tab-btn" data-tab="ohmslaw">🔌 Ohm's Law</button>
+        <button class="tab-btn" data-tab="rcalc">⫼ R / LED Calc</button>
+        <button class="tab-btn" data-tab="db">📶 dB/dBm</button>
+        <div class="dropdown-divider"></div>
+        <button class="tab-btn" data-tab="freq">∿ RC/LC/Freq</button>
+        <button class="tab-btn" data-tab="resistor">⚡ Resistor Decoder</button>
+        <button class="tab-btn" data-tab="tline">〰️ T-Line Z</button>
+      </div>
+    </div>
+    <button class="tab-btn" data-tab="depth">🌊 Depth ↔ Pressure</button>
+    <div class="nav-dropdown">
+      <button class="nav-dropdown-toggle">🛠️ Tools ▾</button>
+      <div class="nav-dropdown-menu">
+        <button class="tab-btn active" data-tab="clock">🕐 World Clock</button>
+        <button class="tab-btn" data-tab="pcb">🔌 PCB Trace</button>
+        <button class="tab-btn" data-tab="gauge">🧮 Wire Gauge</button>
+        <button class="tab-btn" data-tab="battery">🔋 Battery Pack</button>
+        <button class="tab-btn" data-tab="geo">🌍 GeoGuessr</button>
+      </div>
+    </div>
+    <button class="tab-btn" data-tab="tv">📺 TV Remote</button>
+  </div>
+  <button class="tab-btn settings-btn" data-tab="settings">⚙️</button>
+</nav>
+
+<!-- ════════════════════════════════════════════════════════════════
+     CLOCK TAB
+     ════════════════════════════════════════════════════════════════ -->
+<div class="tab-content active" id="tab-clock">
+  <div class="card">
+    <h3>Live Clocks</h3>
+    <div class="clock-grid" id="clocks"></div>
+  </div>
+  <div class="card">
+    <h3>Business Hour Overlap</h3>
+    <div class="overlap-grid" id="overlaps"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     DEPTH TAB
+     ════════════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-depth">
+  <div class="card">
+    <h3>Quick Reference — Seawater at 4°C</h3>
+    <div style="overflow-x:auto;">
+      <table class="ref-table" id="ref-table">
+        <thead>
+          <tr>
+            <th>Depth</th><th>PSI</th><th>ATM</th><th>Bar</th><th>kPa</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p style="margin-top:0.5rem;font-size:0.7rem;color:var(--text-dim);">
+      Marianas Trench: ~11,000 m → ~16,000 psi → ~1,090 atm &nbsp;|&nbsp;
+      Typical AUV: 300–6,000 m
+    </p>
+  </div>
+
+  <div class="card">
+    <h3>Interactive Calculator</h3>
+    <div class="calc-row">
+      <div class="input-group">
+        <label>Depth (meters)</label>
+        <input type="number" id="depth-input" value="100" step="any" placeholder="e.g. 500">
+      </div>
+      <div class="input-group">
+        <label>Water Type</label>
+        <select id="water-type">
+          <option value="salt">Saltwater</option>
+          <option value="fresh">Freshwater</option>
+        </select>
+      </div>
+      <button class="btn primary" onclick="calculateDepth()">Calculate</button>
+    </div>
+    <div class="result-grid" id="depth-results"></div>
+    <div class="zone-tag" id="zone-tag"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     RESISTOR TAB
+     ════════════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-resistor">
+  <div class="card">
+    <h3>Color Code Reference</h3>
+    <div class="color-grid" id="color-ref"></div>
+    <table class="ref-table" style="margin-top:0.5rem;" id="color-ref-table">
+      <thead><tr><th>Color</th><th>Digit</th><th>Multiplier</th><th>Tolerance</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Decode Resistor</h3>
+    <div style="display:flex;gap:1rem;margin-bottom:1rem;">
+      <button class="btn" id="btn-4band" onclick="setBands(4)" style="background:var(--cyan);color:#000;">4 Band</button>
+      <button class="btn" id="btn-5band" onclick="setBands(5)">5 Band</button>
+      <button class="btn" id="btn-6band" onclick="setBands(6)">6 Band</button>
+    </div>
+    <div id="band-selectors"></div>
+    <div class="result-bar" id="result-bar"></div>
+    <div class="result-detail" id="result-detail"></div>
+  </div>
+
+  <div class="card">
+    <h3>Reverse Lookup (Value → Colors)</h3>
+    <div class="calc-row">
+      <div class="input-group">
+        <label>Resistance</label>
+        <input type="text" id="lookup-value" placeholder="e.g. 4.7k, 220, 1M">
+      </div>
+      <button class="btn primary" onclick="reverseLookup()">Find Colors</button>
+    </div>
+    <div id="lookup-result"></div>
+  </div>
+
+  <div class="card">
+    <h3>E-Series Standard Values <span style="font-weight:normal;font-size:0.65rem;color:var(--text-dim);">Resistors &amp; Capacitors</span></h3>
+    <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+      <div style="flex:1;min-width:280px;">
+        <h4 style="font-size:0.72rem;color:var(--green);margin-bottom:0.5rem;">E96 — 1% Tolerance</h4>
+        <div id="e96-table" style="font-family:var(--font);font-size:0.7rem;display:grid;grid-template-columns:repeat(8,1fr);gap:2px 6px;"></div>
+      </div>
+      <div style="flex:1;min-width:180px;">
+        <h4 style="font-size:0.72rem;color:var(--yellow);margin-bottom:0.5rem;">E24 — 5% Tolerance</h4>
+        <div id="e24-table" style="font-family:var(--font);font-size:0.72rem;display:grid;grid-template-columns:repeat(6,1fr);gap:2px 6px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     PCB TRACE WIDTH TAB
+     ════════════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-pcb">
+  <div class="card">
+    <h3>IPC-2221 Trace Width Calculator</h3>
+    <p style="font-size:0.7rem;color:var(--text-dim);margin-bottom:1rem;">
+      Calculates minimum trace width for a given current and temperature rise.
+      External = outer layers (better cooling), Internal = inner layers.
+    </p>
+
+    <div class="calc-row" style="align-items:flex-end;">
+      <div class="input-group">
+        <label>Current (A)</label>
+        <input type="number" id="pcb-current" value="1" step="0.1" min="0.1" style="width:100px;">
+      </div>
+      <div class="input-group">
+        <label>Temp Rise (°C)</label>
+        <input type="number" id="pcb-temp" value="10" step="1" min="1" max="100" style="width:100px;">
+      </div>
+      <div class="input-group">
+        <label>Copper (oz/ft²)</label>
+        <select id="pcb-copper" style="width:100px;">
+          <option value="0.5">0.5 oz</option>
+          <option value="1" selected>1 oz</option>
+          <option value="2">2 oz</option>
+          <option value="3">3 oz</option>
+          <option value="4">4 oz</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Layer</label>
+        <select id="pcb-layer" style="width:110px;">
+          <option value="external" selected>External</option>
+          <option value="internal">Internal</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="pcb-results" style="margin-top:1rem;"></div>
+
+    <div class="result-grid" id="pcb-grid" style="margin-top:1rem;">
+      <div class="result-item">
+        <div class="result-label">Trace Width</div>
+        <div class="result-value cyan" id="pcb-width-mils">—</div>
+        <div style="font-size:0.65rem;color:var(--text-dim);">mils</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">Width (mm)</div>
+        <div class="result-value" id="pcb-width-mm">—</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">Resistance</div>
+        <div class="result-value" id="pcb-resistance">—</div>
+        <div style="font-size:0.65rem;color:var(--text-dim);">mΩ/inch</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">Voltage Drop</div>
+        <div class="result-value" id="pcb-vdrop">—</div>
+        <div style="font-size:0.65rem;color:var(--text-dim);">mV/inch</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1rem;background:var(--bg);">
+      <h3>Quick Reference <span style="font-weight:normal;font-size:0.65rem;color:var(--text-dim);">(same copper &amp; temp rise)</span></h3>
+      <table class="ref-table" style="margin-top:0.5rem;" id="pcb-ref-table">
+        <thead><tr><th>Current</th><th>Width (mils)</th><th>Width (mm)</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     GEOGUESSR / GEOTEMP SOLVER TAB
+     ════════════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-geo">
+  <div class="card">
+    <h3>GeoGuessr / GeoTemp Solver</h3>
+    <p style="font-size:0.7rem;color:var(--text-dim);margin-bottom:1rem;">
+      Enter your guess country and the distance (km) the game shows you.
+      The tool finds all countries whose center is within tolerance of that distance.
+      Add multiple guesses to narrow down. Toggle between country centroids and capital cities.
+    </p>
+
+    <div class="geo-mode-row">
+      <button class="geo-mode-btn active" id="geo-mode-country" onclick="geoSetMode('country')">🗺 Country Centroids</button>
+      <button class="geo-mode-btn" id="geo-mode-capital" onclick="geoSetMode('capital')">🏛 Capital Cities</button>
+      <span style="margin-left:auto;font-size:0.7rem;color:var(--text-dim);">Final round → Capital mode</span>
+    </div>
+
+    <div class="geo-guess-row">
+      <div class="input-group">
+        <label>Your Guess</label>
+        <select id="geo-guess-country"></select>
+      </div>
+      <div class="input-group">
+        <label>Distance (km)</label>
+        <input type="number" id="geo-guess-dist" placeholder="e.g. 2260" step="1" min="0">
+      </div>
+      <button class="btn primary" onclick="geoAddGuess()">Add Guess</button>
+    </div>
+
+    <div class="geo-tolerance-row">
+      <span>Tolerance: ±<strong id="geo-tol-label">50</strong> km</span>
+      <input type="range" id="geo-tolerance" min="5" max="500" value="50" oninput="geoTolChange()">
+      <button class="btn" onclick="geoReset()" style="margin-left:auto;">Reset All</button>
+    </div>
+
+    <div id="geo-history-container" style="display:none;">
+      <table class="geo-history-table">
+        <thead><tr><th>#</th><th>Country</th><th>Distance (km)</th><th></th></tr></thead>
+        <tbody id="geo-history-tbody"></tbody>
+      </table>
+    </div>
+
+    <div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.5rem;" id="geo-summary"></div>
+    <div class="geo-results" id="geo-results">
+      <div class="geo-no-results">Add a guess to see possible countries</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     BATTERY PACK SOLVER TAB
+     ════════════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-battery" style="height:calc(100vh - 160px);">
+  <iframe src="/static/battery-solver.html" style="width:100%;height:100%;border:none;border-radius:8px;"></iframe>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     WIRE GAUGE CALCULATOR TAB
+     ════════════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-gauge" style="height:calc(100vh - 160px);">
+  <iframe src="/static/wire-gauge.html" style="width:100%;height:100%;border:none;border-radius:8px;"></iframe>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     T-LINE IMPEDANCE CALCULATOR TAB
+     ════════════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-tline">
+  <div class="card">
+    <h3>〰️ Transmission Line Impedance</h3>
+    <div class="tline-structure-tabs">
+      <button class="tline-structure-btn active" data-type="microstrip">🔲 Microstrip</button>
+      <button class="tline-structure-btn" data-type="stripline">🔳 Stripline</button>
+    </div>
+    <div class="tline-grid">
+      <div>
+        <div class="tline-inputs">
+          <div class="tline-input-group">
+            <label>Dielectric Constant (εᵣ)</label>
+            <input type="number" id="tline-er" value="4.50" step="0.01" min="1">
+            <div class="tline-presets">
+              <button class="tline-preset active" data-er="4.5" onclick="applyTLinePreset(4.5)">FR-4</button>
+              <button class="tline-preset" data-er="3.48" onclick="applyTLinePreset(3.48)">4350B</button>
+              <button class="tline-preset" data-er="3.38" onclick="applyTLinePreset(3.38)">4003C</button>
+              <button class="tline-preset" data-er="2.1" onclick="applyTLinePreset(2.1)">PTFE</button>
+              <button class="tline-preset" data-er="9.8" onclick="applyTLinePreset(9.8)">Al₂O₃</button>
+            </div>
+          </div>
+          <div class="tline-input-group">
+            <label>Substrate Height (H) mm</label>
+            <input type="number" id="tline-h" value="1.60" step="0.01" min="0.05">
+          </div>
+          <div class="tline-input-group">
+            <label>Trace Width (W) mm</label>
+            <input type="number" id="tline-w" value="3.00" step="0.01" min="0.05">
+          </div>
+          <div class="tline-input-group">
+            <label>Copper Thickness (t) mm</label>
+            <input type="number" id="tline-t" value="0.035" step="0.001" min="0.005">
+          </div>
+        </div>
+        <div style="margin-top:1rem;display:flex;align-items:center;gap:0.75rem;">
+          <label class="toggle-switch" style="position:relative;display:inline-block;width:44px;height:24px;">
+            <input type="checkbox" id="tline-diff-toggle" style="opacity:0;width:0;height:0;">
+            <span class="toggle-slider" style="border-radius:24px;"></span>
+          </label>
+          <span style="font-size:0.85rem;color:var(--text-dim);">Differential Pair</span>
+          <div class="tline-input-group" id="tline-s-group" style="display:none;margin-left:1rem;">
+            <label>Spacing (S) mm</label>
+            <input type="number" id="tline-s" value="0.50" step="0.01" min="0.05" style="width:100px;">
+          </div>
+        </div>
+        <div style="margin-top:1rem;">
+          <span style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;font-weight:600;letter-spacing:0.5px;">Target Z₀</span>
+          <div class="tline-presets" style="margin-top:0.25rem;">
+            <button class="tline-preset active" data-z="50" onclick="setTLineTarget(50)">50Ω</button>
+            <button class="tline-preset" data-z="75" onclick="setTLineTarget(75)">75Ω</button>
+            <button class="tline-preset" data-z="90" onclick="setTLineTarget(90)">90Ω USB</button>
+            <button class="tline-preset" data-z="100" onclick="setTLineTarget(100)">100Ω Diff</button>
+            <input type="number" id="tline-target" value="50" step="1" min="10" max="300"
+              style="width:60px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:0.2rem 0.4rem;font-size:0.75rem;font-family:var(--font);">
+          </div>
+        </div>
+        <div class="tline-results">
+          <div class="tline-result">
+            <div class="label">Characteristic Impedance</div>
+            <div class="value" id="tline-z0">—</div><div class="unit">Ω</div>
+          </div>
+          <div class="tline-result">
+            <div class="label">Impedance Match</div>
+            <div class="value" style="font-size:0.85rem;" id="tline-match">—</div>
+          </div>
+          <div class="tline-result">
+            <div class="label">Effective εᵣ</div>
+            <div class="value" id="tline-eeff">—</div>
+          </div>
+          <div class="tline-result">
+            <div class="label">Propagation Delay</div>
+            <div class="value" id="tline-tpd">—</div><div class="unit">ps/mm</div>
+          </div>
+          <div class="tline-result">
+            <div class="label">Capacitance</div>
+            <div class="value" id="tline-c0">—</div><div class="unit">pF/mm</div>
+          </div>
+          <div class="tline-result">
+            <div class="label">Inductance</div>
+            <div class="value" id="tline-l0">—</div><div class="unit">nH/mm</div>
+          </div>
+        </div>
+        <div class="tline-results" id="tline-diff-results" style="display:none;">
+          <div class="tline-result" style="border-color:var(--seafoam);">
+            <div class="label">Differential Z (Zdiff)</div>
+            <div class="value" id="tline-zdiff" style="color:var(--seafoam);">—</div><div class="unit">Ω</div>
+          </div>
+          <div class="tline-result">
+            <div class="label">Odd-Mode Z (Zodd)</div>
+            <div class="value" id="tline-zodd">—</div><div class="unit">Ω</div>
+          </div>
+          <div class="tline-result">
+            <div class="label">Even-Mode Z (Zeven)</div>
+            <div class="value" id="tline-zeven">—</div><div class="unit">Ω</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="tline-diagram">
+          <svg id="tline-diagram-svg" viewBox="0 0 360 280" style="width:100%;height:auto;"></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     OHM'S LAW TAB (Ohm's Law + Voltage Drop + Resistor Divider)
+     ════════════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-ohmslaw">
+  <!-- Ohm's Law + Power Card -->
+  <div class="card">
+    <h3>🔌 Ohm's Law &amp; Power</h3>
+    <p style="font-size:0.75rem;color:var(--text-dim);margin-bottom:1rem;">Enter any two values — the solver computes the rest.</p>
+    <div class="ohms-grid">
+      <div>
+        <div class="ohms-field"><label>Voltage (V)</label><input type="number" id="ol-v" step="any" placeholder="Volts" oninput="calcOhmsLaw()"></div>
+        <div class="ohms-field"><label>Current (I)</label><input type="number" id="ol-i" step="any" placeholder="Amps" oninput="calcOhmsLaw()"></div>
+        <div class="ohms-field"><label>Resistance (R)</label><input type="number" id="ol-r" step="any" placeholder="Ohms" oninput="calcOhmsLaw()"></div>
+        <div class="ohms-field"><label>Power (P)</label><input type="number" id="ol-p" step="any" placeholder="Watts" oninput="calcOhmsLaw()"></div>
+      </div>
+      <div>
+        <div class="card" style="background:var(--bg);">
+          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.5rem;">Results</div>
+          <div id="ol-results">
+            <div class="ohms-result-row"><span class="label">V</span><span class="value">—</span><span class="unit">V</span></div>
+            <div class="ohms-result-row"><span class="label">I</span><span class="value">—</span><span class="unit">A</span></div>
+            <div class="ohms-result-row"><span class="label">R</span><span class="value">—</span><span class="unit">Ω</span></div>
+            <div class="ohms-result-row"><span class="label">P</span><span class="value">—</span><span class="unit">W</span></div>
+          </div>
+          <div id="ol-derived" style="margin-top:0.5rem;font-size:0.75rem;color:var(--text-dim);"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Voltage Drop Card -->
+  <div class="card">
+    <h3>📏 Voltage Drop Over Distance</h3>
+    <div class="ohms-grid">
+      <div>
+        <div class="ohms-field">
+          <label>Wire Gauge</label>
+          <select id="vd-awg" class="awg-select" onchange="calcVoltDrop()">
+            <option value="0.3224">0000 (0.3224 Ω/km)</option>
+            <option value="0.4066">000 (0.4066 Ω/km)</option>
+            <option value="0.5127">00 (0.5127 Ω/km)</option>
+            <option value="0.6465">0 (0.6465 Ω/km)</option>
+            <option value="0.8152">2 (0.8152 Ω/km)</option>
+            <option value="1.028">4 (1.028 Ω/km)</option>
+            <option value="1.296">6 (1.296 Ω/km)</option>
+            <option value="1.634">8 (1.634 Ω/km)</option>
+            <option value="2.061" selected>10 (2.061 Ω/km)</option>
+            <option value="2.599">12 (2.599 Ω/km)</option>
+            <option value="3.277">14 (3.277 Ω/km)</option>
+            <option value="4.133">16 (4.133 Ω/km)</option>
+            <option value="5.211">18 (5.211 Ω/km)</option>
+            <option value="6.571">20 (6.571 Ω/km)</option>
+            <option value="8.286">22 (8.286 Ω/km)</option>
+            <option value="10.45">24 (10.45 Ω/km)</option>
+            <option value="13.17">26 (13.17 Ω/km)</option>
+            <option value="16.61">28 (16.61 Ω/km)</option>
+            <option value="20.95">30 (20.95 Ω/km)</option>
+          </select>
+        </div>
+        <div class="ohms-field"><label>Distance (one-way)</label><input type="number" id="vd-dist" value="30" step="any" placeholder="meters" oninput="calcVoltDrop()"></div>
+        <div class="ohms-field">
+          <label>Current Draw</label>
+          <input type="number" id="vd-current" value="10" step="any" placeholder="Amps" oninput="calcVoltDrop()">
+        </div>
+        <div class="ohms-field"><label>Source Voltage</label><input type="number" id="vd-vsrc" value="12" step="any" placeholder="Volts" oninput="calcVoltDrop()"></div>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
+          <label class="toggle-switch" style="position:relative;display:inline-block;width:44px;height:24px;">
+            <input type="checkbox" id="vd-roundtrip" checked onchange="calcVoltDrop()" style="opacity:0;width:0;height:0;">
+            <span class="toggle-slider" style="border-radius:24px;"></span>
+          </label>
+          <span style="font-size:0.8rem;color:var(--text-dim);">Round-trip (×2)</span>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="background:var(--bg);">
+          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.5rem;">Voltage Drop Results</div>
+          <div id="vd-results">
+            <div class="ohms-result-row"><span class="label">V<sub>drop</sub></span><span class="value">—</span><span class="unit">V</span></div>
+            <div class="ohms-result-row"><span class="label">V<sub>load</sub></span><span class="value">—</span><span class="unit">V</span></div>
+            <div class="ohms-result-row"><span class="label">%</span><span class="value">—</span><span class="unit">% loss</span></div>
+            <div class="ohms-result-row"><span class="label">P<sub>loss</sub></span><span class="value">—</span><span class="unit">W</span></div>
+            <div class="ohms-result-row"><span class="label">R<sub>wire</sub></span><span class="value">—</span><span class="unit">Ω</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resistor Divider Card -->
+  <div class="card">
+    <h3>⊢⊣ Resistor Divider</h3>
+    <div class="ohms-grid">
+      <div>
+        <div class="ohms-field"><label>Input Voltage (Vin)</label><input type="number" id="div-vin" value="5" step="any" placeholder="Volts" oninput="calcDivider()"></div>
+        <div class="ohms-field"><label>R1 (top)</label><input type="number" id="div-r1" value="10000" step="any" placeholder="Ohms" oninput="calcDivider()"></div>
+        <div class="ohms-field"><label>R2 (bottom)</label><input type="number" id="div-r2" value="10000" step="any" placeholder="Ohms" oninput="calcDivider()"></div>
+      </div>
+      <div>
+        <div class="card" style="background:var(--bg);">
+          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.5rem;">Output</div>
+          <div class="ohms-result-row"><span class="label">V<sub>out</sub></span><span class="value" id="div-vout">—</span><span class="unit">V</span></div>
+          <div class="ohms-result-row"><span class="label">I</span><span class="value" id="div-i">—</span><span class="unit">mA</span></div>
+          <div class="ohms-result-row"><span class="label">P<sub>R1</sub></span><span class="value" id="div-pr1">—</span><span class="unit">mW</span></div>
+          <div class="ohms-result-row"><span class="label">P<sub>R2</sub></span><span class="value" id="div-pr2">—</span><span class="unit">mW</span></div>
+          <div class="ohms-result-row"><span class="label">Ratio</span><span class="value" id="div-ratio">—</span></div>
+        </div>
+        <div class="divider-visual">
+          <span style="color:var(--red);">Vin</span>
+          <span class="wire"></span>
+          <span class="resistor-box">R1</span>
+          <span class="wire"></span>
+          <span class="vout-point">⬤ Vout</span>
+          <span class="wire"></span>
+          <span class="resistor-box">R2</span>
+          <span class="wire"></span>
+          <span class="gnd">⏚ GND</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     dB/dBm CONVERTER TAB
+     ════════════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-db">
+  <div class="card">
+    <h3>📶 dB/dBm Converter</h3>
+    <div class="db-grid">
+      <div>
+        <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;font-weight:600;margin-bottom:0.5rem;">dBm ↔ Watts ↔ Volts</div>
+        <div class="ohms-field"><label>dBm</label><input type="number" id="db-dbm" step="any" placeholder="dBm" oninput="calcDB_from('dbm')"></div>
+        <div class="ohms-field"><label>Power (Watts)</label><input type="number" id="db-watts" step="any" placeholder="Watts" oninput="calcDB_from('watts')"></div>
+        <div class="ohms-field"><label>Voltage</label><input type="number" id="db-volts" step="any" placeholder="Volts" oninput="calcDB_from('volts')"></div>
+        <div class="db-input-row">
+          <select id="db-impedance" onchange="calcDB_from('impedance')">
+            <option value="50" selected>50 Ω</option>
+            <option value="75">75 Ω</option>
+            <option value="600">600 Ω</option>
+          </select>
+          <span style="font-size:0.75rem;color:var(--text-dim);">impedance</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;font-weight:600;margin-bottom:0.5rem;">dB ↔ Ratio</div>
+        <div class="ohms-field"><label>dB</label><input type="number" id="db-ratio-db" step="any" placeholder="dB" oninput="calcDBRatio_from('db')"></div>
+        <div class="ohms-field"><label>Power Ratio</label><input type="number" id="db-ratio-power" step="any" placeholder="×" oninput="calcDBRatio_from('power')"></div>
+        <div class="ohms-field"><label>Voltage Ratio</label><input type="number" id="db-ratio-volt" step="any" placeholder="×" oninput="calcDBRatio_from('volt')"></div>
+        
+        <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;font-weight:600;margin-top:1rem;margin-bottom:0.35rem;">Cascaded Gain</div>
+        <div class="db-cascade-inputs" id="db-cascade-inputs">
+          <input type="number" value="3" step="any" placeholder="dB" oninput="calcDBCascade()">
+          <input type="number" value="-1" step="any" placeholder="dB" oninput="calcDBCascade()">
+          <input type="number" value="20" step="any" placeholder="dB" oninput="calcDBCascade()">
+        </div>
+        <button onclick="addDBCascadeStage()" style="background:var(--bg);border:1px solid var(--border);color:var(--text-dim);border-radius:4px;padding:0.2rem 0.5rem;font-size:0.7rem;cursor:pointer;margin-top:0.25rem;">+ Add Stage</button>
+        <div style="font-family:var(--font);font-size:0.9rem;color:var(--cyan);margin-top:0.5rem;" id="db-cascade-result">Total: 22 dB (158.5× power)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     R CALC TAB (Parallel/Series + LED + Current Divider)
+     ════════════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-rcalc">
+  <!-- Parallel Resistance Card -->
+  <div class="card">
+    <h3>⫼ Parallel / Series Resistance</h3>
+    <div class="rc-solver">
+      <div>
+        <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;font-weight:600;margin-bottom:0.35rem;">Parallel Resistors</div>
+        <div class="rc-parallel-inputs" id="rc-parallel-chips"></div>
+        <div style="display:flex;gap:0.4rem;margin-top:0.35rem;">
+          <input type="number" id="rc-parallel-add" placeholder="Ω" style="width:90px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--font);font-size:0.85rem;padding:0.35rem 0.5rem;" onkeydown="if(event.key==='Enter') addParallelR()">
+          <button onclick="addParallelR()" style="background:var(--cyan);color:#fff;border:none;border-radius:4px;padding:0.35rem 0.75rem;font-size:0.8rem;cursor:pointer;font-family:var(--font-ui);">Add</button>
+        </div>
+        <div style="margin-top:0.5rem;font-family:var(--font);font-size:1.1rem;color:var(--cyan);" id="rc-parallel-result">—</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);" id="rc-parallel-nearest"></div>
+      </div>
+      <div>
+        <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;font-weight:600;margin-bottom:0.35rem;">Series Resistors</div>
+        <div class="rc-parallel-inputs" id="rc-series-chips"></div>
+        <div style="display:flex;gap:0.4rem;margin-top:0.35rem;">
+          <input type="number" id="rc-series-add" placeholder="Ω" style="width:90px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--font);font-size:0.85rem;padding:0.35rem 0.5rem;" onkeydown="if(event.key==='Enter') addSeriesR()">
+          <button onclick="addSeriesR()" style="background:var(--cyan);color:#fff;border:none;border-radius:4px;padding:0.35rem 0.75rem;font-size:0.8rem;cursor:pointer;font-family:var(--font-ui);">Add</button>
+        </div>
+        <div style="margin-top:0.5rem;font-family:var(--font);font-size:1.1rem;color:var(--cyan);" id="rc-series-result">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LED Resistor Card -->
+  <div class="card">
+    <h3>💡 LED Dropper Resistor</h3>
+    <div class="rc-solver">
+      <div>
+        <div class="ohms-field"><label>Supply Voltage (V)</label><input type="number" id="led-vsup" value="5" step="any" oninput="calcLED()"></div>
+        <div class="ohms-field"><label>LED Forward Voltage (Vf)</label><input type="number" id="led-vf" value="2.0" step="any" oninput="calcLED()"></div>
+        <div class="ohms-field"><label>LED Current (mA)</label><input type="number" id="led-if" value="20" step="any" oninput="calcLED()"></div>
+        <div class="led-colors">
+          <span class="led-color-chip active" onclick="setLED(2.0,20)" style="background:#ff000033;color:#ff4444;">🔴 Red 2.0V</span>
+          <span class="led-color-chip" onclick="setLED(2.1,20)" style="background:#ffaa0033;color:#ffaa00;">🟠 Amber 2.1V</span>
+          <span class="led-color-chip" onclick="setLED(2.2,20)" style="background:#ffff0033;color:#cccc00;">🟡 Yellow 2.2V</span>
+          <span class="led-color-chip" onclick="setLED(3.2,20)" style="background:#00ff0033;color:#44ff44;">🟢 Green 3.2V</span>
+          <span class="led-color-chip" onclick="setLED(3.3,20)" style="background:#0088ff33;color:#44aaff;">🔵 Blue 3.3V</span>
+          <span class="led-color-chip" onclick="setLED(3.4,20)" style="background:#ffffff33;color:#cccccc;">⚪ White 3.4V</span>
+          <span class="led-color-chip" onclick="setLED(1.7,20)" style="background:#ff000033;color:#ff6666;">🔴 IR 1.7V</span>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="background:var(--bg);">
+          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.5rem;">Result</div>
+          <div class="ohms-result-row"><span class="label">R</span><span class="value" id="led-r">—</span><span class="unit">Ω</span></div>
+          <div class="ohms-result-row"><span class="label">P<sub>R</sub></span><span class="value" id="led-pr">—</span><span class="unit">mW</span></div>
+          <div class="ohms-result-row"><span class="label">P<sub>LED</sub></span><span class="value" id="led-pled">—</span><span class="unit">mW</span></div>
+          <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.3rem;" id="led-nearest"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Current Divider Card -->
+  <div class="card">
+    <h3>⑂ Current Divider</h3>
+    <div class="rc-solver">
+      <div>
+        <div class="ohms-field"><label>Total Current (mA)</label><input type="number" id="cd-itotal" value="100" step="any" oninput="calcCurrentDiv()"></div>
+        <div class="ohms-field"><label>R1 (Ω)</label><input type="number" id="cd-r1" value="100" step="any" oninput="calcCurrentDiv()"></div>
+        <div class="ohms-field"><label>R2 (Ω)</label><input type="number" id="cd-r2" value="200" step="any" oninput="calcCurrentDiv()"></div>
+      </div>
+      <div>
+        <div class="card" style="background:var(--bg);">
+          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.5rem;">Branch Currents</div>
+          <div class="ohms-result-row"><span class="label">I₁</span><span class="value" id="cd-i1">—</span><span class="unit">mA</span></div>
+          <div class="ohms-result-row"><span class="label">I₂</span><span class="value" id="cd-i2">—</span><span class="unit">mA</span></div>
+          <div class="ohms-result-row"><span class="label">R<sub>eq</sub></span><span class="value" id="cd-req">—</span><span class="unit">Ω</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     FREQ CALC TAB (RC + LC + Reactance)
+     ════════════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-freq">
+  <!-- RC Filter Card -->
+  <div class="card">
+    <h3>⏱ RC Time Constant &amp; Filter</h3>
+    <div class="rc-solver">
+      <div>
+        <div class="ohms-field"><label>Resistance (R)</label><input type="number" id="rc-r" value="10000" step="any" placeholder="Ω" oninput="calcRC()"></div>
+        <div class="ohms-field"><label>Capacitance (C)</label><input type="number" id="rc-c" value="0.0000001" step="any" placeholder="Farads" oninput="calcRC()"></div>
+        <div style="font-size:0.65rem;color:var(--text-dim);margin-top:-0.3rem;margin-bottom:0.5rem;">Default: 10kΩ, 100nF → τ = 1ms, fc = 159Hz</div>
+      </div>
+      <div>
+        <div class="freq-result"><span class="freq-label">τ (time constant)</span><span class="freq-value" id="rc-tau">—</span></div>
+        <div class="freq-result"><span class="freq-label">fc (cutoff freq)</span><span class="freq-value" id="rc-fc">—</span></div>
+        <div class="freq-result"><span class="freq-label">Rise Time (10-90%)</span><span class="freq-value" id="rc-trise">—</span></div>
+        <div class="freq-result"><span class="freq-label">Xc at fc</span><span class="freq-value" id="rc-xc">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LC Resonator Card -->
+  <div class="card">
+    <h3>〰️ LC Resonant Frequency</h3>
+    <div class="rc-solver">
+      <div>
+        <div class="ohms-field"><label>Inductance (L)</label><input type="number" id="lc-l" value="0.000010" step="any" placeholder="Henries" oninput="calcLC()"></div>
+        <div class="ohms-field"><label>Capacitance (C)</label><input type="number" id="lc-c" value="0.0000001" step="any" placeholder="Farads" oninput="calcLC()"></div>
+        <div class="ohms-field"><label>Series R (for Q, optional)</label><input type="number" id="lc-r" value="0" step="any" placeholder="Ω" oninput="calcLC()"></div>
+        <div style="font-size:0.65rem;color:var(--text-dim);">Default: 10µH, 100nF → f = 159kHz</div>
+      </div>
+      <div>
+        <div class="freq-result"><span class="freq-label">Resonant Frequency</span><span class="freq-value" id="lc-f">—</span></div>
+        <div class="freq-result"><span class="freq-label">XL = XC at res.</span><span class="freq-value" id="lc-x">—</span></div>
+        <div class="freq-result"><span class="freq-label">Q Factor</span><span class="freq-value" id="lc-q">—</span></div>
+        <div class="freq-result"><span class="freq-label">ω (angular freq)</span><span class="freq-value" id="lc-omega">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reactance Card -->
+  <div class="card">
+    <h3>∿ Reactance (XL / XC)</h3>
+    <div class="rc-solver">
+      <div>
+        <div class="ohms-field"><label>Frequency</label><input type="number" id="rx-freq" value="1000000" step="any" placeholder="Hz" oninput="calcReactance()"></div>
+        <div class="ohms-field"><label>Inductance (L)</label><input type="number" id="rx-l" value="0.000010" step="any" placeholder="Henries" oninput="calcReactance()"></div>
+        <div class="ohms-field"><label>Capacitance (C)</label><input type="number" id="rx-c" value="0.0000001" step="any" placeholder="Farads" oninput="calcReactance()"></div>
+      </div>
+      <div>
+        <div class="freq-result"><span class="freq-label">XL (inductive)</span><span class="freq-value" id="rx-xl">—</span></div>
+        <div class="freq-result"><span class="freq-label">XC (capacitive)</span><span class="freq-value" id="rx-xc">—</span></div>
+        <div class="freq-result"><span class="freq-label">|XL - XC|</span><span class="freq-value" id="rx-diff">—</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SVG ICON SPRITE (for TV Remote)
+     ════════════════════════════════════════════════════════════════ -->
+<svg style="display:none;" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="icon-power" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 2v8"/><circle cx="12" cy="16" r="5"/>
+  </symbol>
+  <symbol id="icon-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 12L12 3l9 9"/><path d="M5 10v10h14V10"/>
+  </symbol>
+  <symbol id="icon-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M19 12H5m7-7l-7 7 7 7"/>
+  </symbol>
+  <symbol id="icon-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="18 15 12 9 6 15"/>
+  </symbol>
+  <symbol id="icon-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="6 9 12 15 18 9"/>
+  </symbol>
+  <symbol id="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="15 18 9 12 15 6"/>
+  </symbol>
+  <symbol id="icon-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="9 18 15 12 9 6"/>
+  </symbol>
+  <symbol id="icon-enter" viewBox="0 0 24 24" fill="currentColor">
+    <circle cx="12" cy="12" r="4"/>
+  </symbol>
+  <symbol id="icon-volup" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/><path d="M19.07 4.93a10 10 0 010 14.14"/>
+  </symbol>
+  <symbol id="icon-voldown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/>
+  </symbol>
+  <symbol id="icon-mute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
+  </symbol>
+  <symbol id="icon-play" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+    <polygon points="6 3 20 12 6 21 6 3"/>
+  </symbol>
+  <symbol id="icon-rew" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+    <polygon points="12 3 4 12 12 21 12 13 20 21 20 3 12 11 12 3"/>
+  </symbol>
+  <symbol id="icon-ff" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+    <polygon points="12 3 20 12 12 21 12 13 4 21 4 3 12 11 12 3"/>
+  </symbol>
+  <symbol id="icon-stop" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+    <rect x="4" y="4" width="16" height="16" rx="2"/>
+  </symbol>
+  <symbol id="icon-source" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+  </symbol>
+  <symbol id="icon-hdmi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 7h16v3H4z"/><path d="M6 10v7h12v-7"/><path d="M8 17l1 3h6l1-3"/>
+  </symbol>
+  <symbol id="icon-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+  </symbol>
+  <symbol id="icon-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+    <line x1="4" y1="6" x2="20" y2="6"/>
+    <line x1="4" y1="12" x2="20" y2="12"/>
+    <line x1="4" y1="18" x2="20" y2="18"/>
+  </symbol>
+</svg>
+
+<!-- ════════════════════════════════════════════════════════════════
+     TV REMOTE TAB
+     ════════════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-tv">
+  <div class="card">
+    <h3>TV Status</h3>
+    <div id="tv-status" style="font-family:var(--font);font-size:0.85rem;color:var(--text-dim);">
+      Checking...
+    </div>
+    <div style="margin-top:0.5rem;display:none;" id="tv-wake-row">
+      <button class="btn primary" onclick="tvWake()" style="font-size:0.8rem;">
+        <svg width="14" height="14" style="vertical-align:middle;margin-right:4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Wake TV
+      </button>
+      <span style="font-size:0.7rem;color:var(--text-dim);margin-left:0.5rem;">Wake-on-LAN</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Remote Control</h3>
+    <div class="tv-remote">
+      <!-- Power & Nav row -->
+      <div class="tv-row tv-top-row">
+        <button class="tv-btn tv-power" onclick="tvSendKey('POWER')" title="Power">
+          <svg width="22" height="22"><use href="#icon-power"/></svg>
+        </button>
+        <div class="tv-spacer"></div>
+        <button class="tv-btn tv-sm" onclick="tvSendKey('SETTINGS')" title="Settings">
+          <svg width="16" height="16"><use href="#icon-settings"/></svg>
+        </button>
+        <button class="tv-btn tv-sm" onclick="tvSendKey('HOME')" title="Home">
+          <svg width="16" height="16"><use href="#icon-home"/></svg>
+        </button>
+        <button class="tv-btn tv-sm" onclick="tvSendKey('RETURN')" title="Back">
+          <svg width="16" height="16"><use href="#icon-back"/></svg>
+        </button>
+      </div>
+
+      <!-- D-Pad -->
+      <div class="tv-dpad-wrap">
+        <div class="tv-dpad-ring">
+          <button class="tv-btn tv-nav tv-nav-up" onclick="tvSendKey('UP')" title="Up">
+            <svg width="18" height="18"><use href="#icon-up"/></svg>
+          </button>
+          <button class="tv-btn tv-nav tv-nav-left" onclick="tvSendKey('LEFT')" title="Left">
+            <svg width="18" height="18"><use href="#icon-left"/></svg>
+          </button>
+          <button class="tv-btn tv-enter" onclick="tvSendKey('ENTER')" title="OK">
+            <svg width="16" height="16"><use href="#icon-enter"/></svg>
+          </button>
+          <button class="tv-btn tv-nav tv-nav-right" onclick="tvSendKey('RIGHT')" title="Right">
+            <svg width="18" height="18"><use href="#icon-right"/></svg>
+          </button>
+          <button class="tv-btn tv-nav tv-nav-down" onclick="tvSendKey('DOWN')" title="Down">
+            <svg width="18" height="18"><use href="#icon-down"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Volume -->
+      <div class="tv-section-label">VOLUME</div>
+      <div class="tv-row">
+        <button class="tv-btn tv-media" onclick="tvSendKey('VOLUP')" title="Volume Up">
+          <svg width="20" height="20"><use href="#icon-volup"/></svg>
+        </button>
+        <button class="tv-btn tv-media tv-mute" onclick="tvSendKey('MUTE')" title="Mute">
+          <svg width="20" height="20"><use href="#icon-mute"/></svg>
+        </button>
+        <button class="tv-btn tv-media" onclick="tvSendKey('VOLDOWN')" title="Volume Down">
+          <svg width="20" height="20"><use href="#icon-voldown"/></svg>
+        </button>
+      </div>
+
+      <!-- Media -->
+      <div class="tv-section-label">MEDIA</div>
+      <div class="tv-row">
+        <button class="tv-btn tv-media" onclick="tvSendKey('REW')" title="Rewind">
+          <svg width="20" height="20"><use href="#icon-rew"/></svg>
+        </button>
+        <button class="tv-btn tv-media tv-play" onclick="tvSendKey('PLAY')" title="Play / Pause">
+          <svg width="20" height="20"><use href="#icon-play"/></svg>
+        </button>
+        <button class="tv-btn tv-media" onclick="tvSendKey('FF')" title="Fast Forward">
+          <svg width="20" height="20"><use href="#icon-ff"/></svg>
+        </button>
+        <button class="tv-btn tv-media" onclick="tvSendKey('STOP')" title="Stop">
+          <svg width="16" height="16"><use href="#icon-stop"/></svg>
+        </button>
+      </div>
+
+      <!-- App launchers -->
+      <div class="tv-section-label">APPS</div>
+      <div class="tv-app-grid">
+        <button class="tv-app-btn netflix" onclick="tvSendKey('NETFLIX')">
+          <span class="tv-app-letter">N</span>
+          <span class="tv-app-name">Netflix</span>
+        </button>
+        <button class="tv-app-btn youtube" onclick="tvSendKey('YOUTUBE')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+          <span class="tv-app-name">YouTube</span>
+        </button>
+        <button class="tv-app-btn prime" onclick="tvSendKey('AMAZON')">
+          <span class="tv-app-name">Prime</span>
+        </button>
+        <button class="tv-app-btn disney" onclick="tvSendKey('DISNEY')">
+          <span class="tv-app-name">Disney+</span>
+        </button>
+      </div>
+
+      <!-- Bottom row -->
+      <div class="tv-section-label">INPUT</div>
+      <div class="tv-row">
+        <button class="tv-btn tv-sm" onclick="tvSendKey('SOURCE')" title="Source">
+          <svg width="16" height="16"><use href="#icon-source"/></svg>
+          <span style="margin-left:4px;font-size:0.65rem;">Src</span>
+        </button>
+        <button class="tv-btn tv-sm" onclick="tvSendKey('HDMI')" title="HDMI">
+          <svg width="16" height="16"><use href="#icon-hdmi"/></svg>
+          <span style="margin-left:4px;font-size:0.65rem;">HDMI</span>
+        </button>
+        <button class="tv-btn tv-sm tv-exit" onclick="tvSendKey('EXIT')" title="Exit">
+          <svg width="14" height="14"><use href="#icon-exit"/></svg>
+        </button>
+      </div>
+
+      <!-- Number pad -->
+      <div class="tv-section-label">CHANNELS</div>
+      <div class="tv-numpad">
+        <button class="tv-btn tv-num" onclick="tvSendKey('1')">1</button>
+        <button class="tv-btn tv-num" onclick="tvSendKey('2')">2</button>
+        <button class="tv-btn tv-num" onclick="tvSendKey('3')">3</button>
+        <button class="tv-btn tv-num" onclick="tvSendKey('4')">4</button>
+        <button class="tv-btn tv-num" onclick="tvSendKey('5')">5</button>
+        <button class="tv-btn tv-num" onclick="tvSendKey('6')">6</button>
+        <button class="tv-btn tv-num" onclick="tvSendKey('7')">7</button>
+        <button class="tv-btn tv-num" onclick="tvSendKey('8')">8</button>
+        <button class="tv-btn tv-num" onclick="tvSendKey('9')">9</button>
+        <div></div>
+        <button class="tv-btn tv-num" onclick="tvSendKey('0')">0</button>
+        <div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     SETTINGS TAB
+     ════════════════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-settings">
+  <div class="settings-grid">
+    <h3>⚙️ Settings</h3>
+
+    <div class="settings-section">
+      <h4>Tabs</h4>
+      <p style="font-size:0.7rem;color:var(--text-dim);margin-bottom:0.75rem;">Show or hide tools on the menu ribbon.</p>
+      <div id="tab-toggles"></div>
+    </div>
+
+    <div class="settings-section">
+      <h4>World Clock Timezones</h4>
+      <p style="font-size:0.7rem;color:var(--text-dim);margin-bottom:0.75rem;">Select which timezones appear in the World Clock.</p>
+      <div id="tz-editor">
+        <div id="tz-list"></div>
+        <div class="tz-add-row">
+          <select id="tz-preset">
+            <option value="">+ Add timezone...</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-actions">
+      <button class="settings-save" onclick="saveSettings()">💾 Save Settings</button>
+      <span id="settings-saved" style="display:none;color:var(--green);margin-left:1rem;">✓ Saved</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ════════════════════════════════════════════════════════════════════ -->
+<script>
+// ── Tab Switching ─────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    // Highlight parent dropdown toggle
+    document.querySelectorAll('.nav-dropdown-toggle').forEach(t => t.classList.remove('active'));
+    const parent = btn.closest('.nav-dropdown');
+    if (parent) {
+      const toggle = parent.querySelector('.nav-dropdown-toggle');
+      if (toggle) toggle.classList.add('active');
+      parent.classList.remove('open');
+    }
+  });
+});
+
+// ── Dropdown Behavior ────────────────────────────────────────────
+document.querySelectorAll('.nav-dropdown-toggle').forEach(toggle => {
+  toggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const dropdown = toggle.parentElement;
+    const wasOpen = dropdown.classList.contains('open');
+    document.querySelectorAll('.nav-dropdown').forEach(d => d.classList.remove('open'));
+    if (!wasOpen) dropdown.classList.add('open');
+  });
+  // Touch events for mobile
+  toggle.addEventListener('touchend', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const dropdown = toggle.parentElement;
+    const wasOpen = dropdown.classList.contains('open');
+    document.querySelectorAll('.nav-dropdown').forEach(d => d.classList.remove('open'));
+    if (!wasOpen) dropdown.classList.add('open');
+  });
+});
+
+// Click outside to close — only if target isn't inside a dropdown
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.nav-dropdown')) {
+    document.querySelectorAll('.nav-dropdown').forEach(d => d.classList.remove('open'));
+  }
+});
+document.addEventListener('touchend', (e) => {
+  if (!e.target.closest('.nav-dropdown')) {
+    document.querySelectorAll('.nav-dropdown').forEach(d => d.classList.remove('open'));
+  }
+});
+
+// ── Color Data ────────────────────────────────────────────────────
+const COLOR_BANDS = [
+  {name:"black", digit:0, mult:1, hex:"#1a1a2e", text:"#888", tol:null, tcr:null},
+  {name:"brown", digit:1, mult:10, hex:"#8B4513", text:"#fff", tol:1, tcr:100},
+  {name:"red", digit:2, mult:100, hex:"#CC0000", text:"#fff", tol:2, tcr:50},
+  {name:"orange", digit:3, mult:1000, hex:"#FF8C00", text:"#000", tol:null, tcr:15},
+  {name:"yellow", digit:4, mult:10000, hex:"#FFD700", text:"#000", tol:null, tcr:25},
+  {name:"green", digit:5, mult:100000, hex:"#228B22", text:"#fff", tol:0.5, tcr:null},
+  {name:"blue", digit:6, mult:1000000, hex:"#4169E1", text:"#fff", tol:0.25, tcr:10},
+  {name:"violet", digit:7, mult:10000000, hex:"#8B008B", text:"#fff", tol:0.1, tcr:5},
+  {name:"grey", digit:8, mult:100000000, hex:"#808080", text:"#fff", tol:0.05, tcr:null},
+  {name:"white", digit:9, mult:1000000000, hex:"#F5F5F5", text:"#000", tol:null, tcr:null},
+  {name:"gold", digit:-1, mult:0.1, hex:"#DAA520", text:"#000", tol:5, tcr:null},
+  {name:"silver", digit:-2, mult:0.01, hex:"#C0C0C0", text:"#000", tol:10, tcr:null},
+];
+
+// ── Clock ─────────────────────────────────────────────────────────
+let TIMEZONES = [];
+
+// All available timezones for the picker
+const ALL_TIMEZONES = [
+  {city:"St. John's", tz:"America/St_Johns", label:"NDT"},
+  {city:"Halifax", tz:"America/Halifax", label:"AT"},
+  {city:"Collingwood", tz:"America/Toronto", label:"ET"},
+  {city:"Vancouver", tz:"America/Vancouver", label:"PT"},
+  {city:"Anchorage", tz:"America/Anchorage", label:"AKT"},
+  {city:"Honolulu", tz:"Pacific/Honolulu", label:"HT"},
+  {city:"UTC", tz:"UTC", label:"UTC"},
+  {city:"London", tz:"Europe/London", label:"GMT"},
+  {city:"Paris", tz:"Europe/Paris", label:"CET"},
+  {city:"Tokyo", tz:"Asia/Tokyo", label:"JST"},
+  {city:"Shanghai", tz:"Asia/Shanghai", label:"CST"},
+  {city:"Singapore", tz:"Asia/Singapore", label:"SGT"},
+  {city:"Sydney", tz:"Australia/Sydney", label:"AET"},
+  {city:"Auckland", tz:"Pacific/Auckland", label:"NZST"},
+  {city:"Dubai", tz:"Asia/Dubai", label:"GST"},
+  {city:"Mumbai", tz:"Asia/Kolkata", label:"IST"},
+  {city:"Moscow", tz:"Europe/Moscow", label:"MSK"},
+];
+
+function buildClocks() {
+  const container = document.getElementById('clocks');
+  container.innerHTML = TIMEZONES.map(t => `
+    <div class="clock-card" id="clock-${t.city.replace(/[^a-zA-Z]/g,'')}">
+      <div class="clock-city">${t.city}</div>
+      <div class="clock-tz">${t.label}</div>
+      <div class="clock-time">
+        <span class="clock-status" id="status-${t.city.replace(/[^a-zA-Z]/g,'')}"></span>
+        <span id="time-${t.city.replace(/[^a-zA-Z]/g,'')}">--:--</span><span class="clock-seconds" id="sec-${t.city.replace(/[^a-zA-Z]/g,'')}"></span>
+      </div>
+      <div class="clock-date" id="date-${t.city.replace(/[^a-zA-Z]/g,'')}"></div>
+      <div class="clock-bar" id="bar-${t.city.replace(/[^a-zA-Z]/g,'')}"></div>
+    </div>
+  `).join('');
+}
+
+function updateClocks() {
+  const now = new Date();
+  TIMEZONES.forEach(t => {
+    const id = t.city.replace(/[^a-zA-Z]/g,'');
+    const opts = {timeZone: t.tz, hour12: false, hour:'2-digit', minute:'2-digit'};
+    const secOpts = {timeZone: t.tz, hour12: false, hour:'2-digit', minute:'2-digit', second:'2-digit'};
+    const dateOpts = {timeZone: t.tz, weekday:'short', month:'short', day:'numeric'};
+
+    const timeStr = now.toLocaleString('en-US', opts);
+    const fullTimeStr = now.toLocaleString('en-US', secOpts);
+    const parts = fullTimeStr.match(/(\d{2}):(\d{2}):(\d{2})/);
+    const secStr = parts ? parts[3] : '00';
+    const dateStr = now.toLocaleString('en-US', dateOpts);
+    const hour = parseInt(now.toLocaleString('en-US', {timeZone:t.tz, hour12:false, hour:'2-digit'}));
+    const day = now.toLocaleString('en-US', {timeZone:t.tz, weekday:'short'});
+    const isWeekday = !['Sat','Sun'].includes(day);
+    const isBiz = isWeekday && hour >= 9 && hour < 17;
+    const isFringe = isWeekday && (hour >= 7 && hour < 9 || hour >= 17 && hour < 19);
+
+    const card = document.getElementById('clock-' + id);
+    if (card) {
+      card.className = 'clock-card ' + (isBiz ? 'biz' : isFringe ? 'fringe' : 'off');
+    }
+
+    const statusEl = document.getElementById('status-' + id);
+    if (statusEl) {
+      statusEl.className = 'clock-status ' + (isBiz ? 'biz' : 'off');
+    }
+
+    const timeEl = document.getElementById('time-' + id);
+    const secEl = document.getElementById('sec-' + id);
+    const dateEl = document.getElementById('date-' + id);
+    if (timeEl) timeEl.textContent = timeStr;
+    if (secEl) secEl.textContent = ':' + secStr;
+    if (dateEl) dateEl.textContent = dateStr;
+
+    // 24h bar
+    const barEl = document.getElementById('bar-' + id);
+    if (barEl) {
+      let html = '';
+      for (let h = 0; h < 24; h++) {
+        let cls = 'off';
+        if (isWeekday) {
+          if (h >= 9 && h <= 16) cls = 'biz';
+          else if (h === 7 || h === 8 || h === 17 || h === 18) cls = 'fringe';
+        }
+        if (h === hour) cls += '" style="outline:1px solid var(--cyan);outline-offset:1px;';
+        html += `<div class="clock-bar-seg ${cls}"></div>`;
+      }
+      barEl.innerHTML = html;
+    }
+  });
+
+  buildOverlaps(now);
+}
+
+function buildOverlaps(now) {
+  const container = document.getElementById('overlaps');
+  const pairs = [];
+  for (let i = 0; i < TIMEZONES.length; i++) {
+    for (let j = i + 1; j < TIMEZONES.length; j++) {
+      const a = TIMEZONES[i], b = TIMEZONES[j];
+      const ha = parseInt(now.toLocaleString('en-US', {timeZone:a.tz, hour12:false, hour:'2-digit'}));
+      const hb = parseInt(now.toLocaleString('en-US', {timeZone:b.tz, hour12:false, hour:'2-digit'}));
+      const overlap = Math.max(0, Math.min(ha >= 9 && ha < 17 ? 17 - ha : 0, hb >= 9 && hb < 17 ? 17 - hb : 0));
+      const totalOverlap = 8; // 9am-5pm = 8h window
+      pairs.push({a, b, overlap: totalOverlap}); // simplified: assume 8h overlap if both biz hours align
+    }
+  }
+
+  // Better overlap calc: find overlapping business hours
+  container.innerHTML = '';
+  for (let i = 0; i < TIMEZONES.length; i++) {
+    for (let j = i + 1; j < TIMEZONES.length; j++) {
+      const a = TIMEZONES[i], b = TIMEZONES[j];
+      // Get current hour in each TZ
+      const ha = parseInt(now.toLocaleString('en-US', {timeZone:a.tz, hour12:false, hour:'2-digit'}));
+      const hb = parseInt(now.toLocaleString('en-US', {timeZone:b.tz, hour12:false, hour:'2-digit'}));
+      const diff = ha - hb;
+
+      // Business hours for a: 9-17. For b: same. Offset by diff.
+      const aStart = 9, aEnd = 17;
+      const bStart = 9 + diff, bEnd = 17 + diff;
+      const overlapStart = Math.max(aStart, bStart);
+      const overlapEnd = Math.min(aEnd, bEnd);
+      const overlapHrs = Math.max(0, overlapEnd - overlapStart);
+
+      let color = 'var(--green)';
+      if (overlapHrs < 3) color = 'var(--red)';
+      else if (overlapHrs < 6) color = 'var(--yellow)';
+
+      const div = document.createElement('div');
+      div.className = 'overlap-item';
+      div.innerHTML = `
+        <span>${a.city} ↔ ${b.city}</span>
+        <span style="color:${color};font-family:var(--font);">
+          ${overlapHrs > 0 ? overlapHrs + 'h overlap' : 'no overlap'}
+        </span>`;
+      container.appendChild(div);
+    }
+  }
+}
+
+// ── Depth Calculator ──────────────────────────────────────────────
+const SALT_PSI = 0.445, FRESH_PSI = 0.433, FT_PER_M = 3.28084;
+const REF_DEPTHS = [0, 10, 50, 100, 200, 500, 1000, 2000, 3000, 4000, 6000, 11000];
+
+function buildRefTable() {
+  const tbody = document.querySelector('#ref-table tbody');
+  tbody.innerHTML = REF_DEPTHS.map(d => {
+    const ft = d * FT_PER_M;
+    const psi = ft * SALT_PSI;
+    const atm = (psi / 14.6959) + 1;
+    const bar = psi * 0.0689476;
+    const kpa = bar * 100;
+    const cls = d >= 3000 ? ' class="deep"' : d === 0 ? ' style="opacity:0.4"' : '';
+    return `<tr${cls}>
+      <td>${d} m</td>
+      <td>${d===0?'0.0':psi.toFixed(0)} psi</td>
+      <td>${atm.toFixed(0)}</td>
+      <td>${d===0?'0.00':bar.toFixed(0)}</td>
+      <td>${d===0?'0.0':kpa.toFixed(0)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function calculateDepth() {
+  const meters = parseFloat(document.getElementById('depth-input').value) || 0;
+  const water = document.getElementById('water-type').value;
+  const psiPerFt = water === 'salt' ? SALT_PSI : FRESH_PSI;
+
+  const ft = meters * FT_PER_M;
+  const psi = ft * psiPerFt;
+  const atm = (psi / 14.6959) + 1;
+  const bar = psi * 0.0689476;
+  const kpa = bar * 100;
+
+  document.getElementById('depth-results').innerHTML = `
+    <div class="result-item"><div class="result-label">Pressure</div><div class="result-value cyan">${psi.toFixed(1)} psi</div></div>
+    <div class="result-item"><div class="result-label">Absolute ATM</div><div class="result-value">${atm.toFixed(1)}</div></div>
+    <div class="result-item"><div class="result-label">Gauge ΔP</div><div class="result-value">${(atm-1).toFixed(1)} atm</div></div>
+    <div class="result-item"><div class="result-label">Bar</div><div class="result-value">${bar.toFixed(2)}</div></div>
+    <div class="result-item"><div class="result-label">kPa</div><div class="result-value">${kpa.toFixed(1)}</div></div>
+  `;
+
+  let zone = '';
+  if (meters >= 11000) zone = 'Hadal Zone — deeper than the Marianas Trench. Your ROV is having a very bad day.';
+  else if (meters >= 6000) zone = 'Hadal Zone — only 2% of the ocean floor. Respect.';
+  else if (meters >= 4000) zone = 'Abyssopelagic Zone — no light, crushing pressure, eternal darkness.';
+  else if (meters >= 1000) zone = 'Bathypelagic Zone — midnight zone. No light penetrates.';
+  else if (meters >= 200) zone = 'Mesopelagic Zone — twilight zone. Light fades fast.';
+  else if (meters > 0) zone = 'Epipelagic Zone — sunlight zone. The easy life.';
+  document.getElementById('zone-tag').textContent = zone;
+
+  // Also fetch from API to validate
+  fetch(`/api/depth?meters=${meters}&water=${water}`)
+    .then(r => r.json())
+    .catch(() => {}); // silent
+}
+
+// ── Resistor Decoder ──────────────────────────────────────────────
+let selectedBands = 4;
+let pickedColors = [];
+
+function setBands(n) {
+  selectedBands = n;
+  pickedColors = [];
+  document.querySelectorAll('#btn-4band, #btn-5band, #btn-6band').forEach(b => {
+    b.style.background = '';
+    b.style.color = '';
+  });
+  document.getElementById('btn-' + n + 'band').style.background = 'var(--cyan)';
+  document.getElementById('btn-' + n + 'band').style.color = '#000';
+  buildBandSelectors();
+  updateResult();
+}
+
+function buildColorRef() {
+  const grid = document.getElementById('color-ref');
+  const tbody = document.querySelector('#color-ref-table tbody');
+
+  grid.innerHTML = COLOR_BANDS.map(c =>
+    `<div class="color-swatch" style="background:${c.hex};color:${c.text};" title="${c.name}">${c.name.substring(0,3)}</div>`
+  ).join('');
+
+  tbody.innerHTML = COLOR_BANDS.map(c => {
+    const multStr = c.mult >= 1e9 ? (c.mult/1e9).toFixed(1)+'G' :
+                    c.mult >= 1e6 ? (c.mult/1e6).toFixed(1)+'M' :
+                    c.mult >= 1e3 ? (c.mult/1e3).toFixed(1)+'k' :
+                    c.mult < 1 ? '×'+c.mult : c.mult.toString();
+    return `<tr>
+      <td><span style="display:inline-block;width:14px;height:14px;border-radius:2px;background:${c.hex};vertical-align:middle;margin-right:6px;"></span>${c.name}</td>
+      <td>${c.digit >= 0 ? c.digit : '—'}</td>
+      <td>${multStr}Ω</td>
+      <td>${c.tol !== null ? '±'+c.tol+'%' : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function buildESeriesTables() {
+  // E96 — 1% tolerance
+  const e96 = [1.00,1.02,1.05,1.07,1.10,1.13,1.15,1.18,1.21,1.24,1.27,1.30,1.33,1.37,1.40,1.43,1.47,1.50,1.54,1.58,1.62,1.65,1.69,1.74,1.78,1.82,1.87,1.91,1.96,2.00,2.05,2.10,2.15,2.21,2.26,2.32,2.37,2.43,2.49,2.55,2.61,2.67,2.74,2.80,2.87,2.94,3.01,3.09,3.16,3.24,3.32,3.40,3.48,3.57,3.65,3.74,3.83,3.92,4.02,4.12,4.22,4.32,4.42,4.53,4.64,4.75,4.87,4.99,5.11,5.23,5.36,5.49,5.62,5.76,5.90,6.04,6.19,6.34,6.49,6.65,6.81,6.98,7.15,7.32,7.50,7.68,7.87,8.06,8.25,8.45,8.66,8.87,9.09,9.31,9.53,9.76];
+  // E24 — 5% tolerance
+  const e24 = [1.0,1.1,1.2,1.3,1.5,1.6,1.8,2.0,2.2,2.4,2.7,3.0,3.3,3.6,3.9,4.3,4.7,5.1,5.6,6.2,6.8,7.5,8.2,9.1];
+
+  document.getElementById('e96-table').innerHTML = e96.map(v =>
+    `<span>${v.toFixed(2).replace(/0+$/,'').replace(/\.$/,'')}</span>`
+  ).join('');
+
+  document.getElementById('e24-table').innerHTML = e24.map(v =>
+    `<span>${v.toFixed(1)}</span>`
+  ).join('');
+}
+
+function buildBandSelectors() {
+  const container = document.getElementById('band-selectors');
+  const labels = selectedBands === 4
+    ? ['Band 1 — 1st Digit', 'Band 2 — 2nd Digit', 'Band 3 — Multiplier', 'Band 4 — Tolerance']
+    : selectedBands === 5
+    ? ['Band 1 — 1st Digit', 'Band 2 — 2nd Digit', 'Band 3 — 3rd Digit', 'Band 4 — Multiplier', 'Band 5 — Tolerance']
+    : ['Band 1 — 1st Digit', 'Band 2 — 2nd Digit', 'Band 3 — 3rd Digit', 'Band 4 — Multiplier', 'Band 5 — Tolerance', 'Band 6 — TCR'];
+
+  let html = '';
+  for (let i = 0; i < selectedBands; i++) {
+    const isDigit = i < (selectedBands === 4 ? 2 : 3);
+    const isTol = i === (selectedBands === 4 ? 3 : 4);
+    const isTcr = i === 5;
+    let allowed = COLOR_BANDS;
+    if (isDigit) allowed = COLOR_BANDS.filter(c => c.digit >= 0);
+    else if (isTol) allowed = COLOR_BANDS.filter(c => c.tol !== null);
+    else if (isTcr) allowed = COLOR_BANDS.filter(c => c.tcr !== null);
+
+    html += `<div class="band-row">
+      <div class="band-label">${labels[i]}</div>
+      <div class="band-pick">`;
+    allowed.forEach(c => {
+      const sel = pickedColors[i] === c.name ? ' selected' : '';
+      html += `<div class="color-swatch${sel}" style="background:${c.hex};color:${c.text};"
+               onclick="pickColor(${i},'${c.name}')" title="${c.name}">${c.name.substring(0,3)}</div>`;
+    });
+    html += `</div></div>`;
+  }
+  container.innerHTML = html;
+}
+
+function pickColor(idx, name) {
+  while (pickedColors.length < selectedBands) pickedColors.push(null);
+  pickedColors[idx] = name;
+  buildBandSelectors();
+  updateResult();
+}
+
+function updateResult() {
+  const detail = document.getElementById('result-detail');
+  const bar = document.getElementById('result-bar');
+  if (pickedColors.filter(Boolean).length !== selectedBands) {
+    detail.innerHTML = '<span style="color:var(--text-dim);">Pick all bands to see the result</span>';
+    bar.innerHTML = '';
+    return;
+  }
+
+  // Calculate value
+  let value, tol, tcr = null;
+  const lookup = {};
+  COLOR_BANDS.forEach(c => { lookup[c.name] = c; });
+
+  if (selectedBands === 4) {
+    const d1 = lookup[pickedColors[0]].digit;
+    const d2 = lookup[pickedColors[1]].digit;
+    const mult = lookup[pickedColors[2]].mult;
+    tol = lookup[pickedColors[3]].tol || 20;
+    value = (d1 * 10 + d2) * mult;
+  } else {
+    const d1 = lookup[pickedColors[0]].digit;
+    const d2 = lookup[pickedColors[1]].digit;
+    const d3 = lookup[pickedColors[2]].digit;
+    const mult = lookup[pickedColors[3]].mult;
+    tol = lookup[pickedColors[4]].tol || 20;
+    value = (d1 * 100 + d2 * 10 + d3) * mult;
+    if (selectedBands === 6) tcr = lookup[pickedColors[5]].tcr;
+  }
+
+  // E-series check
+  const e24 = [1.0,1.1,1.2,1.3,1.5,1.6,1.8,2.0,2.2,2.4,2.7,3.0,3.3,3.6,3.9,4.3,4.7,5.1,5.6,6.2,6.8,7.5,8.2,9.1];
+  const e12 = [1.0,1.2,1.5,1.8,2.2,2.7,3.3,3.9,4.7,5.6,6.8,8.2];
+  let norm = value;
+  while (norm >= 10) norm /= 10;
+  while (norm < 1) norm *= 10;
+  norm = Math.round(norm * 100) / 100;
+  let eseries = '';
+  if (e24.includes(norm)) eseries = '<span class="good">✓ E24 standard value</span>';
+  else if (e12.includes(norm)) eseries = '<span class="good">✓ E12 standard value</span>';
+  else eseries = '<span class="warn">⚠ Non-standard value</span>';
+
+  // Format
+  let valStr;
+  if (value >= 1e9) valStr = (value/1e9).toFixed(1) + ' GΩ';
+  else if (value >= 1e6) valStr = (value/1e6).toFixed(2) + ' MΩ';
+  else if (value >= 1e3) valStr = (value/1e3).toFixed(2) + ' kΩ';
+  else valStr = value.toFixed(1) + ' Ω';
+
+  bar.innerHTML = pickedColors.map(c => {
+    const clr = lookup[c];
+    return `<div class="result-swatch" style="background:${clr.hex};color:${clr.text};">${c.substring(0,3)}</div>`;
+  }).join('');
+
+  detail.innerHTML = `
+    <span class="val">${valStr}</span><br>
+    Tolerance: ±${tol}% &nbsp; Range: ${(value*(1-tol/100)).toFixed(1)} – ${(value*(1+tol/100)).toFixed(1)} Ω<br>
+    ${tcr ? 'TCR: '+tcr+' ppm/°C<br>' : ''}
+    ${eseries}
+  `;
+}
+
+function reverseLookup() {
+  const valStr = document.getElementById('lookup-value').value.trim();
+  if (!valStr) return;
+
+  fetch('/api/resistor/lookup?value=' + encodeURIComponent(valStr))
+    .then(r => r.json())
+    .then(data => {
+      const container = document.getElementById('lookup-result');
+      if (data.error) {
+        container.innerHTML = `<p style="color:var(--red);">${data.error}</p>`;
+        return;
+      }
+      container.innerHTML = `
+        <div class="result-bar" style="margin-top:1rem;">
+          ${data.colors_4band.map(c => {
+            const clr = COLOR_BANDS.find(x => x.name === c);
+            return `<div class="result-swatch" style="background:${clr.hex};color:${clr.text};">${c.substring(0,3)}</div>`;
+          }).join('')}
+        </div>
+        <div class="result-detail">
+          <span class="val">${data.value_display}</span> (4-band, ±${COLOR_BANDS.find(c=>c.name===data.colors_4band[3]).tol}%)<br>
+          ${data.error_pct > 0.5 ? '<span class="warn">Closest match: '+data.actual_value+' (off by '+data.error_pct+'%)</span>' : ''}
+        </div>
+      `;
+    })
+    .catch(err => {
+      document.getElementById('lookup-result').innerHTML =
+        `<p style="color:var(--red);">Error: ${err.message}</p>`;
+    });
+}
+
+// ── TV Remote ─────────────────────────────────────────────────────
+function tvSendKey(key) {
+  const feedback = document.getElementById('tv-feedback');
+  fetch('/api/tv/key', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({key: key})
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        flashFeedback('Sent: ' + key);
+      } else {
+        flashFeedback('Error: ' + (data.error || 'unknown'), true);
+      }
+      updateTVStatus();
+    })
+    .catch(err => {
+      flashFeedback('Network error', true);
+    });
+}
+
+function flashFeedback(msg, isError) {
+  let el = document.getElementById('tv-feedback');
+  if (!el) {
+    const card = document.querySelector('#tab-tv .card:last-child');
+    el = document.createElement('div');
+    el.id = 'tv-feedback';
+    el.className = 'tv-feedback';
+    card.appendChild(el);
+  }
+  el.style.color = isError ? 'var(--red)' : 'var(--cyan)';
+  el.textContent = msg;
+  el.style.opacity = '1';
+  setTimeout(() => { el.style.opacity = '0'; }, 2000);
+}
+
+function updateTVStatus() {
+  fetch('/api/tv/status')
+    .then(r => r.json())
+    .then(data => {
+      const el = document.getElementById('tv-status');
+      const wakeRow = document.getElementById('tv-wake-row');
+      if (data.error) {
+        el.innerHTML = `<span style="color:var(--red);">⚠ ${data.error}</span>`;
+        wakeRow.style.display = 'none';
+        return;
+      }
+      const powerColor = data.power === 'on' ? 'var(--green)' : 'var(--text-dim)';
+      const powerIcon = data.power === 'on' ? '🟢' : '⭕';
+      const connColor = data.connected ? 'var(--green)' : 'var(--red)';
+      let pairingNote = '';
+      if (data.pairing) {
+        pairingNote = ' <span style="color:var(--yellow);">⚠ Waiting for TV prompt acceptance...</span>';
+      }
+      el.innerHTML = `
+        ${powerIcon} <strong style="color:${powerColor};">${data.power.toUpperCase()}</strong>
+        &nbsp;|&nbsp; ${data.model}
+        &nbsp;|&nbsp; WS: <span style="color:${connColor};">${data.connected ? 'connected' : 'disconnected'}</span>
+        ${pairingNote}
+      `;
+      // Show wake button only when in standby
+      wakeRow.style.display = data.power === 'standby' ? 'block' : 'none';
+    })
+    .catch(err => {
+      document.getElementById('tv-status').innerHTML =
+        `<span style="color:var(--red);">⚠ TV unreachable</span>`;
+    });
+}
+
+function tvWake() {
+  fetch('/api/tv/wake', { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        flashFeedback('Wake packet sent — TV waking up...');
+        // Start polling more frequently while waking
+        setTimeout(updateTVStatus, 2000);
+        setTimeout(updateTVStatus, 5000);
+        setTimeout(updateTVStatus, 10000);
+      } else {
+        flashFeedback('Wake failed: ' + data.error, true);
+      }
+    })
+    .catch(err => flashFeedback('Wake failed', true));
+}
+
+// ── PCB Trace Calculator ──────────────────────────────────────────
+function calcPCB() {
+  const current = parseFloat(document.getElementById('pcb-current').value) || 0;
+  const tempRise = parseFloat(document.getElementById('pcb-temp').value) || 10;
+  const copper = parseFloat(document.getElementById('pcb-copper').value) || 1;
+  const layer = document.getElementById('pcb-layer').value;
+
+  if (current <= 0) return;
+
+  fetch(`/api/pcb/trace?current=${current}&temp_rise=${tempRise}&copper=${copper}&layer=${layer}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) return;
+      document.getElementById('pcb-width-mils').textContent = data.width_mils;
+      document.getElementById('pcb-width-mm').textContent = data.width_mm;
+      document.getElementById('pcb-resistance').textContent = data.resistance_per_inch;
+      document.getElementById('pcb-vdrop').textContent = data.v_drop_per_inch;
+
+      // Quick reference table
+      const tbody = document.querySelector('#pcb-ref-table tbody');
+      tbody.innerHTML = Object.entries(data.recommended).map(([label, width]) =>
+        `<tr><td>${label}</td><td>${width} mil</td><td>${(width * 0.0254).toFixed(3)} mm</td></tr>`
+      ).join('');
+    });
+}
+
+// ── GeoGuessr / GeoTemp Solver ────────────────────────────────────
+// Country dataset: centroids and capital cities
+const GEO_COUNTRIES = [{"name":"Afghanistan","lat":33.9391,"lon":67.7100,"capital":"Kabul","cap_lat":34.5553,"cap_lon":69.2075},{"name":"Albania","lat":41.1533,"lon":20.1683,"capital":"Tirana","cap_lat":41.3275,"cap_lon":19.8187},{"name":"Algeria","lat":28.0339,"lon":1.6596,"capital":"Algiers","cap_lat":36.7538,"cap_lon":3.0588},{"name":"Andorra","lat":42.5063,"lon":1.5218,"capital":"Andorra la Vella","cap_lat":42.5063,"cap_lon":1.5218},{"name":"Angola","lat":-11.2027,"lon":17.8739,"capital":"Luanda","cap_lat":-8.8390,"cap_lon":13.2894},{"name":"Antigua and Barbuda","lat":17.0608,"lon":-61.7964,"capital":"St. John's","cap_lat":17.1274,"cap_lon":-61.8468},{"name":"Argentina","lat":-38.4161,"lon":-63.6167,"capital":"Buenos Aires","cap_lat":-34.6037,"cap_lon":-58.3816},{"name":"Armenia","lat":40.0691,"lon":45.0382,"capital":"Yerevan","cap_lat":40.1792,"cap_lon":44.4991},{"name":"Australia","lat":-25.2744,"lon":133.7751,"capital":"Canberra","cap_lat":-35.2809,"cap_lon":149.1300},{"name":"Austria","lat":47.5162,"lon":14.5501,"capital":"Vienna","cap_lat":48.2082,"cap_lon":16.3738},{"name":"Azerbaijan","lat":40.1431,"lon":47.5769,"capital":"Baku","cap_lat":40.4093,"cap_lon":49.8671},{"name":"Bahamas","lat":25.0343,"lon":-77.3963,"capital":"Nassau","cap_lat":25.0443,"cap_lon":-77.3504},{"name":"Bahrain","lat":26.0275,"lon":50.5500,"capital":"Manama","cap_lat":26.2235,"cap_lon":50.5876},{"name":"Bangladesh","lat":23.6850,"lon":90.3563,"capital":"Dhaka","cap_lat":23.8103,"cap_lon":90.4125},{"name":"Barbados","lat":13.1939,"lon":-59.5432,"capital":"Bridgetown","cap_lat":13.1132,"cap_lon":-59.5988},{"name":"Belarus","lat":53.7098,"lon":27.9534,"capital":"Minsk","cap_lat":53.9006,"cap_lon":27.5590},{"name":"Belgium","lat":50.5039,"lon":4.4699,"capital":"Brussels","cap_lat":50.8503,"cap_lon":4.3517},{"name":"Belize","lat":17.1899,"lon":-88.4976,"capital":"Belmopan","cap_lat":17.2510,"cap_lon":-88.7590},{"name":"Benin","lat":9.3077,"lon":2.3158,"capital":"Porto-Novo","cap_lat":6.4969,"cap_lon":2.6289},{"name":"Bhutan","lat":27.5142,"lon":90.4336,"capital":"Thimphu","cap_lat":27.4712,"cap_lon":89.6419},{"name":"Bolivia","lat":-16.2902,"lon":-63.5887,"capital":"Sucre","cap_lat":-19.0196,"cap_lon":-65.2619},{"name":"Bosnia and Herzegovina","lat":43.9159,"lon":17.6791,"capital":"Sarajevo","cap_lat":43.8563,"cap_lon":18.4131},{"name":"Botswana","lat":-22.3285,"lon":24.6849,"capital":"Gaborone","cap_lat":-24.6282,"cap_lon":25.9231},{"name":"Brazil","lat":-14.2350,"lon":-51.9253,"capital":"Brasilia","cap_lat":-15.7939,"cap_lon":-47.8828},{"name":"Brunei","lat":4.5353,"lon":114.7277,"capital":"Bandar Seri Begawan","cap_lat":4.9031,"cap_lon":114.9398},{"name":"Bulgaria","lat":42.7339,"lon":25.4858,"capital":"Sofia","cap_lat":42.6977,"cap_lon":23.3219},{"name":"Burkina Faso","lat":12.2383,"lon":-1.5616,"capital":"Ouagadougou","cap_lat":12.3714,"cap_lon":-1.5197},{"name":"Burundi","lat":-3.3731,"lon":29.9189,"capital":"Gitega","cap_lat":-3.4264,"cap_lon":29.9306},{"name":"Cambodia","lat":12.5657,"lon":104.9910,"capital":"Phnom Penh","cap_lat":11.5564,"cap_lon":104.9282},{"name":"Cameroon","lat":7.3697,"lon":12.3547,"capital":"Yaounde","cap_lat":3.8480,"cap_lon":11.5021},{"name":"Canada","lat":56.1304,"lon":-106.3468,"capital":"Ottawa","cap_lat":45.4215,"cap_lon":-75.6972},{"name":"Cape Verde","lat":16.5388,"lon":-23.0418,"capital":"Praia","cap_lat":14.9330,"cap_lon":-23.5133},{"name":"Central African Republic","lat":6.6111,"lon":20.9394,"capital":"Bangui","cap_lat":4.3947,"cap_lon":18.5582},{"name":"Chad","lat":15.4542,"lon":18.7322,"capital":"N'Djamena","cap_lat":12.1348,"cap_lon":15.0557},{"name":"Chile","lat":-35.6751,"lon":-71.5430,"capital":"Santiago","cap_lat":-33.4489,"cap_lon":-70.6693},{"name":"China","lat":35.8617,"lon":104.1954,"capital":"Beijing","cap_lat":39.9042,"cap_lon":116.4074},{"name":"Colombia","lat":4.5709,"lon":-74.2973,"capital":"Bogota","cap_lat":4.7110,"cap_lon":-74.0721},{"name":"Comoros","lat":-11.6455,"lon":43.3333,"capital":"Moroni","cap_lat":-11.7022,"cap_lon":43.2551},{"name":"Congo","lat":-0.2280,"lon":15.8277,"capital":"Brazzaville","cap_lat":-4.2634,"cap_lon":15.2429},{"name":"Costa Rica","lat":9.7489,"lon":-83.7534,"capital":"San Jose","cap_lat":9.9281,"cap_lon":-84.0907},{"name":"Croatia","lat":45.1000,"lon":15.2000,"capital":"Zagreb","cap_lat":45.8150,"cap_lon":15.9819},{"name":"Cuba","lat":21.5218,"lon":-77.7812,"capital":"Havana","cap_lat":23.1136,"cap_lon":-82.3666},{"name":"Cyprus","lat":35.1264,"lon":33.4299,"capital":"Nicosia","cap_lat":35.1856,"cap_lon":33.3823},{"name":"Czech Republic","lat":49.8175,"lon":15.4730,"capital":"Prague","cap_lat":50.0755,"cap_lon":14.4378},{"name":"Denmark","lat":56.2639,"lon":9.5018,"capital":"Copenhagen","cap_lat":55.6761,"cap_lon":12.5683},{"name":"Djibouti","lat":11.8251,"lon":42.5903,"capital":"Djibouti","cap_lat":11.5721,"cap_lon":43.1456},{"name":"Dominica","lat":15.4150,"lon":-61.3710,"capital":"Roseau","cap_lat":15.3011,"cap_lon":-61.3870},{"name":"Dominican Republic","lat":18.7357,"lon":-70.1627,"capital":"Santo Domingo","cap_lat":18.4861,"cap_lon":-69.9312},{"name":"DR Congo","lat":-4.0383,"lon":21.7587,"capital":"Kinshasa","cap_lat":-4.4419,"cap_lon":15.2663},{"name":"Ecuador","lat":-1.8312,"lon":-78.1834,"capital":"Quito","cap_lat":-0.1807,"cap_lon":-78.4678},{"name":"Egypt","lat":26.8206,"lon":30.8025,"capital":"Cairo","cap_lat":30.0444,"cap_lon":31.2357},{"name":"El Salvador","lat":13.7942,"lon":-88.8965,"capital":"San Salvador","cap_lat":13.6929,"cap_lon":-89.2182},{"name":"Equatorial Guinea","lat":1.6508,"lon":10.2679,"capital":"Malabo","cap_lat":3.7500,"cap_lon":8.7833},{"name":"Eritrea","lat":15.1794,"lon":39.7823,"capital":"Asmara","cap_lat":15.3229,"cap_lon":38.9251},{"name":"Estonia","lat":58.5953,"lon":25.0136,"capital":"Tallinn","cap_lat":59.4370,"cap_lon":24.7536},{"name":"Eswatini","lat":-26.5225,"lon":31.4659,"capital":"Mbabane","cap_lat":-26.3054,"cap_lon":31.1367},{"name":"Ethiopia","lat":9.1450,"lon":40.4897,"capital":"Addis Ababa","cap_lat":9.0320,"cap_lon":38.7469},{"name":"Fiji","lat":-17.7134,"lon":178.0650,"capital":"Suva","cap_lat":-18.1248,"cap_lon":178.4501},{"name":"Finland","lat":61.9241,"lon":25.7482,"capital":"Helsinki","cap_lat":60.1699,"cap_lon":24.9384},{"name":"France","lat":46.6034,"lon":1.8883,"capital":"Paris","cap_lat":48.8566,"cap_lon":2.3522},{"name":"Gabon","lat":-0.8037,"lon":11.6094,"capital":"Libreville","cap_lat":0.4162,"cap_lon":9.4673},{"name":"Gambia","lat":13.4432,"lon":-15.3101,"capital":"Banjul","cap_lat":13.4549,"cap_lon":-16.5790},{"name":"Georgia","lat":42.3154,"lon":43.3569,"capital":"Tbilisi","cap_lat":41.7151,"cap_lon":44.8271},{"name":"Germany","lat":51.1657,"lon":10.4515,"capital":"Berlin","cap_lat":52.5200,"cap_lon":13.4050},{"name":"Ghana","lat":7.9465,"lon":-1.0232,"capital":"Accra","cap_lat":5.6037,"cap_lon":-0.1870},{"name":"Greece","lat":39.0742,"lon":21.8243,"capital":"Athens","cap_lat":37.9838,"cap_lon":23.7275},{"name":"Grenada","lat":12.1165,"lon":-61.6790,"capital":"St. George's","cap_lat":12.0561,"cap_lon":-61.7488},{"name":"Guatemala","lat":15.7835,"lon":-90.2308,"capital":"Guatemala City","cap_lat":14.6349,"cap_lon":-90.5069},{"name":"Guinea","lat":9.9456,"lon":-9.6966,"capital":"Conakry","cap_lat":9.6412,"cap_lon":-13.5784},{"name":"Guinea-Bissau","lat":11.8037,"lon":-15.1804,"capital":"Bissau","cap_lat":11.8817,"cap_lon":-15.6170},{"name":"Guyana","lat":4.8604,"lon":-58.9302,"capital":"Georgetown","cap_lat":6.8013,"cap_lon":-58.1551},{"name":"Haiti","lat":18.9712,"lon":-72.2852,"capital":"Port-au-Prince","cap_lat":18.5944,"cap_lon":-72.3074},{"name":"Honduras","lat":14.7456,"lon":-86.2383,"capital":"Tegucigalpa","cap_lat":14.0723,"cap_lon":-87.1921},{"name":"Hungary","lat":47.1625,"lon":19.5033,"capital":"Budapest","cap_lat":47.4979,"cap_lon":19.0402},{"name":"Iceland","lat":64.9631,"lon":-19.0208,"capital":"Reykjavik","cap_lat":64.1466,"cap_lon":-21.9426},{"name":"India","lat":20.5937,"lon":78.9629,"capital":"New Delhi","cap_lat":28.6139,"cap_lon":77.2090},{"name":"Indonesia","lat":-0.7893,"lon":113.9213,"capital":"Jakarta","cap_lat":-6.2088,"cap_lon":106.8456},{"name":"Iran","lat":32.4279,"lon":53.6880,"capital":"Tehran","cap_lat":35.6892,"cap_lon":51.3890},{"name":"Iraq","lat":33.2232,"lon":43.6793,"capital":"Baghdad","cap_lat":33.3152,"cap_lon":44.3661},{"name":"Ireland","lat":53.1424,"lon":-7.6921,"capital":"Dublin","cap_lat":53.3498,"cap_lon":-6.2603},{"name":"Israel","lat":31.0461,"lon":34.8516,"capital":"Jerusalem","cap_lat":31.7683,"cap_lon":35.2137},{"name":"Italy","lat":41.8719,"lon":12.5674,"capital":"Rome","cap_lat":41.9028,"cap_lon":12.4964},{"name":"Ivory Coast","lat":7.5400,"lon":-5.5471,"capital":"Yamoussoukro","cap_lat":6.8276,"cap_lon":-5.2893},{"name":"Jamaica","lat":18.1096,"lon":-77.2975,"capital":"Kingston","cap_lat":17.9712,"cap_lon":-76.7936},{"name":"Japan","lat":36.2048,"lon":138.2529,"capital":"Tokyo","cap_lat":35.6762,"cap_lon":139.6503},{"name":"Jordan","lat":30.5852,"lon":36.2384,"capital":"Amman","cap_lat":31.9454,"cap_lon":35.9284},{"name":"Kazakhstan","lat":48.0196,"lon":66.9237,"capital":"Astana","cap_lat":51.1605,"cap_lon":71.4704},{"name":"Kenya","lat":-0.0236,"lon":37.9062,"capital":"Nairobi","cap_lat":-1.2921,"cap_lon":36.8219},{"name":"Kiribati","lat":-3.3704,"lon":-168.7340,"capital":"Tarawa","cap_lat":1.3280,"cap_lon":172.9770},{"name":"Kosovo","lat":42.6026,"lon":20.9030,"capital":"Pristina","cap_lat":42.6629,"cap_lon":21.1655},{"name":"Kuwait","lat":29.3117,"lon":47.4818,"capital":"Kuwait City","cap_lat":29.3759,"cap_lon":47.9774},{"name":"Kyrgyzstan","lat":41.2044,"lon":74.7661,"capital":"Bishkek","cap_lat":42.8746,"cap_lon":74.5698},{"name":"Laos","lat":19.8563,"lon":102.4955,"capital":"Vientiane","cap_lat":17.9757,"cap_lon":102.6331},{"name":"Latvia","lat":56.8796,"lon":24.6032,"capital":"Riga","cap_lat":56.9496,"cap_lon":24.1052},{"name":"Lebanon","lat":33.8547,"lon":35.8623,"capital":"Beirut","cap_lat":33.8938,"cap_lon":35.5018},{"name":"Lesotho","lat":-29.6100,"lon":28.2336,"capital":"Maseru","cap_lat":-29.3167,"cap_lon":27.4833},{"name":"Liberia","lat":6.4281,"lon":-9.4295,"capital":"Monrovia","cap_lat":6.3004,"cap_lon":-10.7969},{"name":"Libya","lat":26.3351,"lon":17.2283,"capital":"Tripoli","cap_lat":32.8872,"cap_lon":13.1913},{"name":"Liechtenstein","lat":47.1660,"lon":9.5554,"capital":"Vaduz","cap_lat":47.1410,"cap_lon":9.5215},{"name":"Lithuania","lat":55.1694,"lon":23.8813,"capital":"Vilnius","cap_lat":54.6872,"cap_lon":25.2797},{"name":"Luxembourg","lat":49.8153,"lon":6.1296,"capital":"Luxembourg City","cap_lat":49.6117,"cap_lon":6.1300},{"name":"Madagascar","lat":-18.7669,"lon":46.8691,"capital":"Antananarivo","cap_lat":-18.8792,"cap_lon":47.5079},{"name":"Malawi","lat":-13.2543,"lon":34.3015,"capital":"Lilongwe","cap_lat":-13.9626,"cap_lon":33.7741},{"name":"Malaysia","lat":4.2105,"lon":101.9758,"capital":"Kuala Lumpur","cap_lat":3.1390,"cap_lon":101.6869},{"name":"Maldives","lat":3.2028,"lon":73.2207,"capital":"Male","cap_lat":4.1755,"cap_lon":73.5093},{"name":"Mali","lat":17.5707,"lon":-3.9962,"capital":"Bamako","cap_lat":12.6392,"cap_lon":-8.0029},{"name":"Malta","lat":35.9375,"lon":14.3754,"capital":"Valletta","cap_lat":35.8997,"cap_lon":14.5147},{"name":"Marshall Islands","lat":7.1315,"lon":171.1845,"capital":"Majuro","cap_lat":7.1164,"cap_lon":171.1950},{"name":"Mauritania","lat":21.0079,"lon":-10.9408,"capital":"Nouakchott","cap_lat":18.0735,"cap_lon":-15.9582},{"name":"Mauritius","lat":-20.3484,"lon":57.5522,"capital":"Port Louis","cap_lat":-20.1609,"cap_lon":57.5012},{"name":"Mexico","lat":23.6345,"lon":-102.5528,"capital":"Mexico City","cap_lat":19.4326,"cap_lon":-99.1332},{"name":"Micronesia","lat":7.4256,"lon":150.5508,"capital":"Palikir","cap_lat":6.9177,"cap_lon":158.1850},{"name":"Moldova","lat":47.4116,"lon":28.3699,"capital":"Chisinau","cap_lat":47.0105,"cap_lon":28.8638},{"name":"Monaco","lat":43.7384,"lon":7.4246,"capital":"Monaco","cap_lat":43.7384,"cap_lon":7.4246},{"name":"Mongolia","lat":46.8625,"lon":103.8467,"capital":"Ulaanbaatar","cap_lat":47.8864,"cap_lon":106.9057},{"name":"Montenegro","lat":42.7087,"lon":19.3744,"capital":"Podgorica","cap_lat":42.4304,"cap_lon":19.2594},{"name":"Morocco","lat":31.7917,"lon":-7.0926,"capital":"Rabat","cap_lat":34.0209,"cap_lon":-6.8416},{"name":"Mozambique","lat":-18.6657,"lon":35.5296,"capital":"Maputo","cap_lat":-25.9692,"cap_lon":32.5732},{"name":"Myanmar","lat":21.9162,"lon":95.9560,"capital":"Naypyidaw","cap_lat":19.7633,"cap_lon":96.0785},{"name":"Namibia","lat":-22.9576,"lon":18.4904,"capital":"Windhoek","cap_lat":-22.5609,"cap_lon":17.0658},{"name":"Nauru","lat":-0.5228,"lon":166.9315,"capital":"Yaren","cap_lat":-0.5477,"cap_lon":166.9209},{"name":"Nepal","lat":28.3949,"lon":84.1240,"capital":"Kathmandu","cap_lat":27.7172,"cap_lon":85.3240},{"name":"Netherlands","lat":52.1326,"lon":5.2913,"capital":"Amsterdam","cap_lat":52.3676,"cap_lon":4.9041},{"name":"New Zealand","lat":-40.9006,"lon":174.8860,"capital":"Wellington","cap_lat":-41.2866,"cap_lon":174.7756},{"name":"Nicaragua","lat":12.8654,"lon":-85.2072,"capital":"Managua","cap_lat":12.1149,"cap_lon":-86.2362},{"name":"Niger","lat":17.6078,"lon":8.0817,"capital":"Niamey","cap_lat":13.5127,"cap_lon":2.1126},{"name":"Nigeria","lat":9.0820,"lon":8.6753,"capital":"Abuja","cap_lat":9.0579,"cap_lon":7.4951},{"name":"North Korea","lat":40.3399,"lon":127.5101,"capital":"Pyongyang","cap_lat":39.0392,"cap_lon":125.7625},{"name":"North Macedonia","lat":41.6086,"lon":21.7453,"capital":"Skopje","cap_lat":41.9981,"cap_lon":21.4254},{"name":"Norway","lat":60.4720,"lon":8.4689,"capital":"Oslo","cap_lat":59.9139,"cap_lon":10.7522},{"name":"Oman","lat":21.4735,"lon":55.9754,"capital":"Muscat","cap_lat":23.5880,"cap_lon":58.3829},{"name":"Pakistan","lat":30.3753,"lon":69.3451,"capital":"Islamabad","cap_lat":33.6844,"cap_lon":73.0479},{"name":"Palau","lat":7.5150,"lon":134.5825,"capital":"Ngerulmud","cap_lat":7.5004,"cap_lon":134.6242},{"name":"Palestine","lat":31.9474,"lon":35.2272,"capital":"Ramallah","cap_lat":31.8996,"cap_lon":35.2043},{"name":"Panama","lat":8.5380,"lon":-80.7821,"capital":"Panama City","cap_lat":8.9824,"cap_lon":-79.5199},{"name":"Papua New Guinea","lat":-6.3150,"lon":143.9555,"capital":"Port Moresby","cap_lat":-9.4780,"cap_lon":147.1507},{"name":"Paraguay","lat":-23.4425,"lon":-58.4438,"capital":"Asuncion","cap_lat":-25.2637,"cap_lon":-57.5759},{"name":"Peru","lat":-9.1900,"lon":-75.0152,"capital":"Lima","cap_lat":-12.0464,"cap_lon":-77.0428},{"name":"Philippines","lat":12.8797,"lon":121.7740,"capital":"Manila","cap_lat":14.5995,"cap_lon":120.9842},{"name":"Poland","lat":51.9194,"lon":19.1451,"capital":"Warsaw","cap_lat":52.2297,"cap_lon":21.0122},{"name":"Portugal","lat":39.3999,"lon":-8.2245,"capital":"Lisbon","cap_lat":38.7223,"cap_lon":-9.1393},{"name":"Qatar","lat":25.3548,"lon":51.1839,"capital":"Doha","cap_lat":25.2854,"cap_lon":51.5310},{"name":"Romania","lat":45.9432,"lon":24.9668,"capital":"Bucharest","cap_lat":44.4268,"cap_lon":26.1025},{"name":"Russia","lat":61.5240,"lon":105.3188,"capital":"Moscow","cap_lat":55.7558,"cap_lon":37.6173},{"name":"Rwanda","lat":-1.9403,"lon":29.8739,"capital":"Kigali","cap_lat":-1.9441,"cap_lon":30.0619},{"name":"Saint Kitts and Nevis","lat":17.3578,"lon":-62.7830,"capital":"Basseterre","cap_lat":17.3026,"cap_lon":-62.7177},{"name":"Saint Lucia","lat":13.9094,"lon":-60.9789,"capital":"Castries","cap_lat":13.9972,"cap_lon":-61.0015},{"name":"Saint Vincent and the Grenadines","lat":13.2528,"lon":-61.1971,"capital":"Kingstown","cap_lat":13.1572,"cap_lon":-61.2249},{"name":"Samoa","lat":-13.7590,"lon":-172.1046,"capital":"Apia","cap_lat":-13.8333,"cap_lon":-171.7667},{"name":"San Marino","lat":43.9424,"lon":12.4578,"capital":"San Marino","cap_lat":43.9424,"cap_lon":12.4578},{"name":"Sao Tome and Principe","lat":0.1864,"lon":6.6131,"capital":"Sao Tome","cap_lat":0.3360,"cap_lon":6.7311},{"name":"Saudi Arabia","lat":23.8859,"lon":45.0792,"capital":"Riyadh","cap_lat":24.7136,"cap_lon":46.6753},{"name":"Senegal","lat":14.4974,"lon":-14.4524,"capital":"Dakar","cap_lat":14.7167,"cap_lon":-17.4677},{"name":"Serbia","lat":44.0165,"lon":21.0059,"capital":"Belgrade","cap_lat":44.7866,"cap_lon":20.4489},{"name":"Seychelles","lat":-4.6796,"lon":55.4920,"capital":"Victoria","cap_lat":-4.6191,"cap_lon":55.4513},{"name":"Sierra Leone","lat":8.4606,"lon":-11.7799,"capital":"Freetown","cap_lat":8.4844,"cap_lon":-13.2344},{"name":"Singapore","lat":1.3521,"lon":103.8198,"capital":"Singapore","cap_lat":1.3521,"cap_lon":103.8198},{"name":"Slovakia","lat":48.6690,"lon":19.6990,"capital":"Bratislava","cap_lat":48.1486,"cap_lon":17.1077},{"name":"Slovenia","lat":46.1512,"lon":14.9955,"capital":"Ljubljana","cap_lat":46.0569,"cap_lon":14.5058},{"name":"Solomon Islands","lat":-9.6457,"lon":160.1562,"capital":"Honiara","cap_lat":-9.4333,"cap_lon":159.9500},{"name":"Somalia","lat":5.1521,"lon":46.1996,"capital":"Mogadishu","cap_lat":2.0469,"cap_lon":45.3182},{"name":"South Africa","lat":-30.5595,"lon":22.9375,"capital":"Pretoria","cap_lat":-25.7479,"cap_lon":28.2293},{"name":"South Korea","lat":35.9078,"lon":127.7669,"capital":"Seoul","cap_lat":37.5665,"cap_lon":126.9780},{"name":"South Sudan","lat":6.8770,"lon":31.3070,"capital":"Juba","cap_lat":4.8517,"cap_lon":31.5825},{"name":"Spain","lat":40.4637,"lon":-3.7492,"capital":"Madrid","cap_lat":40.4168,"cap_lon":-3.7038},{"name":"Sri Lanka","lat":7.8731,"lon":80.7718,"capital":"Sri Jayawardenepura Kotte","cap_lat":6.8941,"cap_lon":79.9016},{"name":"Sudan","lat":12.8628,"lon":30.2176,"capital":"Khartoum","cap_lat":15.5007,"cap_lon":32.5599},{"name":"Suriname","lat":3.9193,"lon":-56.0278,"capital":"Paramaribo","cap_lat":5.8520,"cap_lon":-55.2038},{"name":"Sweden","lat":60.1282,"lon":18.6435,"capital":"Stockholm","cap_lat":59.3293,"cap_lon":18.0686},{"name":"Switzerland","lat":46.8182,"lon":8.2275,"capital":"Bern","cap_lat":46.9480,"cap_lon":7.4474},{"name":"Syria","lat":34.8021,"lon":38.9968,"capital":"Damascus","cap_lat":33.5138,"cap_lon":36.2765},{"name":"Taiwan","lat":23.6978,"lon":120.9605,"capital":"Taipei","cap_lat":25.0330,"cap_lon":121.5654},{"name":"Tajikistan","lat":38.8610,"lon":71.2761,"capital":"Dushanbe","cap_lat":38.5598,"cap_lon":68.7870},{"name":"Tanzania","lat":-6.3690,"lon":34.8888,"capital":"Dodoma","cap_lat":-6.1620,"cap_lon":35.7516},{"name":"Thailand","lat":15.8700,"lon":100.9925,"capital":"Bangkok","cap_lat":13.7563,"cap_lon":100.5018},{"name":"Timor-Leste","lat":-8.8742,"lon":125.7275,"capital":"Dili","cap_lat":-8.5569,"cap_lon":125.5603},{"name":"Togo","lat":8.6195,"lon":0.8248,"capital":"Lome","cap_lat":6.1319,"cap_lon":1.2228},{"name":"Tonga","lat":-21.1790,"lon":-175.1982,"capital":"Nuku'alofa","cap_lat":-21.1393,"cap_lon":-175.2049},{"name":"Trinidad and Tobago","lat":10.6918,"lon":-61.2225,"capital":"Port of Spain","cap_lat":10.6601,"cap_lon":-61.5086},{"name":"Tunisia","lat":33.8869,"lon":9.5375,"capital":"Tunis","cap_lat":36.8065,"cap_lon":10.1815},{"name":"Turkey","lat":38.9637,"lon":35.2433,"capital":"Ankara","cap_lat":39.9334,"cap_lon":32.8597},{"name":"Turkmenistan","lat":38.9697,"lon":59.5563,"capital":"Ashgabat","cap_lat":37.9601,"cap_lon":58.3261},{"name":"Tuvalu","lat":-7.1095,"lon":177.6493,"capital":"Funafuti","cap_lat":-8.5201,"cap_lon":179.1980},{"name":"Uganda","lat":1.3733,"lon":32.2903,"capital":"Kampala","cap_lat":0.3476,"cap_lon":32.5825},{"name":"Ukraine","lat":48.3794,"lon":31.1656,"capital":"Kyiv","cap_lat":50.4501,"cap_lon":30.5234},{"name":"United Arab Emirates","lat":23.4241,"lon":53.8478,"capital":"Abu Dhabi","cap_lat":24.4539,"cap_lon":54.3773},{"name":"United Kingdom","lat":55.3781,"lon":-3.4360,"capital":"London","cap_lat":51.5074,"cap_lon":-0.1278},{"name":"United States","lat":39.8283,"lon":-98.5795,"capital":"Washington DC","cap_lat":38.9072,"cap_lon":-77.0369},{"name":"Uruguay","lat":-32.5228,"lon":-55.7658,"capital":"Montevideo","cap_lat":-34.9011,"cap_lon":-56.1645},{"name":"Uzbekistan","lat":41.3775,"lon":64.5853,"capital":"Tashkent","cap_lat":41.2995,"cap_lon":69.2401},{"name":"Vanuatu","lat":-15.3767,"lon":166.9592,"capital":"Port Vila","cap_lat":-17.7333,"cap_lon":168.3167},{"name":"Vatican City","lat":41.9029,"lon":12.4534,"capital":"Vatican City","cap_lat":41.9029,"cap_lon":12.4534},{"name":"Venezuela","lat":6.4238,"lon":-66.5897,"capital":"Caracas","cap_lat":10.4806,"cap_lon":-66.9036},{"name":"Vietnam","lat":14.0583,"lon":108.2772,"capital":"Hanoi","cap_lat":21.0278,"cap_lon":105.8342},{"name":"Yemen","lat":15.5527,"lon":48.5164,"capital":"Sanaa","cap_lat":15.3694,"cap_lon":44.1910},{"name":"Zambia","lat":-13.1339,"lon":27.8493,"capital":"Lusaka","cap_lat":-15.3875,"cap_lon":28.3228},{"name":"Zimbabwe","lat":-19.0154,"lon":29.1549,"capital":"Harare","cap_lat":-17.8252,"cap_lon":31.0335}];
+
+// GeoGuessr state
+let geoMode = 'country';  // 'country' or 'capital'
+let geoGuesses = [];      // [{name, lat, lon, dist}]
+let geoTolerance = 50;
+
+function geoHaversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function geoBuildDropdown() {
+  const sel = document.getElementById('geo-guess-country');
+  sel.innerHTML = '<option value="">-- Select country --</option>' +
+    GEO_COUNTRIES.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+}
+
+function geoSetMode(mode) {
+  geoMode = mode;
+  document.getElementById('geo-mode-country').classList.toggle('active', mode === 'country');
+  document.getElementById('geo-mode-capital').classList.toggle('active', mode === 'capital');
+  geoSolve();
+}
+
+function geoAddGuess() {
+  const sel = document.getElementById('geo-guess-country');
+  const distInput = document.getElementById('geo-guess-dist');
+  const name = sel.value;
+  const dist = parseFloat(distInput.value);
+
+  if (!name) return;
+  if (isNaN(dist) || dist < 0) return;
+
+  const country = GEO_COUNTRIES.find(c => c.name === name);
+  if (!country) return;
+
+  const lat = geoMode === 'capital' ? country.cap_lat : country.lat;
+  const lon = geoMode === 'capital' ? country.cap_lon : country.lon;
+
+  geoGuesses.push({name, lat, lon, dist});
+  distInput.value = '';
+  sel.value = '';
+  geoRenderHistory();
+  geoSolve();
+}
+
+function geoRemoveGuess(idx) {
+  geoGuesses.splice(idx, 1);
+  geoRenderHistory();
+  geoSolve();
+}
+
+function geoRenderHistory() {
+  const container = document.getElementById('geo-history-container');
+  const tbody = document.getElementById('geo-history-tbody');
+
+  if (geoGuesses.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+  container.style.display = 'block';
+  tbody.innerHTML = geoGuesses.map((g, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${g.name}</td>
+      <td>${g.dist.toFixed(0)} km</td>
+      <td><button class="del-btn" onclick="geoRemoveGuess(${i})">✕</button></td>
+    </tr>
+  `).join('');
+}
+
+function geoTolChange() {
+  geoTolerance = parseInt(document.getElementById('geo-tolerance').value);
+  document.getElementById('geo-tol-label').textContent = geoTolerance;
+  geoSolve();
+}
+
+function geoReset() {
+  geoGuesses = [];
+  document.getElementById('geo-guess-dist').value = '';
+  document.getElementById('geo-guess-country').value = '';
+  geoRenderHistory();
+  geoSolve();
+}
+
+function geoSolve() {
+  const resultsDiv = document.getElementById('geo-results');
+  const summaryDiv = document.getElementById('geo-summary');
+
+  if (geoGuesses.length === 0) {
+    resultsDiv.innerHTML = '<div class="geo-no-results">Add a guess to see possible countries</div>';
+    summaryDiv.textContent = '';
+    return;
+  }
+
+  // For each country in dataset, check if it passes all guess constraints
+  const candidates = [];
+  for (const c of GEO_COUNTRIES) {
+    const cLat = geoMode === 'capital' ? c.cap_lat : c.lat;
+    const cLon = geoMode === 'capital' ? c.cap_lon : c.lon;
+    let totalErr = 0;
+    let passes = true;
+
+    for (const g of geoGuesses) {
+      const actualDist = geoHaversine(g.lat, g.lon, cLat, cLon);
+      const err = Math.abs(actualDist - g.dist);
+      if (err > geoTolerance) {
+        passes = false;
+        break;
+      }
+      totalErr += err;
+    }
+
+    if (passes) {
+      // Calculate average error per guess
+      const avgErr = totalErr / geoGuesses.length;
+      // Also calculate best single-guess match
+      let minSingleErr = Infinity;
+      for (const g of geoGuesses) {
+        const actualDist = geoHaversine(g.lat, g.lon, cLat, cLon);
+        const err = Math.abs(actualDist - g.dist);
+        if (err < minSingleErr) minSingleErr = err;
+      }
+      candidates.push({
+        name: c.name,
+        capital: c.capital || '',
+        avgErr,
+        minErr: minSingleErr,
+        totalErr
+      });
+    }
+  }
+
+  // Sort by average error (best match first)
+  candidates.sort((a, b) => a.avgErr - b.avgErr);
+
+  summaryDiv.textContent = `${candidates.length} of ${GEO_COUNTRIES.length} countries match (${geoMode === 'capital' ? 'capital' : 'centroid'} mode, ±${geoTolerance} km)`;
+
+  if (candidates.length === 0) {
+    resultsDiv.innerHTML = '<div class="geo-no-results">No countries match. Try increasing tolerance or check your distance values.</div>';
+    return;
+  }
+
+  // Find max avgErr for coloring
+  const maxAvgErr = candidates.length > 0 ? candidates[candidates.length - 1].avgErr : 1;
+
+  resultsDiv.innerHTML = candidates.map((c, i) => {
+    let cls = '';
+    if (c.avgErr > maxAvgErr * 0.75) cls = ' worst';
+    else if (c.avgErr > maxAvgErr * 0.4) cls = ' bad';
+    const label = geoMode === 'capital' ? `${c.name} (${c.capital})` : c.name;
+    return `
+      <div class="geo-result-row">
+        <span class="geo-result-rank">${i + 1}.</span>
+        <span class="geo-result-name">${label}</span>
+        <span class="geo-result-count" title="Closest single guess">min ${c.minErr.toFixed(0)} km</span>
+        <span class="geo-result-error${cls}">avg ${c.avgErr.toFixed(0)} km</span>
+      </div>`;
+  }).join('');
+}
+
+// ── Config & Settings ─────────────────────────────────────────────
+
+let appConfig = null;
+
+async function loadConfig() {
+  try {
+    const r = await fetch('/api/config');
+    appConfig = await r.json();
+    applyConfig();
+  } catch(e) {
+    console.error('Failed to load config:', e);
+  }
+}
+
+function applyConfig() {
+  if (!appConfig) return;
+
+  // Apply tab visibility
+  const cfg = appConfig.tabs || {};
+  document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
+    const tab = btn.dataset.tab;
+    if (tab === 'settings') return; // Always show settings
+    btn.style.display = cfg[tab] ? '' : 'none';
+  });
+  // Hide tab content for disabled tabs
+  document.querySelectorAll('.tab-content').forEach(p => {
+    const tab = p.id.replace('tab-', '');
+    if (tab === 'settings') return;
+    p.style.display = ''; // CSS handles active via .active class, not display
+  });
+  // If active tab is hidden, switch to first visible
+  const activeBtn = document.querySelector('.tab-btn.active');
+  if (activeBtn && activeBtn.style.display === 'none') {
+    const first = document.querySelector('.tab-btn[data-tab]:not([style*="display: none"])');
+    if (first) first.click();
+  }
+
+  // Apply timezones
+  TIMEZONES = appConfig.timezones || ALL_TIMEZONES.slice(0, 4);
+  buildClocks();
+  updateClocks();
+
+  // Populate settings UI
+  populateSettings();
+}
+
+function populateSettings() {
+  // Tab toggles
+  const togglesDiv = document.getElementById('tab-toggles');
+  if (!togglesDiv) return;
+  const tabNames = {
+    clock: '🕐 World Clock', depth: '🌊 Depth ↔ Pressure',
+    resistor: '⚡ Resistor Decoder', tv: '📺 TV Remote',
+    pcb: '🔌 PCB Trace', geo: '🌍 GeoGuessr', battery: '🔋 Battery Pack', gauge: '🧮 Wire Gauge', tline: '〰️ T-Line Z', ohmslaw: '🔌 Ohm\'s Law', rcalc: '⫼ R / LED Calc', db: '📶 dB/dBm', freq: '∿ RC/LC/Freq'
+  };
+  togglesDiv.innerHTML = Object.entries(tabNames).map(([id, label]) => {
+    const checked = (appConfig.tabs && appConfig.tabs[id] !== false) ? 'checked' : '';
+    return `<div class="toggle-row">
+      <span class="toggle-label">${label}</span>
+      <label class="toggle-switch">
+        <input type="checkbox" data-tab="${id}" ${checked} onchange="toggleTabPreview(this)">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>`;
+  }).join('');
+
+  // Timezone list
+  const tzList = document.getElementById('tz-list');
+  tzList.innerHTML = TIMEZONES.map((t, i) => `
+    <div class="tz-item">
+      <span>${t.city} <span style="color:var(--text-dim)">${t.label}</span></span>
+      <button class="tz-remove" onclick="removeTimezone(${i})" title="Remove">✕</button>
+    </div>
+  `).join('');
+
+  // Timezone presets dropdown
+  const sel = document.getElementById('tz-preset');
+  sel.innerHTML = '<option value="">+ Add timezone...</option>' +
+    ALL_TIMEZONES.filter(t => !TIMEZONES.some(tz => tz.tz === t.tz))
+      .map(t => `<option value="${t.tz}">${t.city} (${t.label})</option>`).join('');
+  sel.onchange = function() {
+    if (!this.value) return;
+    const t = ALL_TIMEZONES.find(tz => tz.tz === this.value);
+    if (t) {
+      TIMEZONES.push(t);
+      populateSettings();
+    }
+    this.value = '';
+  };
+}
+
+function removeTimezone(idx) {
+  if (TIMEZONES.length <= 1) return;
+  TIMEZONES.splice(idx, 1);
+  populateSettings();
+}
+
+function toggleTabPreview(cb) {
+  const tab = cb.dataset.tab;
+  const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+  if (btn) btn.style.display = cb.checked ? '' : 'none';
+}
+
+function saveSettings() {
+  const tabs = {};
+  document.querySelectorAll('#tab-toggles input[data-tab]').forEach(cb => {
+    tabs[cb.dataset.tab] = cb.checked;
+  });
+
+  fetch('/api/config', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({tabs, timezones: TIMEZONES})
+  }).then(r => r.json()).then(data => {
+    if (data.ok) {
+      appConfig = data.config;
+      applyConfig();
+      document.getElementById('settings-saved').style.display = 'inline';
+      setTimeout(() => {
+        document.getElementById('settings-saved').style.display = 'none';
+      }, 2000);
+    }
+  });
+}
+
+// ── T-Line Impedance Calculator ──────────────────────────────────
+
+let tlineStructure = 'microstrip';
+let tlineDifferential = false;
+let tlineTargetZ = 50;
+
+function setTLineStructure(type) {
+  tlineStructure = type;
+  document.querySelectorAll('.tline-structure-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`.tline-structure-btn[data-type="${type}"]`);
+  if (btn) btn.classList.add('active');
+  calcTLine();
+}
+
+function toggleDifferential() {
+  tlineDifferential = document.getElementById('tline-diff-toggle').checked;
+  document.getElementById('tline-s-group').style.display = tlineDifferential ? 'flex' : 'none';
+  calcTLine();
+}
+
+function setTLineTarget(z) {
+  tlineTargetZ = z;
+  document.querySelectorAll('.tline-preset[data-z]').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`.tline-preset[data-z="${z}"]`);
+  if (btn) btn.classList.add('active');
+  document.getElementById('tline-target').value = z;
+  calcTLine();
+}
+
+function applyTLinePreset(er) {
+  document.getElementById('tline-er').value = er;
+  document.querySelectorAll('.tline-preset[data-er]').forEach(b => {
+    b.classList.toggle('active', parseFloat(b.dataset.er) === er);
+  });
+  calcTLine();
+}
+
+// Wheeler microstrip (IPC-2141A) with thickness correction
+function calcMicrostrip(er, w, h, t) {
+  let we = w;
+  if (t > 0) {
+    if (w/h < 0.159) {
+      we = w + t/Math.PI * (1 + Math.log(2*h/t));
+    } else {
+      we = w + t/Math.PI * (1 + Math.log(4*Math.PI*w/t));
+    }
+  }
+  we = Math.max(we, 0.001);
+  const ratio = we / h;
+  let eeff, z0;
+  if (ratio <= 1) {
+    eeff = (er+1)/2 + (er-1)/2 * (Math.pow(1+12/ratio, -0.5) + 0.04*Math.pow(1-ratio, 2));
+    z0 = 60/Math.sqrt(eeff) * Math.log(8/ratio + ratio/4);
+  } else {
+    eeff = (er+1)/2 + (er-1)/2 * Math.pow(1+12/ratio, -0.5);
+    z0 = 120*Math.PI/Math.sqrt(eeff) / (ratio + 1.393 + 0.667*Math.log(ratio+1.444));
+  }
+  return { z0, eeff };
+}
+
+// Symmetric stripline (IPC-2141A)
+function calcStripline(er, w, h, t) {
+  const z0 = 60/Math.sqrt(er) * Math.log(1.9*(2*h)/(0.8*w + t));
+  return { z0, eeff: er };
+}
+
+// Differential microstrip approximation
+function calcDiffMicrostrip(z0, s, h) {
+  const factor = 1 - 0.48*Math.exp(-0.96*s/h);
+  const zdiff = 2*z0*factor;
+  const zodd = zdiff/2;
+  const zeven = 2*z0 - zodd;
+  return { zdiff, zodd, zeven };
+}
+
+function drawTLineDiagram(w, h, t, s) {
+  const svg = document.getElementById('tline-diagram-svg');
+  if (!svg) return;
+  const W = 360, H = 280;
+  const margin = { top: 30, right: 20, bottom: 40, left: 20 };
+  const plotW = W - margin.left - margin.right;
+  const plotH = H - margin.top - margin.bottom;
+  const maxDim = Math.max(w, h, t*10);
+  const scale = plotW * 0.75 / maxDim;
+  const sx = Math.max(w * scale, 8);
+  const sh = h * scale;
+  const st = Math.max(t * scale, 2);
+  const er = parseFloat(document.getElementById('tline-er')?.value) || 4.5;
+
+  let parts = [];
+
+  if (tlineStructure === 'stripline') {
+    // Top ground
+    parts.push(`<rect x="${margin.left}" y="${margin.top}" width="${plotW}" height="6" fill="var(--orange)" opacity="0.7"/>`);
+    // Bottom ground
+    parts.push(`<rect x="${margin.left}" y="${margin.top+plotH-6}" width="${plotW}" height="6" fill="var(--orange)" opacity="0.7"/>`);
+    // Dielectric fill
+    parts.push(`<rect x="${margin.left}" y="${margin.top+6}" width="${plotW}" height="${plotH-12}" fill="var(--bg-hover)" opacity="0.4"/>`);
+    // Trace centered
+    const traceY = margin.top + plotH/2 - st/2;
+    parts.push(`<rect x="${margin.left+(plotW-sx)/2}" y="${traceY}" width="${sx}" height="${st}" fill="var(--cyan)" rx="1"/>`);
+    // Labels
+    parts.push(`<text x="${margin.left}" y="${margin.top-10}" fill="var(--orange)" font-size="11" font-family="sans-serif">⏚ GND</text>`);
+    parts.push(`<text x="${margin.left}" y="${margin.top+plotH+25}" fill="var(--orange)" font-size="11" font-family="sans-serif">⏚ GND</text>`);
+    parts.push(`<text x="${W/2}" y="${margin.top+plotH/2 - 10}" fill="var(--text-dim)" font-size="10" text-anchor="middle" font-family="sans-serif">H = ${h.toFixed(2)} mm</text>`);
+    // Dimension lines
+    parts.push(`<line x1="${margin.left+plotW-8}" y1="${margin.top+6}" x2="${margin.left+plotW-8}" y2="${margin.top+plotH/2}" stroke="var(--text-dim)" stroke-width="0.5" stroke-dasharray="3,2"/>`);
+    parts.push(`<line x1="${margin.left+plotW-8}" y1="${margin.top+plotH/2}" x2="${margin.left+plotW-8}" y2="${margin.top+plotH-6}" stroke="var(--text-dim)" stroke-width="0.5" stroke-dasharray="3,2"/>`);
+  } else {
+    // Ground plane at bottom
+    parts.push(`<rect x="${margin.left}" y="${margin.top+plotH-6}" width="${plotW}" height="6" fill="var(--orange)" opacity="0.7"/>`);
+    // Dielectric
+    const dielTop = margin.top + plotH - 6 - sh;
+    parts.push(`<rect x="${margin.left}" y="${dielTop}" width="${plotW}" height="${sh}" fill="var(--bg-hover)" opacity="0.4"/>`);
+    // Trace on top
+    const traceX = margin.left + (plotW-sx)/2;
+    parts.push(`<rect x="${traceX}" y="${dielTop-st}" width="${sx}" height="${st}" fill="var(--cyan)" rx="1"/>`);
+    // Labels
+    parts.push(`<text x="${margin.left}" y="${margin.top+plotH+25}" fill="var(--orange)" font-size="11" font-family="sans-serif">⏚ GND Plane</text>`);
+    parts.push(`<text x="${W/2}" y="${dielTop-st-8}" fill="var(--text-dim)" font-size="10" text-anchor="middle" font-family="sans-serif">W = ${w.toFixed(2)} mm</text>`);
+    parts.push(`<text x="${margin.left+plotW+6}" y="${dielTop+sh/2+3}" fill="var(--text-dim)" font-size="10" font-family="sans-serif">H = ${h.toFixed(2)}</text>`);
+    // H dimension line
+    parts.push(`<line x1="${margin.left+plotW-5}" y1="${dielTop}" x2="${margin.left+plotW-5}" y2="${margin.top+plotH-6}" stroke="var(--text-dim)" stroke-width="0.5" stroke-dasharray="3,2"/>`);
+    // Differential pair
+    if (tlineDifferential) {
+      const ss = Math.max(s * scale, 4);
+      const trace1X = margin.left + (plotW - 2*sx - ss)/2;
+      const trace2X = trace1X + sx + ss;
+      parts.push(`<rect x="${trace1X}" y="${dielTop-st}" width="${sx}" height="${st}" fill="var(--cyan)" rx="1"/>`);
+      parts.push(`<rect x="${trace2X}" y="${dielTop-st}" width="${sx}" height="${st}" fill="var(--seafoam)" rx="1"/>`);
+      const midX = trace1X + sx + ss/2;
+      parts.push(`<text x="${midX}" y="${dielTop-st-8}" fill="var(--text-dim)" font-size="9" text-anchor="middle" font-family="sans-serif">S=${s.toFixed(2)}</text>`);
+    }
+  }
+
+  // Er label in dielectric
+  parts.push(`<text x="${W/2}" y="${margin.top+plotH/2+5}" fill="var(--text-dim)" font-size="14" text-anchor="middle" font-family="sans-serif" opacity="0.35">εᵣ = ${er.toFixed(2)}</text>`);
+
+  svg.innerHTML = parts.join('');
+}
+
+function calcTLine() {
+  const er = parseFloat(document.getElementById('tline-er')?.value) || 4.5;
+  const w = parseFloat(document.getElementById('tline-w')?.value) || 3.0;
+  const h = parseFloat(document.getElementById('tline-h')?.value) || 1.6;
+  const t = parseFloat(document.getElementById('tline-t')?.value) || 0.035;
+  const s = parseFloat(document.getElementById('tline-s')?.value) || 0.5;
+
+  let result = tlineStructure === 'stripline'
+    ? calcStripline(er, w, h, t)
+    : calcMicrostrip(er, w, h, t);
+
+  const { z0, eeff } = result;
+  const c = 299.792458;
+  const tpd = Math.sqrt(eeff) * 3.3356; // ps/mm
+  const c0 = tpd / z0; // pF/mm
+  const l0 = z0 * tpd / 1000; // nH/mm
+
+  document.getElementById('tline-z0').textContent = z0.toFixed(1);
+  document.getElementById('tline-eeff').textContent = eeff.toFixed(3);
+  document.getElementById('tline-tpd').textContent = tpd.toFixed(2);
+  document.getElementById('tline-c0').textContent = c0.toFixed(3);
+  document.getElementById('tline-l0').textContent = l0.toFixed(2);
+
+  // Match indicator
+  const diff = Math.abs(z0 - tlineTargetZ) / tlineTargetZ * 100;
+  let cls, text;
+  if (Math.abs(z0 - tlineTargetZ) < 0.5) { cls = 'good'; text = '✓ DEAD ON'; }
+  else if (diff < 5) { cls = 'good'; text = 'GOOD'; }
+  else if (diff < 15) { cls = 'warn'; text = 'OK'; }
+  else { cls = 'bad'; text = 'OFF'; }
+  document.getElementById('tline-match').innerHTML = `<span class="badge ${cls}">${text}</span> ${diff.toFixed(1)}% off ${tlineTargetZ}Ω`;
+
+  // Differential
+  if (tlineDifferential && tlineStructure === 'microstrip') {
+    const d = calcDiffMicrostrip(z0, s, h);
+    document.getElementById('tline-zdiff').textContent = d.zdiff.toFixed(1);
+    document.getElementById('tline-zodd').textContent = d.zodd.toFixed(1);
+    document.getElementById('tline-zeven').textContent = d.zeven.toFixed(1);
+    document.getElementById('tline-diff-results').style.display = 'grid';
+  } else {
+    document.getElementById('tline-diff-results').style.display = 'none';
+  }
+
+  drawTLineDiagram(w, h, t, s);
+}
+
+function initTLine() {
+  document.querySelectorAll('.tline-structure-btn').forEach(btn => {
+    btn.addEventListener('click', () => setTLineStructure(btn.dataset.type));
+  });
+  ['tline-er', 'tline-w', 'tline-h', 'tline-t', 'tline-s', 'tline-target'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', calcTLine);
+  });
+  const diffToggle = document.getElementById('tline-diff-toggle');
+  if (diffToggle) diffToggle.addEventListener('change', toggleDifferential);
+  calcTLine();
+}
+
+// ── Ohm's Law & Power Solver ─────────────────────────────────────
+
+function calcOhmsLaw() {
+  const v = parseFloat(document.getElementById('ol-v').value);
+  const i = parseFloat(document.getElementById('ol-i').value);
+  const r = parseFloat(document.getElementById('ol-r').value);
+  const p = parseFloat(document.getElementById('ol-p').value);
+
+  const inputs = [isNaN(v)?0:1, isNaN(i)?0:1, isNaN(r)?0:1, isNaN(p)?0:1];
+  const count = inputs.reduce((a,b)=>a+b,0);
+
+  let V=v, I=i, R=r, P=p;
+  const resultsEl = document.getElementById('ol-results');
+  const derivedEl = document.getElementById('ol-derived');
+
+  if (count < 2) {
+    resultsEl.innerHTML = '<div class="ohms-result-row"><span class="label">V</span><span class="value">—</span><span class="unit">V</span></div><div class="ohms-result-row"><span class="label">I</span><span class="value">—</span><span class="unit">A</span></div><div class="ohms-result-row"><span class="label">R</span><span class="value">—</span><span class="unit">Ω</span></div><div class="ohms-result-row"><span class="label">P</span><span class="value">—</span><span class="unit">W</span></div>';
+    derivedEl.textContent = '';
+    return;
+  }
+
+  // Solve using any 2 known values
+  let solved = false;
+
+  // V + I → R, P
+  if (!solved && !isNaN(v) && !isNaN(i)) { R = v/i; P = v*i; solved = true; }
+  // V + R → I, P
+  if (!solved && !isNaN(v) && !isNaN(r)) { I = v/r; P = v*v/r; solved = true; }
+  // V + P → I, R
+  if (!solved && !isNaN(v) && !isNaN(p)) { I = p/v; R = v*v/p; solved = true; }
+  // I + R → V, P
+  if (!solved && !isNaN(i) && !isNaN(r)) { V = i*r; P = i*i*r; solved = true; }
+  // I + P → V, R
+  if (!solved && !isNaN(i) && !isNaN(p)) { V = p/i; R = p/(i*i); solved = true; }
+  // R + P → V, I
+  if (!solved && !isNaN(r) && !isNaN(p)) { V = Math.sqrt(p*r); I = Math.sqrt(p/r); solved = true; }
+
+  if (!solved || !isFinite(V) || !isFinite(I) || !isFinite(R) || !isFinite(P)) {
+    derivedEl.textContent = 'Invalid combination';
+    return;
+  }
+
+  function fmt(v, unit) {
+    if (v === 0) return '0';
+    const abs = Math.abs(v);
+    if (unit === 'A' && abs < 0.001) return (v*1e6).toFixed(1) + ' µA';
+    if (unit === 'A' && abs < 1) return (v*1000).toFixed(2) + ' mA';
+    if (unit === 'Ω' && abs >= 1e6) return (v/1e6).toFixed(2) + ' MΩ';
+    if (unit === 'Ω' && abs >= 1000) return (v/1000).toFixed(2) + ' kΩ';
+    if (unit === 'W' && abs < 0.001) return (v*1e6).toFixed(1) + ' µW';
+    if (unit === 'W' && abs < 1) return (v*1000).toFixed(2) + ' mW';
+    if (unit === 'W' && abs >= 1000) return (v/1000).toFixed(2) + ' kW';
+    return v.toFixed(3);
+  }
+
+  resultsEl.innerHTML = `
+    <div class="ohms-result-row"><span class="label">V</span><span class="value">${fmt(V,'V')}</span><span class="unit">V</span></div>
+    <div class="ohms-result-row"><span class="label">I</span><span class="value">${fmt(I,'A')}</span><span class="unit">A</span></div>
+    <div class="ohms-result-row"><span class="label">R</span><span class="value">${fmt(R,'Ω')}</span><span class="unit">Ω</span></div>
+    <div class="ohms-result-row"><span class="label">P</span><span class="value">${fmt(P,'W')}</span><span class="unit">W</span></div>`;
+
+  derivedEl.innerHTML = `P = I²R = ${fmt(I*I*R,'W')}W &nbsp;|&nbsp; P = V²/R = ${fmt(V*V/R,'W')}W`;
+}
+
+// ── Voltage Drop ──────────────────────────────────────────────────
+
+function calcVoltDrop() {
+  const rPerKm = parseFloat(document.getElementById('vd-awg').value);
+  let dist = parseFloat(document.getElementById('vd-dist').value) || 0;
+  const current = parseFloat(document.getElementById('vd-current').value) || 0;
+  const vsrc = parseFloat(document.getElementById('vd-vsrc').value) || 0;
+  const roundTrip = document.getElementById('vd-roundtrip').checked;
+
+  if (roundTrip) dist *= 2;
+  const rWire = rPerKm * dist / 1000;
+  const vDrop = current * rWire;
+  const vLoad = vsrc - vDrop;
+  const pLoss = vDrop * current;
+  const pctLoss = vsrc > 0 ? (vDrop / vsrc) * 100 : 0;
+
+  document.getElementById('vd-results').innerHTML = `
+    <div class="ohms-result-row"><span class="label">V<sub>drop</sub></span><span class="value">${vDrop.toFixed(2)}</span><span class="unit">V</span></div>
+    <div class="ohms-result-row"><span class="label">V<sub>load</sub></span><span class="value">${vLoad.toFixed(2)}</span><span class="unit">V</span></div>
+    <div class="ohms-result-row"><span class="label">%</span><span class="value">${pctLoss.toFixed(1)}</span><span class="unit">% loss</span></div>
+    <div class="ohms-result-row"><span class="label">P<sub>loss</sub></span><span class="value">${pLoss.toFixed(2)}</span><span class="unit">W</span></div>
+    <div class="ohms-result-row"><span class="label">R<sub>wire</sub></span><span class="value">${(rWire*1000).toFixed(1)}</span><span class="unit">mΩ</span></div>`;
+}
+
+// ── Resistor Divider ──────────────────────────────────────────────
+
+function calcDivider() {
+  const vin = parseFloat(document.getElementById('div-vin').value) || 0;
+  const r1 = parseFloat(document.getElementById('div-r1').value) || 0;
+  const r2 = parseFloat(document.getElementById('div-r2').value) || 0;
+
+  if (r1 <= 0 || r2 <= 0) {
+    document.getElementById('div-vout').textContent = '—';
+    document.getElementById('div-i').textContent = '—';
+    document.getElementById('div-pr1').textContent = '—';
+    document.getElementById('div-pr2').textContent = '—';
+    document.getElementById('div-ratio').textContent = '—';
+    return;
+  }
+
+  const rTotal = r1 + r2;
+  const vout = vin * r2 / rTotal;
+  const i = vin / rTotal;
+  const p1 = i * i * r1;
+  const p2 = i * i * r2;
+
+  document.getElementById('div-vout').textContent = vout.toFixed(3) + ' V';
+  document.getElementById('div-i').textContent = (i * 1000).toFixed(2) + ' mA';
+  document.getElementById('div-pr1').textContent = (p1 * 1000).toFixed(2) + ' mW';
+  document.getElementById('div-pr2').textContent = (p2 * 1000).toFixed(2) + ' mW';
+  document.getElementById('div-ratio').textContent = (r2 / rTotal).toFixed(3);
+}
+
+// ── dB/dBm Converter ──────────────────────────────────────────────
+
+function calcDB_from(src) {
+  const z = parseFloat(document.getElementById('db-impedance').value) || 50;
+  const dbmEl = document.getElementById('db-dbm');
+  const wattsEl = document.getElementById('db-watts');
+  const voltsEl = document.getElementById('db-volts');
+
+  let dbm, watts, volts;
+
+  if (src === 'dbm' && dbmEl.value !== '') {
+    dbm = parseFloat(dbmEl.value);
+    watts = Math.pow(10, (dbm - 30) / 10);
+    volts = Math.sqrt(watts * z);
+  } else if (src === 'watts' && wattsEl.value !== '') {
+    watts = parseFloat(wattsEl.value);
+    dbm = 10 * Math.log10(watts) + 30;
+    volts = Math.sqrt(watts * z);
+  } else if (src === 'volts' && voltsEl.value !== '') {
+    volts = parseFloat(voltsEl.value);
+    watts = volts * volts / z;
+    dbm = 10 * Math.log10(watts) + 30;
+  } else {
+    return;
+  }
+
+  if (isFinite(dbm)) dbmEl.value = dbm.toFixed(2);
+  if (isFinite(watts)) {
+    if (watts >= 1) wattsEl.value = watts.toFixed(4);
+    else if (watts >= 0.001) wattsEl.value = (watts*1000).toFixed(3);
+    else wattsEl.value = watts.toExponential(3);
+  }
+  if (isFinite(volts)) {
+    if (volts >= 1) voltsEl.value = volts.toFixed(3);
+    else if (volts >= 0.001) voltsEl.value = (volts*1000).toFixed(2);
+    else voltsEl.value = volts.toExponential(3);
+  }
+}
+
+function calcDBRatio_from(src) {
+  const dbEl = document.getElementById('db-ratio-db');
+  const powerEl = document.getElementById('db-ratio-power');
+  const voltEl = document.getElementById('db-ratio-volt');
+
+  let db, pr, vr;
+
+  if (src === 'db' && dbEl.value !== '') {
+    db = parseFloat(dbEl.value);
+    pr = Math.pow(10, db/10);
+    vr = Math.pow(10, db/20);
+  } else if (src === 'power' && powerEl.value !== '') {
+    pr = parseFloat(powerEl.value);
+    db = 10 * Math.log10(pr);
+    vr = Math.sqrt(pr);
+  } else if (src === 'volt' && voltEl.value !== '') {
+    vr = parseFloat(voltEl.value);
+    db = 20 * Math.log10(vr);
+    pr = vr * vr;
+  } else {
+    return;
+  }
+
+  if (isFinite(db)) dbEl.value = db.toFixed(2);
+  if (isFinite(pr)) powerEl.value = pr.toFixed(4);
+  if (isFinite(vr)) voltEl.value = vr.toFixed(4);
+}
+
+function calcDBCascade() {
+  const inputs = document.querySelectorAll('#db-cascade-inputs input');
+  let totalDB = 0;
+  inputs.forEach(inp => {
+    const v = parseFloat(inp.value);
+    if (!isNaN(v)) totalDB += v;
+  });
+  const totalRatio = Math.pow(10, totalDB/10);
+  document.getElementById('db-cascade-result').textContent =
+    `Total: ${totalDB.toFixed(1)} dB (${totalRatio >= 1000 ? totalRatio.toExponential(2) : totalRatio.toFixed(1)}× power)`;
+}
+
+function addDBCascadeStage() {
+  const container = document.getElementById('db-cascade-inputs');
+  const inp = document.createElement('input');
+  inp.type = 'number';
+  inp.value = '0';
+  inp.step = 'any';
+  inp.placeholder = 'dB';
+  inp.addEventListener('input', calcDBCascade);
+  container.appendChild(inp);
+}
+
+// ── R Calc (Parallel/Series) ────────────────────────────────────
+
+const E12 = [1.0,1.2,1.5,1.8,2.2,2.7,3.3,3.9,4.7,5.6,6.8,8.2];
+let parallelValues = [];
+let seriesValues = [];
+
+function fmtR(v) {
+  if (v >= 1e6) return (v/1e6).toFixed(2) + ' MΩ';
+  if (v >= 1000) return (v/1000).toFixed(2) + ' kΩ';
+  return v.toFixed(2) + ' Ω';
+}
+
+function nearestE12(v) {
+  if (v <= 0) return '—';
+  const decade = Math.pow(10, Math.floor(Math.log10(v)));
+  const norm = v / decade;
+  let best = E12[0];
+  for (const e of E12) {
+    if (Math.abs(norm - e) < Math.abs(norm - best)) best = e;
+  }
+  return fmtR(best * decade);
+}
+
+function renderParallelChips() {
+  const div = document.getElementById('rc-parallel-chips');
+  div.innerHTML = parallelValues.map((v, i) =>
+    `<span class="rc-chip">${fmtR(v)}<span class="remove" onclick="removeParallel(${i})">×</span></span>`
+  ).join('');
+  calcParallel();
+}
+
+function addParallelR() {
+  const inp = document.getElementById('rc-parallel-add');
+  const v = parseFloat(inp.value);
+  if (!isNaN(v) && v > 0) { parallelValues.push(v); renderParallelChips(); }
+  inp.value = '';
+}
+
+function removeParallel(i) { parallelValues.splice(i,1); renderParallelChips(); }
+
+function calcParallel() {
+  if (parallelValues.length === 0) {
+    document.getElementById('rc-parallel-result').textContent = '—';
+    document.getElementById('rc-parallel-nearest').textContent = '';
+    return;
+  }
+  const invSum = parallelValues.reduce((s, v) => s + 1/v, 0);
+  const req = 1 / invSum;
+  document.getElementById('rc-parallel-result').textContent = 'Req = ' + fmtR(req);
+  document.getElementById('rc-parallel-nearest').textContent = 'Nearest E12: ' + nearestE12(req);
+}
+
+function renderSeriesChips() {
+  const div = document.getElementById('rc-series-chips');
+  div.innerHTML = seriesValues.map((v, i) =>
+    `<span class="rc-chip">${fmtR(v)}<span class="remove" onclick="removeSeries(${i})">×</span></span>`
+  ).join('');
+  calcSeries();
+}
+
+function addSeriesR() {
+  const inp = document.getElementById('rc-series-add');
+  const v = parseFloat(inp.value);
+  if (!isNaN(v) && v > 0) { seriesValues.push(v); renderSeriesChips(); }
+  inp.value = '';
+}
+
+function removeSeries(i) { seriesValues.splice(i,1); renderSeriesChips(); }
+
+function calcSeries() {
+  if (seriesValues.length === 0) {
+    document.getElementById('rc-series-result').textContent = '—';
+    return;
+  }
+  const req = seriesValues.reduce((s, v) => s + v, 0);
+  document.getElementById('rc-series-result').textContent = 'Req = ' + fmtR(req);
+}
+
+// ── LED Resistor ──────────────────────────────────────────────────
+
+function setLED(vf, ifMa) {
+  document.getElementById('led-vf').value = vf;
+  document.getElementById('led-if').value = ifMa;
+  document.querySelectorAll('.led-color-chip').forEach(c => c.classList.remove('active'));
+  event.target.classList.add('active');
+  calcLED();
+}
+
+function calcLED() {
+  const vsup = parseFloat(document.getElementById('led-vsup').value) || 0;
+  const vf = parseFloat(document.getElementById('led-vf').value) || 0;
+  const ifMa = parseFloat(document.getElementById('led-if').value) || 0;
+
+  if (vsup <= vf || ifMa <= 0) {
+    document.getElementById('led-r').textContent = vsup <= vf ? 'Vsup ≤ Vf!' : '—';
+    document.getElementById('led-pr').textContent = '—';
+    document.getElementById('led-pled').textContent = '—';
+    document.getElementById('led-nearest').textContent = '';
+    return;
+  }
+
+  const r = (vsup - vf) / (ifMa / 1000);
+  const pr = (vsup - vf) * (ifMa / 1000);
+  const pled = vf * (ifMa / 1000);
+
+  document.getElementById('led-r').textContent = fmtR(r);
+  document.getElementById('led-pr').textContent = (pr * 1000).toFixed(1) + ' mW';
+  document.getElementById('led-pled').textContent = (pled * 1000).toFixed(1) + ' mW';
+  document.getElementById('led-nearest').textContent = 'Nearest E12: ' + nearestE12(r) + ' (≥' + (pr*1000*2).toFixed(0) + 'mW rating)';
+}
+
+// ── Current Divider ───────────────────────────────────────────────
+
+function calcCurrentDiv() {
+  const itotal = parseFloat(document.getElementById('cd-itotal').value) || 0;
+  const r1 = parseFloat(document.getElementById('cd-r1').value) || 0;
+  const r2 = parseFloat(document.getElementById('cd-r2').value) || 0;
+
+  if (r1 <= 0 || r2 <= 0) {
+    document.getElementById('cd-i1').textContent = '—';
+    document.getElementById('cd-i2').textContent = '—';
+    document.getElementById('cd-req').textContent = '—';
+    return;
+  }
+
+  const req = (r1 * r2) / (r1 + r2);
+  const i1 = itotal * r2 / (r1 + r2);
+  const i2 = itotal * r1 / (r1 + r2);
+
+  document.getElementById('cd-i1').textContent = i1.toFixed(2) + ' mA';
+  document.getElementById('cd-i2').textContent = i2.toFixed(2) + ' mA';
+  document.getElementById('cd-req').textContent = fmtR(req);
+}
+
+// ── RC Filter ─────────────────────────────────────────────────────
+
+function calcRC() {
+  const r = parseFloat(document.getElementById('rc-r').value) || 0;
+  const c = parseFloat(document.getElementById('rc-c').value) || 0;
+
+  if (r <= 0 || c <= 0) {
+    ['rc-tau','rc-fc','rc-trise','rc-xc'].forEach(id => document.getElementById(id).textContent = '—');
+    return;
+  }
+
+  const tau = r * c;
+  const fc = 1 / (2 * Math.PI * tau);
+  const trise = 2.2 * tau;
+  const xc = r; // at fc, Xc = R
+
+  document.getElementById('rc-tau').textContent = fmtTime(tau);
+  document.getElementById('rc-fc').textContent = fmtFreq(fc);
+  document.getElementById('rc-trise').textContent = fmtTime(trise);
+  document.getElementById('rc-xc').textContent = fmtR(r) + ' (Xc = R at fc)';
+}
+
+// ── LC Resonator ──────────────────────────────────────────────────
+
+function calcLC() {
+  const l = parseFloat(document.getElementById('lc-l').value) || 0;
+  const cap = parseFloat(document.getElementById('lc-c').value) || 0;
+  const r = parseFloat(document.getElementById('lc-r').value) || 0;
+
+  if (l <= 0 || cap <= 0) {
+    ['lc-f','lc-x','lc-q','lc-omega'].forEach(id => document.getElementById(id).textContent = '—');
+    return;
+  }
+
+  const f = 1 / (2 * Math.PI * Math.sqrt(l * cap));
+  const omega = 2 * Math.PI * f;
+  const x = omega * l; // XL = XC at resonance
+  const q = r > 0 ? x / r : 0;
+
+  document.getElementById('lc-f').textContent = fmtFreq(f);
+  document.getElementById('lc-omega').textContent = fmtFreq(omega) + ' rad/s';
+  document.getElementById('lc-x').textContent = fmtR(x);
+  document.getElementById('lc-q').textContent = r > 0 ? q.toFixed(1) : '∞ (lossless)';
+}
+
+// ── Reactance ─────────────────────────────────────────────────────
+
+function calcReactance() {
+  const f = parseFloat(document.getElementById('rx-freq').value) || 0;
+  const l = parseFloat(document.getElementById('rx-l').value) || 0;
+  const c = parseFloat(document.getElementById('rx-c').value) || 0;
+
+  const xl = f > 0 && l > 0 ? 2 * Math.PI * f * l : 0;
+  const xc = f > 0 && c > 0 ? 1 / (2 * Math.PI * f * c) : 0;
+  const diff = Math.abs(xl - xc);
+
+  document.getElementById('rx-xl').textContent = fmtR(xl);
+  document.getElementById('rx-xc').textContent = fmtR(xc);
+  document.getElementById('rx-diff').textContent = fmtR(diff);
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+
+function fmtTime(s) {
+  if (s >= 1) return s.toFixed(2) + ' s';
+  if (s >= 0.001) return (s*1000).toFixed(2) + ' ms';
+  if (s >= 0.000001) return (s*1e6).toFixed(2) + ' µs';
+  return (s*1e9).toFixed(2) + ' ns';
+}
+
+function fmtFreq(hz) {
+  if (hz >= 1e9) return (hz/1e9).toFixed(2) + ' GHz';
+  if (hz >= 1e6) return (hz/1e6).toFixed(2) + ' MHz';
+  if (hz >= 1e3) return (hz/1e3).toFixed(2) + ' kHz';
+  return hz.toFixed(2) + ' Hz';
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadConfig();
+  setInterval(updateClocks, 1000);
+  buildRefTable();
+  buildColorRef();
+  buildESeriesTables();
+  setBands(4);
+  calculateDepth();
+
+  // Live depth calculation on input
+  document.getElementById('depth-input').addEventListener('input', calculateDepth);
+  document.getElementById('water-type').addEventListener('change', calculateDepth);
+
+  // Enter key for lookup
+  document.getElementById('lookup-value').addEventListener('keydown', e => {
+    if (e.key === 'Enter') reverseLookup();
+  });
+
+  // TV status polling
+  updateTVStatus();
+  setInterval(updateTVStatus, 10000);
+
+  // PCB trace live calculation
+  document.getElementById('pcb-current').addEventListener('input', calcPCB);
+  document.getElementById('pcb-temp').addEventListener('input', calcPCB);
+  document.getElementById('pcb-copper').addEventListener('change', calcPCB);
+  document.getElementById('pcb-layer').addEventListener('change', calcPCB);
+  calcPCB();  // initial
+
+  // GeoGuessr solver
+  geoBuildDropdown();
+
+  // T-Line impedance
+  initTLine();
+
+  // Init calculators with defaults
+  calcDBCascade();
+  calcRC();
+  calcLC();
+  calcReactance();
+  calcLED();
+  calcCurrentDiv();
+});
+</script>
+</body>
+</html>

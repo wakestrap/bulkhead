@@ -1,0 +1,291 @@
+<style>
+/* ── Ohm's Law ─────────────────────────────────────────────────── */
+.ohms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.ohms-field { margin-bottom: 0.75rem; }
+.ohms-field label {
+  display: block; font-size: 0.7rem; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 0.2rem;
+}
+.ohms-field input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-family: var(--font);
+  font-size: 1.1rem; padding: 0.5rem 0.75rem;
+}
+.ohms-field input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(88,166,255,0.15); }
+.ohms-field input.locked { background: var(--bg-hover); color: var(--cyan); cursor: default; }
+.ohms-result-row {
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.ohms-result-row:last-child { border-bottom: none; }
+.ohms-result-row .label { width: 30px; color: var(--text-dim); font-size: 0.75rem; text-align: center; }
+.ohms-result-row .value { font-family: var(--font); font-size: 1.1rem; color: var(--cyan); }
+.ohms-result-row .unit { color: var(--text-dim); font-size: 0.7rem; margin-left: 0.25rem; }
+.ohms-result-row .derived { color: var(--cyan); font-family: var(--font); font-size: 0.85rem; }
+
+.awg-select {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text); font-family: var(--font); font-size: 0.9rem; padding: 0.5rem 0.75rem;
+  width: 100%;
+}
+.awg-select:focus { outline: none; border-color: var(--cyan); }
+
+.divider-visual {
+  display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0;
+  font-family: var(--font); font-size: 0.85rem;
+}
+.divider-visual .wire { height: 2px; background: var(--text-dim); flex: 1; }
+.divider-visual .resistor-box {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  padding: 0.3rem 0.6rem; min-width: 45px; text-align: center;
+}
+.divider-visual .vout-point {
+  color: var(--green); font-weight: bold; font-size: 1rem; margin: 0 0.5rem;
+}
+.divider-visual .gnd { color: var(--text-dim); font-size: 0.7rem; }
+
+@media (max-width: 700px) {
+  .ohms-grid { grid-template-columns: 1fr; }
+}
+
+</style>
+
+<div class="tab-content" id="tab-ohmslaw">
+  <!-- Ohm's Law + Power Card -->
+  <div class="card">
+    <h3>🔌 Ohm's Law &amp; Power</h3>
+    <p style="font-size:0.75rem;color:var(--text-dim);margin-bottom:1rem;">Enter any two values — the solver computes the rest.</p>
+    <div class="ohms-grid">
+      <div>
+        <div class="ohms-field"><label>Voltage (V)</label><input type="number" id="ol-v" step="any" placeholder="Volts" oninput="calcOhmsLaw()"></div>
+        <div class="ohms-field"><label>Current (I)</label><input type="number" id="ol-i" step="any" placeholder="Amps" oninput="calcOhmsLaw()"></div>
+        <div class="ohms-field"><label>Resistance (R)</label><input type="number" id="ol-r" step="any" placeholder="Ohms" oninput="calcOhmsLaw()"></div>
+        <div class="ohms-field"><label>Power (P)</label><input type="number" id="ol-p" step="any" placeholder="Watts" oninput="calcOhmsLaw()"></div>
+      </div>
+      <div>
+        <div class="card" style="background:var(--bg);">
+          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.5rem;">Results</div>
+          <div id="ol-results">
+            <div class="ohms-result-row"><span class="label">V</span><span class="value">—</span><span class="unit">V</span></div>
+            <div class="ohms-result-row"><span class="label">I</span><span class="value">—</span><span class="unit">A</span></div>
+            <div class="ohms-result-row"><span class="label">R</span><span class="value">—</span><span class="unit">Ω</span></div>
+            <div class="ohms-result-row"><span class="label">P</span><span class="value">—</span><span class="unit">W</span></div>
+          </div>
+          <div id="ol-derived" style="margin-top:0.5rem;font-size:0.75rem;color:var(--text-dim);"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Voltage Drop Card -->
+  <div class="card">
+    <h3>📏 Voltage Drop Over Distance</h3>
+    <div class="ohms-grid">
+      <div>
+        <div class="ohms-field">
+          <label>Wire Gauge</label>
+          <select id="vd-awg" class="awg-select" onchange="calcVoltDrop()">
+            <option value="0.3224">0000 (0.3224 Ω/km)</option>
+            <option value="0.4066">000 (0.4066 Ω/km)</option>
+            <option value="0.5127">00 (0.5127 Ω/km)</option>
+            <option value="0.6465">0 (0.6465 Ω/km)</option>
+            <option value="0.8152">2 (0.8152 Ω/km)</option>
+            <option value="1.028">4 (1.028 Ω/km)</option>
+            <option value="1.296">6 (1.296 Ω/km)</option>
+            <option value="1.634">8 (1.634 Ω/km)</option>
+            <option value="2.061" selected>10 (2.061 Ω/km)</option>
+            <option value="2.599">12 (2.599 Ω/km)</option>
+            <option value="3.277">14 (3.277 Ω/km)</option>
+            <option value="4.133">16 (4.133 Ω/km)</option>
+            <option value="5.211">18 (5.211 Ω/km)</option>
+            <option value="6.571">20 (6.571 Ω/km)</option>
+            <option value="8.286">22 (8.286 Ω/km)</option>
+            <option value="10.45">24 (10.45 Ω/km)</option>
+            <option value="13.17">26 (13.17 Ω/km)</option>
+            <option value="16.61">28 (16.61 Ω/km)</option>
+            <option value="20.95">30 (20.95 Ω/km)</option>
+          </select>
+        </div>
+        <div class="ohms-field"><label>Distance (one-way)</label><input type="number" id="vd-dist" value="30" step="any" placeholder="meters" oninput="calcVoltDrop()"></div>
+        <div class="ohms-field">
+          <label>Current Draw</label>
+          <input type="number" id="vd-current" value="10" step="any" placeholder="Amps" oninput="calcVoltDrop()">
+        </div>
+        <div class="ohms-field"><label>Source Voltage</label><input type="number" id="vd-vsrc" value="12" step="any" placeholder="Volts" oninput="calcVoltDrop()"></div>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
+          <label class="toggle-switch" style="position:relative;display:inline-block;width:44px;height:24px;">
+            <input type="checkbox" id="vd-roundtrip" checked onchange="calcVoltDrop()" style="opacity:0;width:0;height:0;">
+            <span class="toggle-slider" style="border-radius:24px;"></span>
+          </label>
+          <span style="font-size:0.8rem;color:var(--text-dim);">Round-trip (×2)</span>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="background:var(--bg);">
+          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.5rem;">Voltage Drop Results</div>
+          <div id="vd-results">
+            <div class="ohms-result-row"><span class="label">V<sub>drop</sub></span><span class="value">—</span><span class="unit">V</span></div>
+            <div class="ohms-result-row"><span class="label">V<sub>load</sub></span><span class="value">—</span><span class="unit">V</span></div>
+            <div class="ohms-result-row"><span class="label">%</span><span class="value">—</span><span class="unit">% loss</span></div>
+            <div class="ohms-result-row"><span class="label">P<sub>loss</sub></span><span class="value">—</span><span class="unit">W</span></div>
+            <div class="ohms-result-row"><span class="label">R<sub>wire</sub></span><span class="value">—</span><span class="unit">Ω</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resistor Divider Card -->
+  <div class="card">
+    <h3>⊢⊣ Resistor Divider</h3>
+    <div class="ohms-grid">
+      <div>
+        <div class="ohms-field"><label>Input Voltage (Vin)</label><input type="number" id="div-vin" value="5" step="any" placeholder="Volts" oninput="calcDivider()"></div>
+        <div class="ohms-field"><label>R1 (top)</label><input type="number" id="div-r1" value="10000" step="any" placeholder="Ohms" oninput="calcDivider()"></div>
+        <div class="ohms-field"><label>R2 (bottom)</label><input type="number" id="div-r2" value="10000" step="any" placeholder="Ohms" oninput="calcDivider()"></div>
+      </div>
+      <div>
+        <div class="card" style="background:var(--bg);">
+          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.5rem;">Output</div>
+          <div class="ohms-result-row"><span class="label">V<sub>out</sub></span><span class="value" id="div-vout">—</span><span class="unit">V</span></div>
+          <div class="ohms-result-row"><span class="label">I</span><span class="value" id="div-i">—</span><span class="unit">mA</span></div>
+          <div class="ohms-result-row"><span class="label">P<sub>R1</sub></span><span class="value" id="div-pr1">—</span><span class="unit">mW</span></div>
+          <div class="ohms-result-row"><span class="label">P<sub>R2</sub></span><span class="value" id="div-pr2">—</span><span class="unit">mW</span></div>
+          <div class="ohms-result-row"><span class="label">Ratio</span><span class="value" id="div-ratio">—</span></div>
+        </div>
+        <div class="divider-visual">
+          <span style="color:var(--red);">Vin</span>
+          <span class="wire"></span>
+          <span class="resistor-box">R1</span>
+          <span class="wire"></span>
+          <span class="vout-point">⬤ Vout</span>
+          <span class="wire"></span>
+          <span class="resistor-box">R2</span>
+          <span class="wire"></span>
+          <span class="gnd">⏚ GND</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ── Ohm's Law & Power Solver ─────────────────────────────────────
+
+function calcOhmsLaw() {
+  const v = parseFloat(document.getElementById('ol-v').value);
+  const i = parseFloat(document.getElementById('ol-i').value);
+  const r = parseFloat(document.getElementById('ol-r').value);
+  const p = parseFloat(document.getElementById('ol-p').value);
+
+  const inputs = [isNaN(v)?0:1, isNaN(i)?0:1, isNaN(r)?0:1, isNaN(p)?0:1];
+  const count = inputs.reduce((a,b)=>a+b,0);
+
+  let V=v, I=i, R=r, P=p;
+  const resultsEl = document.getElementById('ol-results');
+  const derivedEl = document.getElementById('ol-derived');
+
+  if (count < 2) {
+    resultsEl.innerHTML = '<div class="ohms-result-row"><span class="label">V</span><span class="value">—</span><span class="unit">V</span></div><div class="ohms-result-row"><span class="label">I</span><span class="value">—</span><span class="unit">A</span></div><div class="ohms-result-row"><span class="label">R</span><span class="value">—</span><span class="unit">Ω</span></div><div class="ohms-result-row"><span class="label">P</span><span class="value">—</span><span class="unit">W</span></div>';
+    derivedEl.textContent = '';
+    return;
+  }
+
+  // Solve using any 2 known values
+  let solved = false;
+
+  // V + I → R, P
+  if (!solved && !isNaN(v) && !isNaN(i)) { R = v/i; P = v*i; solved = true; }
+  // V + R → I, P
+  if (!solved && !isNaN(v) && !isNaN(r)) { I = v/r; P = v*v/r; solved = true; }
+  // V + P → I, R
+  if (!solved && !isNaN(v) && !isNaN(p)) { I = p/v; R = v*v/p; solved = true; }
+  // I + R → V, P
+  if (!solved && !isNaN(i) && !isNaN(r)) { V = i*r; P = i*i*r; solved = true; }
+  // I + P → V, R
+  if (!solved && !isNaN(i) && !isNaN(p)) { V = p/i; R = p/(i*i); solved = true; }
+  // R + P → V, I
+  if (!solved && !isNaN(r) && !isNaN(p)) { V = Math.sqrt(p*r); I = Math.sqrt(p/r); solved = true; }
+
+  if (!solved || !isFinite(V) || !isFinite(I) || !isFinite(R) || !isFinite(P)) {
+    derivedEl.textContent = 'Invalid combination';
+    return;
+  }
+
+  function fmt(v, unit) {
+    if (v === 0) return '0';
+    const abs = Math.abs(v);
+    if (unit === 'A' && abs < 0.001) return (v*1e6).toFixed(1) + ' µA';
+    if (unit === 'A' && abs < 1) return (v*1000).toFixed(2) + ' mA';
+    if (unit === 'Ω' && abs >= 1e6) return (v/1e6).toFixed(2) + ' MΩ';
+    if (unit === 'Ω' && abs >= 1000) return (v/1000).toFixed(2) + ' kΩ';
+    if (unit === 'W' && abs < 0.001) return (v*1e6).toFixed(1) + ' µW';
+    if (unit === 'W' && abs < 1) return (v*1000).toFixed(2) + ' mW';
+    if (unit === 'W' && abs >= 1000) return (v/1000).toFixed(2) + ' kW';
+    return v.toFixed(3);
+  }
+
+  resultsEl.innerHTML = `
+    <div class="ohms-result-row"><span class="label">V</span><span class="value">${fmt(V,'V')}</span><span class="unit">V</span></div>
+    <div class="ohms-result-row"><span class="label">I</span><span class="value">${fmt(I,'A')}</span><span class="unit">A</span></div>
+    <div class="ohms-result-row"><span class="label">R</span><span class="value">${fmt(R,'Ω')}</span><span class="unit">Ω</span></div>
+    <div class="ohms-result-row"><span class="label">P</span><span class="value">${fmt(P,'W')}</span><span class="unit">W</span></div>`;
+
+  derivedEl.innerHTML = `P = I²R = ${fmt(I*I*R,'W')}W &nbsp;|&nbsp; P = V²/R = ${fmt(V*V/R,'W')}W`;
+}
+
+// ── Voltage Drop ──────────────────────────────────────────────────
+
+function calcVoltDrop() {
+  const rPerKm = parseFloat(document.getElementById('vd-awg').value);
+  let dist = parseFloat(document.getElementById('vd-dist').value) || 0;
+  const current = parseFloat(document.getElementById('vd-current').value) || 0;
+  const vsrc = parseFloat(document.getElementById('vd-vsrc').value) || 0;
+  const roundTrip = document.getElementById('vd-roundtrip').checked;
+
+  if (roundTrip) dist *= 2;
+  const rWire = rPerKm * dist / 1000;
+  const vDrop = current * rWire;
+  const vLoad = vsrc - vDrop;
+  const pLoss = vDrop * current;
+  const pctLoss = vsrc > 0 ? (vDrop / vsrc) * 100 : 0;
+
+  document.getElementById('vd-results').innerHTML = `
+    <div class="ohms-result-row"><span class="label">V<sub>drop</sub></span><span class="value">${vDrop.toFixed(2)}</span><span class="unit">V</span></div>
+    <div class="ohms-result-row"><span class="label">V<sub>load</sub></span><span class="value">${vLoad.toFixed(2)}</span><span class="unit">V</span></div>
+    <div class="ohms-result-row"><span class="label">%</span><span class="value">${pctLoss.toFixed(1)}</span><span class="unit">% loss</span></div>
+    <div class="ohms-result-row"><span class="label">P<sub>loss</sub></span><span class="value">${pLoss.toFixed(2)}</span><span class="unit">W</span></div>
+    <div class="ohms-result-row"><span class="label">R<sub>wire</sub></span><span class="value">${(rWire*1000).toFixed(1)}</span><span class="unit">mΩ</span></div>`;
+}
+
+// ── Resistor Divider ──────────────────────────────────────────────
+
+function calcDivider() {
+  const vin = parseFloat(document.getElementById('div-vin').value) || 0;
+  const r1 = parseFloat(document.getElementById('div-r1').value) || 0;
+  const r2 = parseFloat(document.getElementById('div-r2').value) || 0;
+
+  if (r1 <= 0 || r2 <= 0) {
+    document.getElementById('div-vout').textContent = '—';
+    document.getElementById('div-i').textContent = '—';
+    document.getElementById('div-pr1').textContent = '—';
+    document.getElementById('div-pr2').textContent = '—';
+    document.getElementById('div-ratio').textContent = '—';
+    return;
+  }
+
+  const rTotal = r1 + r2;
+  const vout = vin * r2 / rTotal;
+  const i = vin / rTotal;
+  const p1 = i * i * r1;
+  const p2 = i * i * r2;
+
+  document.getElementById('div-vout').textContent = vout.toFixed(3) + ' V';
+  document.getElementById('div-i').textContent = (i * 1000).toFixed(2) + ' mA';
+  document.getElementById('div-pr1').textContent = (p1 * 1000).toFixed(2) + ' mW';
+  document.getElementById('div-pr2').textContent = (p2 * 1000).toFixed(2) + ' mW';
+  document.getElementById('div-ratio').textContent = (r2 / rTotal).toFixed(3);
+}
+
+</script>
