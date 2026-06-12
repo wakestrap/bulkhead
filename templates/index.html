@@ -57,32 +57,95 @@ body {
   margin-top: 0.25rem;
 }
 
-/* ── Tab Navigation ─────────────────────────────────────────────── */
-.tabs {
+/* ── Navbar ──────────────────────────────────────────────────────── */
+.navbar {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 0;
   border-bottom: 1px solid var(--border);
   background: var(--bg-card);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 100;
 }
-.tab-btn {
+.nav-group {
+  display: flex;
+  align-items: center;
+}
+.tab-btn, .nav-dropdown-toggle {
   background: none;
   border: none;
   color: var(--text-dim);
   font-family: var(--font-ui);
-  font-size: 0.9rem;
-  padding: 0.75rem 1.5rem;
+  font-size: 0.85rem;
+  padding: 0.75rem 1rem;
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: all 0.15s;
+  white-space: nowrap;
 }
-.tab-btn:hover { color: var(--text); background: var(--bg-hover); }
-.tab-btn.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+.tab-btn:hover, .nav-dropdown-toggle:hover { color: var(--text); background: var(--bg-hover); }
+.tab-btn.active, .nav-dropdown-toggle.active { color: var(--cyan); border-bottom-color: var(--cyan); }
 
-/* ── Tab Content ────────────────────────────────────────────────── */
+/* ── Dropdown ───────────────────────────────────────────────────── */
+.nav-dropdown { position: relative; }
+.nav-dropdown-toggle { padding-right: 0.4rem; }
+.nav-dropdown-toggle::after {
+  content: ' ▾';
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  margin-left: 0.15rem;
+}
+.nav-dropdown-toggle.active::after { color: var(--cyan); }
+.nav-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 200px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  z-index: 101;
+  padding: 0.35rem 0;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.nav-dropdown.open .nav-dropdown-menu { display: block; }
+.nav-dropdown-menu .tab-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 1rem;
+  border-bottom: none;
+  font-size: 0.82rem;
+}
+.nav-dropdown-menu .tab-btn:hover { background: var(--bg-hover); }
+.nav-dropdown-menu .tab-btn.active {
+  color: var(--cyan);
+  background: rgba(88,166,255,0.08);
+  border-bottom: none;
+}
+.nav-dropdown-menu .dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.35rem 0.5rem;
+}
+.settings-btn {
+  margin-left: auto;
+  font-size: 1.1rem !important;
+  padding: 0.5rem 0.75rem !important;
+}
+
+/* ── Mobile Nav ─────────────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .navbar { justify-content: flex-start; overflow-x: auto; }
+  .tab-btn, .nav-dropdown-toggle { font-size: 0.78rem; padding: 0.6rem 0.7rem; }
+  .nav-dropdown-menu { position: fixed; left: 0.5rem; right: 0.5rem; }
+}
+
+/* ── Tab Content (unchanged) ───────────────────────────────────── */
 .tab-content { display: none; padding: 1.5rem; max-width: 960px; margin: 0 auto; }
 .tab-content.active { display: block; }
 
@@ -978,6 +1041,122 @@ body {
   .tline-results { grid-template-columns: 1fr; }
 }
 
+/* ── Ohm's Law ─────────────────────────────────────────────────── */
+.ohms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.ohms-field { margin-bottom: 0.75rem; }
+.ohms-field label {
+  display: block; font-size: 0.7rem; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 0.2rem;
+}
+.ohms-field input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-family: var(--font);
+  font-size: 1.1rem; padding: 0.5rem 0.75rem;
+}
+.ohms-field input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(88,166,255,0.15); }
+.ohms-field input.locked { background: var(--bg-hover); color: var(--cyan); cursor: default; }
+.ohms-result-row {
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.ohms-result-row:last-child { border-bottom: none; }
+.ohms-result-row .label { width: 30px; color: var(--text-dim); font-size: 0.75rem; text-align: center; }
+.ohms-result-row .value { font-family: var(--font); font-size: 1.1rem; color: var(--cyan); }
+.ohms-result-row .unit { color: var(--text-dim); font-size: 0.7rem; margin-left: 0.25rem; }
+.ohms-result-row .derived { color: var(--cyan); font-family: var(--font); font-size: 0.85rem; }
+
+.awg-select {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text); font-family: var(--font); font-size: 0.9rem; padding: 0.5rem 0.75rem;
+  width: 100%;
+}
+.awg-select:focus { outline: none; border-color: var(--cyan); }
+
+.divider-visual {
+  display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0;
+  font-family: var(--font); font-size: 0.85rem;
+}
+.divider-visual .wire { height: 2px; background: var(--text-dim); flex: 1; }
+.divider-visual .resistor-box {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  padding: 0.3rem 0.6rem; min-width: 45px; text-align: center;
+}
+.divider-visual .vout-point {
+  color: var(--green); font-weight: bold; font-size: 1rem; margin: 0 0.5rem;
+}
+.divider-visual .gnd { color: var(--text-dim); font-size: 0.7rem; }
+
+@media (max-width: 700px) {
+  .ohms-grid { grid-template-columns: 1fr; }
+}
+
+/* ── dB Converter ───────────────────────────────────────────────── */
+.db-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.db-input-row { display: flex; gap: 0.5rem; align-items: flex-end; margin-bottom: 0.75rem; }
+.db-input-row select {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text); font-family: var(--font); font-size: 0.85rem; padding: 0.5rem;
+  width: 80px;
+}
+.db-cascade-inputs { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.35rem; }
+.db-cascade-inputs input {
+  width: 70px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-family: var(--font);
+  font-size: 0.85rem; padding: 0.35rem 0.5rem; text-align: center;
+}
+.db-cascade-inputs input:focus { outline: none; border-color: var(--cyan); }
+
+/* ── R Calc ─────────────────────────────────────────────────────── */
+.rc-solver { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.rc-parallel-inputs { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin-bottom: 0.5rem; }
+.rc-parallel-inputs input {
+  width: 80px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-family: var(--font);
+  font-size: 0.9rem; padding: 0.4rem 0.5rem;
+}
+.rc-parallel-inputs input:focus { outline: none; border-color: var(--cyan); }
+.rc-chip {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  padding: 0.3rem 0.6rem; font-family: var(--font); font-size: 0.85rem;
+}
+.rc-chip .remove {
+  cursor: pointer; color: var(--red); font-weight: bold; font-size: 1rem; line-height: 0.8;
+}
+.rc-chip .remove:hover { color: var(--text); }
+.led-colors { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-top: 0.3rem; }
+.led-color-chip {
+  padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; cursor: pointer;
+  border: 1px solid var(--border); transition: all 0.15s;
+}
+.led-color-chip:hover { border-color: var(--cyan); }
+.led-color-chip.active { border-color: var(--cyan); background: rgba(88,166,255,0.15); }
+
+/* ── Freq Calc ──────────────────────────────────────────────────── */
+.freq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.freq-field { margin-bottom: 0.5rem; }
+.freq-field label {
+  display: block; font-size: 0.7rem; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 0.15rem;
+}
+.freq-field input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-family: var(--font);
+  font-size: 0.95rem; padding: 0.45rem 0.65rem;
+}
+.freq-field input:focus { outline: none; border-color: var(--cyan); }
+.freq-result {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  padding: 0.5rem 0.75rem; margin-bottom: 0.35rem;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.freq-result .freq-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; }
+.freq-result .freq-value { font-family: var(--font); font-size: 1rem; color: var(--cyan); }
+
+@media (max-width: 700px) {
+  .db-grid, .rc-solver, .freq-grid { grid-template-columns: 1fr; }
+}
+
 </style>
 </head>
 <body>
@@ -989,17 +1168,34 @@ body {
   <p>Subsea tools &amp; timezone sanity for the North Atlantic EE</p>
 </div>
 
-<!-- ── Tabs ─────────────────────────────────────────────────────── -->
-<nav class="tabs">
-  <button class="tab-btn active" data-tab="clock">🕐 World Clock</button>
-  <button class="tab-btn" data-tab="depth">🌊 Depth ↔ Pressure</button>
-  <button class="tab-btn" data-tab="resistor">⚡ Resistor Decoder</button>
-  <button class="tab-btn" data-tab="tv">📺 TV Remote</button>
-  <button class="tab-btn" data-tab="pcb">🔌 PCB Trace</button>
-  <button class="tab-btn" data-tab="geo">🌍 GeoGuessr</button>
-  <button class="tab-btn" data-tab="battery">🔋 Battery Pack</button>
-  <button class="tab-btn" data-tab="gauge">🧮 Wire Gauge</button>
-  <button class="tab-btn" data-tab="tline">〰️ T-Line Z</button>
+<!-- ── Navbar ────────────────────────────────────────────────────── -->
+<nav class="navbar">
+  <div class="nav-group">
+    <div class="nav-dropdown">
+      <button class="nav-dropdown-toggle">⚡ Electronics ▾</button>
+      <div class="nav-dropdown-menu">
+        <button class="tab-btn" data-tab="ohmslaw">🔌 Ohm's Law</button>
+        <button class="tab-btn" data-tab="rcalc">⫼ R / LED Calc</button>
+        <button class="tab-btn" data-tab="db">📶 dB/dBm</button>
+        <div class="dropdown-divider"></div>
+        <button class="tab-btn" data-tab="freq">∿ RC/LC/Freq</button>
+        <button class="tab-btn" data-tab="resistor">⚡ Resistor Decoder</button>
+        <button class="tab-btn" data-tab="tline">〰️ T-Line Z</button>
+      </div>
+    </div>
+    <button class="tab-btn" data-tab="depth">🌊 Depth ↔ Pressure</button>
+    <div class="nav-dropdown">
+      <button class="nav-dropdown-toggle">🛠️ Tools ▾</button>
+      <div class="nav-dropdown-menu">
+        <button class="tab-btn active" data-tab="clock">🕐 World Clock</button>
+        <button class="tab-btn" data-tab="pcb">🔌 PCB Trace</button>
+        <button class="tab-btn" data-tab="gauge">🧮 Wire Gauge</button>
+        <button class="tab-btn" data-tab="battery">🔋 Battery Pack</button>
+        <button class="tab-btn" data-tab="geo">🌍 GeoGuessr</button>
+      </div>
+    </div>
+    <button class="tab-btn" data-tab="tv">📺 TV Remote</button>
+  </div>
   <button class="tab-btn settings-btn" data-tab="settings">⚙️</button>
 </nav>
 
@@ -1359,6 +1555,308 @@ body {
 </div>
 
 <!-- ════════════════════════════════════════════════════════════════
+     OHM'S LAW TAB (Ohm's Law + Voltage Drop + Resistor Divider)
+     ════════════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-ohmslaw">
+  <!-- Ohm's Law + Power Card -->
+  <div class="card">
+    <h3>🔌 Ohm's Law &amp; Power</h3>
+    <p style="font-size:0.75rem;color:var(--text-dim);margin-bottom:1rem;">Enter any two values — the solver computes the rest.</p>
+    <div class="ohms-grid">
+      <div>
+        <div class="ohms-field"><label>Voltage (V)</label><input type="number" id="ol-v" step="any" placeholder="Volts" oninput="calcOhmsLaw()"></div>
+        <div class="ohms-field"><label>Current (I)</label><input type="number" id="ol-i" step="any" placeholder="Amps" oninput="calcOhmsLaw()"></div>
+        <div class="ohms-field"><label>Resistance (R)</label><input type="number" id="ol-r" step="any" placeholder="Ohms" oninput="calcOhmsLaw()"></div>
+        <div class="ohms-field"><label>Power (P)</label><input type="number" id="ol-p" step="any" placeholder="Watts" oninput="calcOhmsLaw()"></div>
+      </div>
+      <div>
+        <div class="card" style="background:var(--bg);">
+          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.5rem;">Results</div>
+          <div id="ol-results">
+            <div class="ohms-result-row"><span class="label">V</span><span class="value">—</span><span class="unit">V</span></div>
+            <div class="ohms-result-row"><span class="label">I</span><span class="value">—</span><span class="unit">A</span></div>
+            <div class="ohms-result-row"><span class="label">R</span><span class="value">—</span><span class="unit">Ω</span></div>
+            <div class="ohms-result-row"><span class="label">P</span><span class="value">—</span><span class="unit">W</span></div>
+          </div>
+          <div id="ol-derived" style="margin-top:0.5rem;font-size:0.75rem;color:var(--text-dim);"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Voltage Drop Card -->
+  <div class="card">
+    <h3>📏 Voltage Drop Over Distance</h3>
+    <div class="ohms-grid">
+      <div>
+        <div class="ohms-field">
+          <label>Wire Gauge</label>
+          <select id="vd-awg" class="awg-select" onchange="calcVoltDrop()">
+            <option value="0.3224">0000 (0.3224 Ω/km)</option>
+            <option value="0.4066">000 (0.4066 Ω/km)</option>
+            <option value="0.5127">00 (0.5127 Ω/km)</option>
+            <option value="0.6465">0 (0.6465 Ω/km)</option>
+            <option value="0.8152">2 (0.8152 Ω/km)</option>
+            <option value="1.028">4 (1.028 Ω/km)</option>
+            <option value="1.296">6 (1.296 Ω/km)</option>
+            <option value="1.634">8 (1.634 Ω/km)</option>
+            <option value="2.061" selected>10 (2.061 Ω/km)</option>
+            <option value="2.599">12 (2.599 Ω/km)</option>
+            <option value="3.277">14 (3.277 Ω/km)</option>
+            <option value="4.133">16 (4.133 Ω/km)</option>
+            <option value="5.211">18 (5.211 Ω/km)</option>
+            <option value="6.571">20 (6.571 Ω/km)</option>
+            <option value="8.286">22 (8.286 Ω/km)</option>
+            <option value="10.45">24 (10.45 Ω/km)</option>
+            <option value="13.17">26 (13.17 Ω/km)</option>
+            <option value="16.61">28 (16.61 Ω/km)</option>
+            <option value="20.95">30 (20.95 Ω/km)</option>
+          </select>
+        </div>
+        <div class="ohms-field"><label>Distance (one-way)</label><input type="number" id="vd-dist" value="30" step="any" placeholder="meters" oninput="calcVoltDrop()"></div>
+        <div class="ohms-field">
+          <label>Current Draw</label>
+          <input type="number" id="vd-current" value="10" step="any" placeholder="Amps" oninput="calcVoltDrop()">
+        </div>
+        <div class="ohms-field"><label>Source Voltage</label><input type="number" id="vd-vsrc" value="12" step="any" placeholder="Volts" oninput="calcVoltDrop()"></div>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
+          <label class="toggle-switch" style="position:relative;display:inline-block;width:44px;height:24px;">
+            <input type="checkbox" id="vd-roundtrip" checked onchange="calcVoltDrop()" style="opacity:0;width:0;height:0;">
+            <span class="toggle-slider" style="border-radius:24px;"></span>
+          </label>
+          <span style="font-size:0.8rem;color:var(--text-dim);">Round-trip (×2)</span>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="background:var(--bg);">
+          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.5rem;">Voltage Drop Results</div>
+          <div id="vd-results">
+            <div class="ohms-result-row"><span class="label">V<sub>drop</sub></span><span class="value">—</span><span class="unit">V</span></div>
+            <div class="ohms-result-row"><span class="label">V<sub>load</sub></span><span class="value">—</span><span class="unit">V</span></div>
+            <div class="ohms-result-row"><span class="label">%</span><span class="value">—</span><span class="unit">% loss</span></div>
+            <div class="ohms-result-row"><span class="label">P<sub>loss</sub></span><span class="value">—</span><span class="unit">W</span></div>
+            <div class="ohms-result-row"><span class="label">R<sub>wire</sub></span><span class="value">—</span><span class="unit">Ω</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resistor Divider Card -->
+  <div class="card">
+    <h3>⊢⊣ Resistor Divider</h3>
+    <div class="ohms-grid">
+      <div>
+        <div class="ohms-field"><label>Input Voltage (Vin)</label><input type="number" id="div-vin" value="5" step="any" placeholder="Volts" oninput="calcDivider()"></div>
+        <div class="ohms-field"><label>R1 (top)</label><input type="number" id="div-r1" value="10000" step="any" placeholder="Ohms" oninput="calcDivider()"></div>
+        <div class="ohms-field"><label>R2 (bottom)</label><input type="number" id="div-r2" value="10000" step="any" placeholder="Ohms" oninput="calcDivider()"></div>
+      </div>
+      <div>
+        <div class="card" style="background:var(--bg);">
+          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.5rem;">Output</div>
+          <div class="ohms-result-row"><span class="label">V<sub>out</sub></span><span class="value" id="div-vout">—</span><span class="unit">V</span></div>
+          <div class="ohms-result-row"><span class="label">I</span><span class="value" id="div-i">—</span><span class="unit">mA</span></div>
+          <div class="ohms-result-row"><span class="label">P<sub>R1</sub></span><span class="value" id="div-pr1">—</span><span class="unit">mW</span></div>
+          <div class="ohms-result-row"><span class="label">P<sub>R2</sub></span><span class="value" id="div-pr2">—</span><span class="unit">mW</span></div>
+          <div class="ohms-result-row"><span class="label">Ratio</span><span class="value" id="div-ratio">—</span></div>
+        </div>
+        <div class="divider-visual">
+          <span style="color:var(--red);">Vin</span>
+          <span class="wire"></span>
+          <span class="resistor-box">R1</span>
+          <span class="wire"></span>
+          <span class="vout-point">⬤ Vout</span>
+          <span class="wire"></span>
+          <span class="resistor-box">R2</span>
+          <span class="wire"></span>
+          <span class="gnd">⏚ GND</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     dB/dBm CONVERTER TAB
+     ════════════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-db">
+  <div class="card">
+    <h3>📶 dB/dBm Converter</h3>
+    <div class="db-grid">
+      <div>
+        <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;font-weight:600;margin-bottom:0.5rem;">dBm ↔ Watts ↔ Volts</div>
+        <div class="ohms-field"><label>dBm</label><input type="number" id="db-dbm" step="any" placeholder="dBm" oninput="calcDB_from('dbm')"></div>
+        <div class="ohms-field"><label>Power (Watts)</label><input type="number" id="db-watts" step="any" placeholder="Watts" oninput="calcDB_from('watts')"></div>
+        <div class="ohms-field"><label>Voltage</label><input type="number" id="db-volts" step="any" placeholder="Volts" oninput="calcDB_from('volts')"></div>
+        <div class="db-input-row">
+          <select id="db-impedance" onchange="calcDB_from('impedance')">
+            <option value="50" selected>50 Ω</option>
+            <option value="75">75 Ω</option>
+            <option value="600">600 Ω</option>
+          </select>
+          <span style="font-size:0.75rem;color:var(--text-dim);">impedance</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;font-weight:600;margin-bottom:0.5rem;">dB ↔ Ratio</div>
+        <div class="ohms-field"><label>dB</label><input type="number" id="db-ratio-db" step="any" placeholder="dB" oninput="calcDBRatio_from('db')"></div>
+        <div class="ohms-field"><label>Power Ratio</label><input type="number" id="db-ratio-power" step="any" placeholder="×" oninput="calcDBRatio_from('power')"></div>
+        <div class="ohms-field"><label>Voltage Ratio</label><input type="number" id="db-ratio-volt" step="any" placeholder="×" oninput="calcDBRatio_from('volt')"></div>
+        
+        <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;font-weight:600;margin-top:1rem;margin-bottom:0.35rem;">Cascaded Gain</div>
+        <div class="db-cascade-inputs" id="db-cascade-inputs">
+          <input type="number" value="3" step="any" placeholder="dB" oninput="calcDBCascade()">
+          <input type="number" value="-1" step="any" placeholder="dB" oninput="calcDBCascade()">
+          <input type="number" value="20" step="any" placeholder="dB" oninput="calcDBCascade()">
+        </div>
+        <button onclick="addDBCascadeStage()" style="background:var(--bg);border:1px solid var(--border);color:var(--text-dim);border-radius:4px;padding:0.2rem 0.5rem;font-size:0.7rem;cursor:pointer;margin-top:0.25rem;">+ Add Stage</button>
+        <div style="font-family:var(--font);font-size:0.9rem;color:var(--cyan);margin-top:0.5rem;" id="db-cascade-result">Total: 22 dB (158.5× power)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     R CALC TAB (Parallel/Series + LED + Current Divider)
+     ════════════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-rcalc">
+  <!-- Parallel Resistance Card -->
+  <div class="card">
+    <h3>⫼ Parallel / Series Resistance</h3>
+    <div class="rc-solver">
+      <div>
+        <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;font-weight:600;margin-bottom:0.35rem;">Parallel Resistors</div>
+        <div class="rc-parallel-inputs" id="rc-parallel-chips"></div>
+        <div style="display:flex;gap:0.4rem;margin-top:0.35rem;">
+          <input type="number" id="rc-parallel-add" placeholder="Ω" style="width:90px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--font);font-size:0.85rem;padding:0.35rem 0.5rem;" onkeydown="if(event.key==='Enter') addParallelR()">
+          <button onclick="addParallelR()" style="background:var(--cyan);color:#fff;border:none;border-radius:4px;padding:0.35rem 0.75rem;font-size:0.8rem;cursor:pointer;font-family:var(--font-ui);">Add</button>
+        </div>
+        <div style="margin-top:0.5rem;font-family:var(--font);font-size:1.1rem;color:var(--cyan);" id="rc-parallel-result">—</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);" id="rc-parallel-nearest"></div>
+      </div>
+      <div>
+        <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;font-weight:600;margin-bottom:0.35rem;">Series Resistors</div>
+        <div class="rc-parallel-inputs" id="rc-series-chips"></div>
+        <div style="display:flex;gap:0.4rem;margin-top:0.35rem;">
+          <input type="number" id="rc-series-add" placeholder="Ω" style="width:90px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--font);font-size:0.85rem;padding:0.35rem 0.5rem;" onkeydown="if(event.key==='Enter') addSeriesR()">
+          <button onclick="addSeriesR()" style="background:var(--cyan);color:#fff;border:none;border-radius:4px;padding:0.35rem 0.75rem;font-size:0.8rem;cursor:pointer;font-family:var(--font-ui);">Add</button>
+        </div>
+        <div style="margin-top:0.5rem;font-family:var(--font);font-size:1.1rem;color:var(--cyan);" id="rc-series-result">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LED Resistor Card -->
+  <div class="card">
+    <h3>💡 LED Dropper Resistor</h3>
+    <div class="rc-solver">
+      <div>
+        <div class="ohms-field"><label>Supply Voltage (V)</label><input type="number" id="led-vsup" value="5" step="any" oninput="calcLED()"></div>
+        <div class="ohms-field"><label>LED Forward Voltage (Vf)</label><input type="number" id="led-vf" value="2.0" step="any" oninput="calcLED()"></div>
+        <div class="ohms-field"><label>LED Current (mA)</label><input type="number" id="led-if" value="20" step="any" oninput="calcLED()"></div>
+        <div class="led-colors">
+          <span class="led-color-chip active" onclick="setLED(2.0,20)" style="background:#ff000033;color:#ff4444;">🔴 Red 2.0V</span>
+          <span class="led-color-chip" onclick="setLED(2.1,20)" style="background:#ffaa0033;color:#ffaa00;">🟠 Amber 2.1V</span>
+          <span class="led-color-chip" onclick="setLED(2.2,20)" style="background:#ffff0033;color:#cccc00;">🟡 Yellow 2.2V</span>
+          <span class="led-color-chip" onclick="setLED(3.2,20)" style="background:#00ff0033;color:#44ff44;">🟢 Green 3.2V</span>
+          <span class="led-color-chip" onclick="setLED(3.3,20)" style="background:#0088ff33;color:#44aaff;">🔵 Blue 3.3V</span>
+          <span class="led-color-chip" onclick="setLED(3.4,20)" style="background:#ffffff33;color:#cccccc;">⚪ White 3.4V</span>
+          <span class="led-color-chip" onclick="setLED(1.7,20)" style="background:#ff000033;color:#ff6666;">🔴 IR 1.7V</span>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="background:var(--bg);">
+          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.5rem;">Result</div>
+          <div class="ohms-result-row"><span class="label">R</span><span class="value" id="led-r">—</span><span class="unit">Ω</span></div>
+          <div class="ohms-result-row"><span class="label">P<sub>R</sub></span><span class="value" id="led-pr">—</span><span class="unit">mW</span></div>
+          <div class="ohms-result-row"><span class="label">P<sub>LED</sub></span><span class="value" id="led-pled">—</span><span class="unit">mW</span></div>
+          <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.3rem;" id="led-nearest"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Current Divider Card -->
+  <div class="card">
+    <h3>⑂ Current Divider</h3>
+    <div class="rc-solver">
+      <div>
+        <div class="ohms-field"><label>Total Current (mA)</label><input type="number" id="cd-itotal" value="100" step="any" oninput="calcCurrentDiv()"></div>
+        <div class="ohms-field"><label>R1 (Ω)</label><input type="number" id="cd-r1" value="100" step="any" oninput="calcCurrentDiv()"></div>
+        <div class="ohms-field"><label>R2 (Ω)</label><input type="number" id="cd-r2" value="200" step="any" oninput="calcCurrentDiv()"></div>
+      </div>
+      <div>
+        <div class="card" style="background:var(--bg);">
+          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.5rem;">Branch Currents</div>
+          <div class="ohms-result-row"><span class="label">I₁</span><span class="value" id="cd-i1">—</span><span class="unit">mA</span></div>
+          <div class="ohms-result-row"><span class="label">I₂</span><span class="value" id="cd-i2">—</span><span class="unit">mA</span></div>
+          <div class="ohms-result-row"><span class="label">R<sub>eq</sub></span><span class="value" id="cd-req">—</span><span class="unit">Ω</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     FREQ CALC TAB (RC + LC + Reactance)
+     ════════════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-freq">
+  <!-- RC Filter Card -->
+  <div class="card">
+    <h3>⏱ RC Time Constant &amp; Filter</h3>
+    <div class="rc-solver">
+      <div>
+        <div class="ohms-field"><label>Resistance (R)</label><input type="number" id="rc-r" value="10000" step="any" placeholder="Ω" oninput="calcRC()"></div>
+        <div class="ohms-field"><label>Capacitance (C)</label><input type="number" id="rc-c" value="0.0000001" step="any" placeholder="Farads" oninput="calcRC()"></div>
+        <div style="font-size:0.65rem;color:var(--text-dim);margin-top:-0.3rem;margin-bottom:0.5rem;">Default: 10kΩ, 100nF → τ = 1ms, fc = 159Hz</div>
+      </div>
+      <div>
+        <div class="freq-result"><span class="freq-label">τ (time constant)</span><span class="freq-value" id="rc-tau">—</span></div>
+        <div class="freq-result"><span class="freq-label">fc (cutoff freq)</span><span class="freq-value" id="rc-fc">—</span></div>
+        <div class="freq-result"><span class="freq-label">Rise Time (10-90%)</span><span class="freq-value" id="rc-trise">—</span></div>
+        <div class="freq-result"><span class="freq-label">Xc at fc</span><span class="freq-value" id="rc-xc">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LC Resonator Card -->
+  <div class="card">
+    <h3>〰️ LC Resonant Frequency</h3>
+    <div class="rc-solver">
+      <div>
+        <div class="ohms-field"><label>Inductance (L)</label><input type="number" id="lc-l" value="0.000010" step="any" placeholder="Henries" oninput="calcLC()"></div>
+        <div class="ohms-field"><label>Capacitance (C)</label><input type="number" id="lc-c" value="0.0000001" step="any" placeholder="Farads" oninput="calcLC()"></div>
+        <div class="ohms-field"><label>Series R (for Q, optional)</label><input type="number" id="lc-r" value="0" step="any" placeholder="Ω" oninput="calcLC()"></div>
+        <div style="font-size:0.65rem;color:var(--text-dim);">Default: 10µH, 100nF → f = 159kHz</div>
+      </div>
+      <div>
+        <div class="freq-result"><span class="freq-label">Resonant Frequency</span><span class="freq-value" id="lc-f">—</span></div>
+        <div class="freq-result"><span class="freq-label">XL = XC at res.</span><span class="freq-value" id="lc-x">—</span></div>
+        <div class="freq-result"><span class="freq-label">Q Factor</span><span class="freq-value" id="lc-q">—</span></div>
+        <div class="freq-result"><span class="freq-label">ω (angular freq)</span><span class="freq-value" id="lc-omega">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reactance Card -->
+  <div class="card">
+    <h3>∿ Reactance (XL / XC)</h3>
+    <div class="rc-solver">
+      <div>
+        <div class="ohms-field"><label>Frequency</label><input type="number" id="rx-freq" value="1000000" step="any" placeholder="Hz" oninput="calcReactance()"></div>
+        <div class="ohms-field"><label>Inductance (L)</label><input type="number" id="rx-l" value="0.000010" step="any" placeholder="Henries" oninput="calcReactance()"></div>
+        <div class="ohms-field"><label>Capacitance (C)</label><input type="number" id="rx-c" value="0.0000001" step="any" placeholder="Farads" oninput="calcReactance()"></div>
+      </div>
+      <div>
+        <div class="freq-result"><span class="freq-label">XL (inductive)</span><span class="freq-value" id="rx-xl">—</span></div>
+        <div class="freq-result"><span class="freq-label">XC (capacitive)</span><span class="freq-value" id="rx-xc">—</span></div>
+        <div class="freq-result"><span class="freq-label">|XL - XC|</span><span class="freq-value" id="rx-diff">—</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
      SVG ICON SPRITE (for TV Remote)
      ════════════════════════════════════════════════════════════════ -->
 <svg style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -1612,7 +2110,33 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    // Highlight parent dropdown toggle
+    document.querySelectorAll('.nav-dropdown-toggle').forEach(t => t.classList.remove('active'));
+    const parent = btn.closest('.nav-dropdown');
+    if (parent) {
+      const toggle = parent.querySelector('.nav-dropdown-toggle');
+      if (toggle) toggle.classList.add('active');
+      parent.classList.remove('open');
+    }
   });
+});
+
+// ── Dropdown Behavior ────────────────────────────────────────────
+document.querySelectorAll('.nav-dropdown-toggle').forEach(toggle => {
+  toggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const dropdown = toggle.parentElement;
+    const wasOpen = dropdown.classList.contains('open');
+    // Close all dropdowns
+    document.querySelectorAll('.nav-dropdown').forEach(d => d.classList.remove('open'));
+    // Open this one if it wasn't
+    if (!wasOpen) dropdown.classList.add('open');
+  });
+});
+
+// Click outside to close
+document.addEventListener('click', () => {
+  document.querySelectorAll('.nav-dropdown').forEach(d => d.classList.remove('open'));
 });
 
 // ── Color Data ────────────────────────────────────────────────────
@@ -2349,7 +2873,7 @@ function populateSettings() {
   const tabNames = {
     clock: '🕐 World Clock', depth: '🌊 Depth ↔ Pressure',
     resistor: '⚡ Resistor Decoder', tv: '📺 TV Remote',
-    pcb: '🔌 PCB Trace', geo: '🌍 GeoGuessr', battery: '🔋 Battery Pack', gauge: '🧮 Wire Gauge', tline: '〰️ T-Line Z'
+    pcb: '🔌 PCB Trace', geo: '🌍 GeoGuessr', battery: '🔋 Battery Pack', gauge: '🧮 Wire Gauge', tline: '〰️ T-Line Z', ohmslaw: '🔌 Ohm\'s Law', rcalc: '⫼ R / LED Calc', db: '📶 dB/dBm', freq: '∿ RC/LC/Freq'
   };
   togglesDiv.innerHTML = Object.entries(tabNames).map(([id, label]) => {
     const checked = (appConfig.tabs && appConfig.tabs[id] !== false) ? 'checked' : '';
@@ -2621,6 +3145,424 @@ function initTLine() {
   calcTLine();
 }
 
+// ── Ohm's Law & Power Solver ─────────────────────────────────────
+
+function calcOhmsLaw() {
+  const v = parseFloat(document.getElementById('ol-v').value);
+  const i = parseFloat(document.getElementById('ol-i').value);
+  const r = parseFloat(document.getElementById('ol-r').value);
+  const p = parseFloat(document.getElementById('ol-p').value);
+
+  const inputs = [isNaN(v)?0:1, isNaN(i)?0:1, isNaN(r)?0:1, isNaN(p)?0:1];
+  const count = inputs.reduce((a,b)=>a+b,0);
+
+  let V=v, I=i, R=r, P=p;
+  const resultsEl = document.getElementById('ol-results');
+  const derivedEl = document.getElementById('ol-derived');
+
+  if (count < 2) {
+    resultsEl.innerHTML = '<div class="ohms-result-row"><span class="label">V</span><span class="value">—</span><span class="unit">V</span></div><div class="ohms-result-row"><span class="label">I</span><span class="value">—</span><span class="unit">A</span></div><div class="ohms-result-row"><span class="label">R</span><span class="value">—</span><span class="unit">Ω</span></div><div class="ohms-result-row"><span class="label">P</span><span class="value">—</span><span class="unit">W</span></div>';
+    derivedEl.textContent = '';
+    return;
+  }
+
+  // Solve using any 2 known values
+  let solved = false;
+
+  // V + I → R, P
+  if (!solved && !isNaN(v) && !isNaN(i)) { R = v/i; P = v*i; solved = true; }
+  // V + R → I, P
+  if (!solved && !isNaN(v) && !isNaN(r)) { I = v/r; P = v*v/r; solved = true; }
+  // V + P → I, R
+  if (!solved && !isNaN(v) && !isNaN(p)) { I = p/v; R = v*v/p; solved = true; }
+  // I + R → V, P
+  if (!solved && !isNaN(i) && !isNaN(r)) { V = i*r; P = i*i*r; solved = true; }
+  // I + P → V, R
+  if (!solved && !isNaN(i) && !isNaN(p)) { V = p/i; R = p/(i*i); solved = true; }
+  // R + P → V, I
+  if (!solved && !isNaN(r) && !isNaN(p)) { V = Math.sqrt(p*r); I = Math.sqrt(p/r); solved = true; }
+
+  if (!solved || !isFinite(V) || !isFinite(I) || !isFinite(R) || !isFinite(P)) {
+    derivedEl.textContent = 'Invalid combination';
+    return;
+  }
+
+  function fmt(v, unit) {
+    if (v === 0) return '0';
+    const abs = Math.abs(v);
+    if (unit === 'A' && abs < 0.001) return (v*1e6).toFixed(1) + ' µA';
+    if (unit === 'A' && abs < 1) return (v*1000).toFixed(2) + ' mA';
+    if (unit === 'Ω' && abs >= 1e6) return (v/1e6).toFixed(2) + ' MΩ';
+    if (unit === 'Ω' && abs >= 1000) return (v/1000).toFixed(2) + ' kΩ';
+    if (unit === 'W' && abs < 0.001) return (v*1e6).toFixed(1) + ' µW';
+    if (unit === 'W' && abs < 1) return (v*1000).toFixed(2) + ' mW';
+    if (unit === 'W' && abs >= 1000) return (v/1000).toFixed(2) + ' kW';
+    return v.toFixed(3);
+  }
+
+  resultsEl.innerHTML = `
+    <div class="ohms-result-row"><span class="label">V</span><span class="value">${fmt(V,'V')}</span><span class="unit">V</span></div>
+    <div class="ohms-result-row"><span class="label">I</span><span class="value">${fmt(I,'A')}</span><span class="unit">A</span></div>
+    <div class="ohms-result-row"><span class="label">R</span><span class="value">${fmt(R,'Ω')}</span><span class="unit">Ω</span></div>
+    <div class="ohms-result-row"><span class="label">P</span><span class="value">${fmt(P,'W')}</span><span class="unit">W</span></div>`;
+
+  derivedEl.innerHTML = `P = I²R = ${fmt(I*I*R,'W')}W &nbsp;|&nbsp; P = V²/R = ${fmt(V*V/R,'W')}W`;
+}
+
+// ── Voltage Drop ──────────────────────────────────────────────────
+
+function calcVoltDrop() {
+  const rPerKm = parseFloat(document.getElementById('vd-awg').value);
+  let dist = parseFloat(document.getElementById('vd-dist').value) || 0;
+  const current = parseFloat(document.getElementById('vd-current').value) || 0;
+  const vsrc = parseFloat(document.getElementById('vd-vsrc').value) || 0;
+  const roundTrip = document.getElementById('vd-roundtrip').checked;
+
+  if (roundTrip) dist *= 2;
+  const rWire = rPerKm * dist / 1000;
+  const vDrop = current * rWire;
+  const vLoad = vsrc - vDrop;
+  const pLoss = vDrop * current;
+  const pctLoss = vsrc > 0 ? (vDrop / vsrc) * 100 : 0;
+
+  document.getElementById('vd-results').innerHTML = `
+    <div class="ohms-result-row"><span class="label">V<sub>drop</sub></span><span class="value">${vDrop.toFixed(2)}</span><span class="unit">V</span></div>
+    <div class="ohms-result-row"><span class="label">V<sub>load</sub></span><span class="value">${vLoad.toFixed(2)}</span><span class="unit">V</span></div>
+    <div class="ohms-result-row"><span class="label">%</span><span class="value">${pctLoss.toFixed(1)}</span><span class="unit">% loss</span></div>
+    <div class="ohms-result-row"><span class="label">P<sub>loss</sub></span><span class="value">${pLoss.toFixed(2)}</span><span class="unit">W</span></div>
+    <div class="ohms-result-row"><span class="label">R<sub>wire</sub></span><span class="value">${(rWire*1000).toFixed(1)}</span><span class="unit">mΩ</span></div>`;
+}
+
+// ── Resistor Divider ──────────────────────────────────────────────
+
+function calcDivider() {
+  const vin = parseFloat(document.getElementById('div-vin').value) || 0;
+  const r1 = parseFloat(document.getElementById('div-r1').value) || 0;
+  const r2 = parseFloat(document.getElementById('div-r2').value) || 0;
+
+  if (r1 <= 0 || r2 <= 0) {
+    document.getElementById('div-vout').textContent = '—';
+    document.getElementById('div-i').textContent = '—';
+    document.getElementById('div-pr1').textContent = '—';
+    document.getElementById('div-pr2').textContent = '—';
+    document.getElementById('div-ratio').textContent = '—';
+    return;
+  }
+
+  const rTotal = r1 + r2;
+  const vout = vin * r2 / rTotal;
+  const i = vin / rTotal;
+  const p1 = i * i * r1;
+  const p2 = i * i * r2;
+
+  document.getElementById('div-vout').textContent = vout.toFixed(3) + ' V';
+  document.getElementById('div-i').textContent = (i * 1000).toFixed(2) + ' mA';
+  document.getElementById('div-pr1').textContent = (p1 * 1000).toFixed(2) + ' mW';
+  document.getElementById('div-pr2').textContent = (p2 * 1000).toFixed(2) + ' mW';
+  document.getElementById('div-ratio').textContent = (r2 / rTotal).toFixed(3);
+}
+
+// ── dB/dBm Converter ──────────────────────────────────────────────
+
+function calcDB_from(src) {
+  const z = parseFloat(document.getElementById('db-impedance').value) || 50;
+  const dbmEl = document.getElementById('db-dbm');
+  const wattsEl = document.getElementById('db-watts');
+  const voltsEl = document.getElementById('db-volts');
+
+  let dbm, watts, volts;
+
+  if (src === 'dbm' && dbmEl.value !== '') {
+    dbm = parseFloat(dbmEl.value);
+    watts = Math.pow(10, (dbm - 30) / 10);
+    volts = Math.sqrt(watts * z);
+  } else if (src === 'watts' && wattsEl.value !== '') {
+    watts = parseFloat(wattsEl.value);
+    dbm = 10 * Math.log10(watts) + 30;
+    volts = Math.sqrt(watts * z);
+  } else if (src === 'volts' && voltsEl.value !== '') {
+    volts = parseFloat(voltsEl.value);
+    watts = volts * volts / z;
+    dbm = 10 * Math.log10(watts) + 30;
+  } else {
+    return;
+  }
+
+  if (isFinite(dbm)) dbmEl.value = dbm.toFixed(2);
+  if (isFinite(watts)) {
+    if (watts >= 1) wattsEl.value = watts.toFixed(4);
+    else if (watts >= 0.001) wattsEl.value = (watts*1000).toFixed(3);
+    else wattsEl.value = watts.toExponential(3);
+  }
+  if (isFinite(volts)) {
+    if (volts >= 1) voltsEl.value = volts.toFixed(3);
+    else if (volts >= 0.001) voltsEl.value = (volts*1000).toFixed(2);
+    else voltsEl.value = volts.toExponential(3);
+  }
+}
+
+function calcDBRatio_from(src) {
+  const dbEl = document.getElementById('db-ratio-db');
+  const powerEl = document.getElementById('db-ratio-power');
+  const voltEl = document.getElementById('db-ratio-volt');
+
+  let db, pr, vr;
+
+  if (src === 'db' && dbEl.value !== '') {
+    db = parseFloat(dbEl.value);
+    pr = Math.pow(10, db/10);
+    vr = Math.pow(10, db/20);
+  } else if (src === 'power' && powerEl.value !== '') {
+    pr = parseFloat(powerEl.value);
+    db = 10 * Math.log10(pr);
+    vr = Math.sqrt(pr);
+  } else if (src === 'volt' && voltEl.value !== '') {
+    vr = parseFloat(voltEl.value);
+    db = 20 * Math.log10(vr);
+    pr = vr * vr;
+  } else {
+    return;
+  }
+
+  if (isFinite(db)) dbEl.value = db.toFixed(2);
+  if (isFinite(pr)) powerEl.value = pr.toFixed(4);
+  if (isFinite(vr)) voltEl.value = vr.toFixed(4);
+}
+
+function calcDBCascade() {
+  const inputs = document.querySelectorAll('#db-cascade-inputs input');
+  let totalDB = 0;
+  inputs.forEach(inp => {
+    const v = parseFloat(inp.value);
+    if (!isNaN(v)) totalDB += v;
+  });
+  const totalRatio = Math.pow(10, totalDB/10);
+  document.getElementById('db-cascade-result').textContent =
+    `Total: ${totalDB.toFixed(1)} dB (${totalRatio >= 1000 ? totalRatio.toExponential(2) : totalRatio.toFixed(1)}× power)`;
+}
+
+function addDBCascadeStage() {
+  const container = document.getElementById('db-cascade-inputs');
+  const inp = document.createElement('input');
+  inp.type = 'number';
+  inp.value = '0';
+  inp.step = 'any';
+  inp.placeholder = 'dB';
+  inp.addEventListener('input', calcDBCascade);
+  container.appendChild(inp);
+}
+
+// ── R Calc (Parallel/Series) ────────────────────────────────────
+
+const E12 = [1.0,1.2,1.5,1.8,2.2,2.7,3.3,3.9,4.7,5.6,6.8,8.2];
+let parallelValues = [];
+let seriesValues = [];
+
+function fmtR(v) {
+  if (v >= 1e6) return (v/1e6).toFixed(2) + ' MΩ';
+  if (v >= 1000) return (v/1000).toFixed(2) + ' kΩ';
+  return v.toFixed(2) + ' Ω';
+}
+
+function nearestE12(v) {
+  if (v <= 0) return '—';
+  const decade = Math.pow(10, Math.floor(Math.log10(v)));
+  const norm = v / decade;
+  let best = E12[0];
+  for (const e of E12) {
+    if (Math.abs(norm - e) < Math.abs(norm - best)) best = e;
+  }
+  return fmtR(best * decade);
+}
+
+function renderParallelChips() {
+  const div = document.getElementById('rc-parallel-chips');
+  div.innerHTML = parallelValues.map((v, i) =>
+    `<span class="rc-chip">${fmtR(v)}<span class="remove" onclick="removeParallel(${i})">×</span></span>`
+  ).join('');
+  calcParallel();
+}
+
+function addParallelR() {
+  const inp = document.getElementById('rc-parallel-add');
+  const v = parseFloat(inp.value);
+  if (!isNaN(v) && v > 0) { parallelValues.push(v); renderParallelChips(); }
+  inp.value = '';
+}
+
+function removeParallel(i) { parallelValues.splice(i,1); renderParallelChips(); }
+
+function calcParallel() {
+  if (parallelValues.length === 0) {
+    document.getElementById('rc-parallel-result').textContent = '—';
+    document.getElementById('rc-parallel-nearest').textContent = '';
+    return;
+  }
+  const invSum = parallelValues.reduce((s, v) => s + 1/v, 0);
+  const req = 1 / invSum;
+  document.getElementById('rc-parallel-result').textContent = 'Req = ' + fmtR(req);
+  document.getElementById('rc-parallel-nearest').textContent = 'Nearest E12: ' + nearestE12(req);
+}
+
+function renderSeriesChips() {
+  const div = document.getElementById('rc-series-chips');
+  div.innerHTML = seriesValues.map((v, i) =>
+    `<span class="rc-chip">${fmtR(v)}<span class="remove" onclick="removeSeries(${i})">×</span></span>`
+  ).join('');
+  calcSeries();
+}
+
+function addSeriesR() {
+  const inp = document.getElementById('rc-series-add');
+  const v = parseFloat(inp.value);
+  if (!isNaN(v) && v > 0) { seriesValues.push(v); renderSeriesChips(); }
+  inp.value = '';
+}
+
+function removeSeries(i) { seriesValues.splice(i,1); renderSeriesChips(); }
+
+function calcSeries() {
+  if (seriesValues.length === 0) {
+    document.getElementById('rc-series-result').textContent = '—';
+    return;
+  }
+  const req = seriesValues.reduce((s, v) => s + v, 0);
+  document.getElementById('rc-series-result').textContent = 'Req = ' + fmtR(req);
+}
+
+// ── LED Resistor ──────────────────────────────────────────────────
+
+function setLED(vf, ifMa) {
+  document.getElementById('led-vf').value = vf;
+  document.getElementById('led-if').value = ifMa;
+  document.querySelectorAll('.led-color-chip').forEach(c => c.classList.remove('active'));
+  event.target.classList.add('active');
+  calcLED();
+}
+
+function calcLED() {
+  const vsup = parseFloat(document.getElementById('led-vsup').value) || 0;
+  const vf = parseFloat(document.getElementById('led-vf').value) || 0;
+  const ifMa = parseFloat(document.getElementById('led-if').value) || 0;
+
+  if (vsup <= vf || ifMa <= 0) {
+    document.getElementById('led-r').textContent = vsup <= vf ? 'Vsup ≤ Vf!' : '—';
+    document.getElementById('led-pr').textContent = '—';
+    document.getElementById('led-pled').textContent = '—';
+    document.getElementById('led-nearest').textContent = '';
+    return;
+  }
+
+  const r = (vsup - vf) / (ifMa / 1000);
+  const pr = (vsup - vf) * (ifMa / 1000);
+  const pled = vf * (ifMa / 1000);
+
+  document.getElementById('led-r').textContent = fmtR(r);
+  document.getElementById('led-pr').textContent = (pr * 1000).toFixed(1) + ' mW';
+  document.getElementById('led-pled').textContent = (pled * 1000).toFixed(1) + ' mW';
+  document.getElementById('led-nearest').textContent = 'Nearest E12: ' + nearestE12(r) + ' (≥' + (pr*1000*2).toFixed(0) + 'mW rating)';
+}
+
+// ── Current Divider ───────────────────────────────────────────────
+
+function calcCurrentDiv() {
+  const itotal = parseFloat(document.getElementById('cd-itotal').value) || 0;
+  const r1 = parseFloat(document.getElementById('cd-r1').value) || 0;
+  const r2 = parseFloat(document.getElementById('cd-r2').value) || 0;
+
+  if (r1 <= 0 || r2 <= 0) {
+    document.getElementById('cd-i1').textContent = '—';
+    document.getElementById('cd-i2').textContent = '—';
+    document.getElementById('cd-req').textContent = '—';
+    return;
+  }
+
+  const req = (r1 * r2) / (r1 + r2);
+  const i1 = itotal * r2 / (r1 + r2);
+  const i2 = itotal * r1 / (r1 + r2);
+
+  document.getElementById('cd-i1').textContent = i1.toFixed(2) + ' mA';
+  document.getElementById('cd-i2').textContent = i2.toFixed(2) + ' mA';
+  document.getElementById('cd-req').textContent = fmtR(req);
+}
+
+// ── RC Filter ─────────────────────────────────────────────────────
+
+function calcRC() {
+  const r = parseFloat(document.getElementById('rc-r').value) || 0;
+  const c = parseFloat(document.getElementById('rc-c').value) || 0;
+
+  if (r <= 0 || c <= 0) {
+    ['rc-tau','rc-fc','rc-trise','rc-xc'].forEach(id => document.getElementById(id).textContent = '—');
+    return;
+  }
+
+  const tau = r * c;
+  const fc = 1 / (2 * Math.PI * tau);
+  const trise = 2.2 * tau;
+  const xc = r; // at fc, Xc = R
+
+  document.getElementById('rc-tau').textContent = fmtTime(tau);
+  document.getElementById('rc-fc').textContent = fmtFreq(fc);
+  document.getElementById('rc-trise').textContent = fmtTime(trise);
+  document.getElementById('rc-xc').textContent = fmtR(r) + ' (Xc = R at fc)';
+}
+
+// ── LC Resonator ──────────────────────────────────────────────────
+
+function calcLC() {
+  const l = parseFloat(document.getElementById('lc-l').value) || 0;
+  const cap = parseFloat(document.getElementById('lc-c').value) || 0;
+  const r = parseFloat(document.getElementById('lc-r').value) || 0;
+
+  if (l <= 0 || cap <= 0) {
+    ['lc-f','lc-x','lc-q','lc-omega'].forEach(id => document.getElementById(id).textContent = '—');
+    return;
+  }
+
+  const f = 1 / (2 * Math.PI * Math.sqrt(l * cap));
+  const omega = 2 * Math.PI * f;
+  const x = omega * l; // XL = XC at resonance
+  const q = r > 0 ? x / r : 0;
+
+  document.getElementById('lc-f').textContent = fmtFreq(f);
+  document.getElementById('lc-omega').textContent = fmtFreq(omega) + ' rad/s';
+  document.getElementById('lc-x').textContent = fmtR(x);
+  document.getElementById('lc-q').textContent = r > 0 ? q.toFixed(1) : '∞ (lossless)';
+}
+
+// ── Reactance ─────────────────────────────────────────────────────
+
+function calcReactance() {
+  const f = parseFloat(document.getElementById('rx-freq').value) || 0;
+  const l = parseFloat(document.getElementById('rx-l').value) || 0;
+  const c = parseFloat(document.getElementById('rx-c').value) || 0;
+
+  const xl = f > 0 && l > 0 ? 2 * Math.PI * f * l : 0;
+  const xc = f > 0 && c > 0 ? 1 / (2 * Math.PI * f * c) : 0;
+  const diff = Math.abs(xl - xc);
+
+  document.getElementById('rx-xl').textContent = fmtR(xl);
+  document.getElementById('rx-xc').textContent = fmtR(xc);
+  document.getElementById('rx-diff').textContent = fmtR(diff);
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+
+function fmtTime(s) {
+  if (s >= 1) return s.toFixed(2) + ' s';
+  if (s >= 0.001) return (s*1000).toFixed(2) + ' ms';
+  if (s >= 0.000001) return (s*1e6).toFixed(2) + ' µs';
+  return (s*1e9).toFixed(2) + ' ns';
+}
+
+function fmtFreq(hz) {
+  if (hz >= 1e9) return (hz/1e9).toFixed(2) + ' GHz';
+  if (hz >= 1e6) return (hz/1e6).toFixed(2) + ' MHz';
+  if (hz >= 1e3) return (hz/1e3).toFixed(2) + ' kHz';
+  return hz.toFixed(2) + ' Hz';
+}
+
 // ── Init ──────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   await loadConfig();
@@ -2656,6 +3598,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // T-Line impedance
   initTLine();
+
+  // Init calculators with defaults
+  calcDBCascade();
+  calcRC();
+  calcLC();
+  calcReactance();
+  calcLED();
+  calcCurrentDiv();
 });
 </script>
 </body>

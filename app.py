@@ -571,7 +571,7 @@ CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.j
 DEFAULT_CONFIG = {
     "tabs": {
         "clock": True, "depth": True, "resistor": True,
-        "tv": True, "pcb": True, "geo": True, "battery": True, "gauge": True, "tline": True
+        "tv": True, "pcb": True, "geo": True, "battery": True, "gauge": True, "tline": True, "ohmslaw": True, "rcalc": True, "db": True, "freq": True
     },
     "timezones": [
         {"city": "St. John's", "tz": "America/St_Johns", "label": "NDT"},
