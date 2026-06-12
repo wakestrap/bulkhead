@@ -1,0 +1,242 @@
+<style>
+#tab-credits {
+  padding: 1rem;
+}
+.credits-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+@media (max-width: 600px) {
+  .credits-grid { grid-template-columns: 1fr; }
+}
+.credits-provider-card {
+  background: #1a1a2e;
+  border: 1px solid #2a2a4a;
+  border-radius: 10px;
+  padding: 1.2rem;
+}
+.credits-provider-card h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  color: #a0a8c0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.credits-balance-big {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #e0e8ff;
+  margin: 0.3rem 0 0.1rem;
+  font-family: monospace;
+}
+.credits-balance-big.low { color: #ff6b6b; }
+.credits-balance-big.mid { color: #ffd166; }
+.credits-balance-big.ok  { color: #06d6a0; }
+.credits-sub {
+  font-size: 0.75rem;
+  color: #5a6080;
+  margin-bottom: 0.8rem;
+}
+.credits-usage-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: #8090b0;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #1e2040;
+}
+.credits-usage-row span:last-child {
+  color: #c0c8e0;
+  font-family: monospace;
+}
+.credits-bar-wrap {
+  background: #0d0d1e;
+  border-radius: 6px;
+  height: 8px;
+  margin: 0.8rem 0 0.4rem;
+  overflow: hidden;
+}
+.credits-bar {
+  height: 100%;
+  border-radius: 6px;
+  background: #06d6a0;
+  transition: width 0.4s ease;
+}
+.credits-bar.low { background: #ff6b6b; }
+.credits-bar.mid { background: #ffd166; }
+.credits-limit-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: #4a5070;
+}
+.credits-provider-card .error-msg {
+  color: #ff6b6b;
+  font-size: 0.82rem;
+  padding: 0.5rem 0;
+}
+.credits-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+.credits-refresh-btn {
+  background: #1e2a4a;
+  border: 1px solid #3a4a7a;
+  color: #8090c0;
+  border-radius: 6px;
+  padding: 0.4rem 1rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.credits-refresh-btn:hover { background: #2a3a6a; color: #c0d0ff; }
+.credits-last-updated {
+  font-size: 0.72rem;
+  color: #3a4060;
+  margin-top: 0.5rem;
+}
+.credits-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #06d6a0;
+  display: inline-block;
+  margin-right: 4px;
+}
+.credits-status-dot.error { background: #ff6b6b; }
+</style>
+
+<div class="tab-content" id="tab-credits">
+  <div class="credits-grid">
+
+    <!-- OpenRouter -->
+    <div class="credits-provider-card" id="or-card">
+      <h3><span class="credits-status-dot" id="or-dot"></span>⚡ OpenRouter</h3>
+      <div id="or-body">
+        <div class="credits-balance-big" id="or-balance">—</div>
+        <div class="credits-sub" id="or-sub">remaining of — limit</div>
+        <div class="credits-bar-wrap">
+          <div class="credits-bar" id="or-bar" style="width:0%"></div>
+        </div>
+        <div class="credits-limit-label">
+          <span>$0</span>
+          <span id="or-limit-label">$—</span>
+        </div>
+        <div style="margin-top:0.8rem">
+          <div class="credits-usage-row"><span>Today</span><span id="or-daily">—</span></div>
+          <div class="credits-usage-row"><span>This week</span><span id="or-weekly">—</span></div>
+          <div class="credits-usage-row"><span>This month</span><span id="or-monthly">—</span></div>
+          <div class="credits-usage-row"><span>All time</span><span id="or-total">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DeepSeek -->
+    <div class="credits-provider-card" id="ds-card">
+      <h3><span class="credits-status-dot" id="ds-dot"></span>🐋 DeepSeek</h3>
+      <div id="ds-body">
+        <div class="credits-balance-big" id="ds-balance">—</div>
+        <div class="credits-sub" id="ds-sub">USD balance</div>
+        <div style="margin-top:0.8rem">
+          <div class="credits-usage-row"><span>Topped Up</span><span id="ds-toppedUp">—</span></div>
+          <div class="credits-usage-row"><span>Granted (free)</span><span id="ds-granted">—</span></div>
+          <div class="credits-usage-row"><span>Status</span><span id="ds-status">—</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="credits-actions">
+    <button class="credits-refresh-btn" onclick="creditsRefresh()">↻ Refresh</button>
+  </div>
+  <div class="credits-last-updated" id="credits-updated"></div>
+</div>
+
+<script>
+function creditsColorClass(val, limit) {
+  if (!limit) return 'ok';
+  var pct = val / limit;
+  if (pct < 0.15) return 'low';
+  if (pct < 0.35) return 'mid';
+  return 'ok';
+}
+
+function creditsFmt(val) {
+  if (val === null || val === undefined) return '—';
+  return '$' + Number(val).toFixed(2);
+}
+
+function creditsRenderOR(d) {
+  var dot = document.getElementById('or-dot');
+  if (d.error) {
+    dot.className = 'credits-status-dot error';
+    document.getElementById('or-balance').textContent = 'Error';
+    document.getElementById('or-sub').textContent = d.error;
+    return;
+  }
+  dot.className = 'credits-status-dot';
+  var rem   = d.limit_remaining;
+  var limit = d.limit;
+  var cls   = creditsColorClass(rem, limit);
+  var balEl = document.getElementById('or-balance');
+  balEl.textContent = creditsFmt(rem);
+  balEl.className = 'credits-balance-big ' + cls;
+
+  document.getElementById('or-sub').textContent =
+    'remaining of ' + creditsFmt(limit) + ' credit limit';
+
+  var pct = limit ? Math.min(100, (rem / limit) * 100) : 0;
+  var bar = document.getElementById('or-bar');
+  bar.style.width = pct.toFixed(1) + '%';
+  bar.className = 'credits-bar ' + cls;
+
+  document.getElementById('or-limit-label').textContent = creditsFmt(limit);
+  document.getElementById('or-daily').textContent   = creditsFmt(d.usage_daily);
+  document.getElementById('or-weekly').textContent  = creditsFmt(d.usage_weekly);
+  document.getElementById('or-monthly').textContent = creditsFmt(d.usage_monthly);
+  document.getElementById('or-total').textContent   = creditsFmt(d.usage);
+}
+
+function creditsRenderDS(d) {
+  var dot = document.getElementById('ds-dot');
+  if (d.error) {
+    dot.className = 'credits-status-dot error';
+    document.getElementById('ds-balance').textContent = 'Error';
+    document.getElementById('ds-sub').textContent = d.error;
+    return;
+  }
+  dot.className = 'credits-status-dot';
+  var bal = d.balance;
+  var cls = bal < 2 ? 'low' : bal < 5 ? 'mid' : 'ok';
+  var balEl = document.getElementById('ds-balance');
+  balEl.textContent = creditsFmt(bal);
+  balEl.className = 'credits-balance-big ' + cls;
+  document.getElementById('ds-toppedUp').textContent = creditsFmt(d.topped_up);
+  document.getElementById('ds-granted').textContent  = creditsFmt(d.granted);
+  document.getElementById('ds-status').textContent   = d.available ? '🟢 Online' : '🔴 Offline';
+}
+
+function creditsRefresh() {
+  document.getElementById('credits-updated').textContent = 'Fetching...';
+  fetch('/api/credits')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.openrouter) creditsRenderOR(data.openrouter);
+      if (data.deepseek)   creditsRenderDS(data.deepseek);
+      var now = new Date();
+      document.getElementById('credits-updated').textContent =
+        'Last updated: ' + now.toLocaleTimeString();
+    })
+    .catch(function(e) {
+      document.getElementById('credits-updated').textContent = 'Error: ' + e.message;
+    });
+}
+
+creditsRefresh();
+</script>

@@ -13,6 +13,23 @@ import json
 import os
 import ssl
 
+# Load .env from ~/.hermes/.env so API keys are available in production
+def _load_dotenv():
+    env_path = os.path.expanduser("~/.hermes/.env")
+    if not os.path.exists(env_path):
+        return
+    with open(env_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, _, v = line.partition("=")
+            k = k.strip()
+            v = v.strip().strip('"').strip("'")
+            if k and k not in os.environ:
+                os.environ[k] = v
+_load_dotenv()
+
 import websocket
 
 TV_IP = "192.168.2.71"
@@ -481,6 +498,61 @@ def api_tv_apps():
         return jsonify({"ok": False, "error": str(e)})
 
 
+@app.route("/api/credits")
+def api_credits():
+    """Fetch OpenRouter and DeepSeek account balances."""
+    import urllib.request as ureq
+
+    def _fetch_or():
+        key = os.environ.get("OPENROUTER_API_KEY", "")
+        if not key:
+            return {"error": "No OPENROUTER_API_KEY"}
+        try:
+            req = ureq.Request(
+                "https://openrouter.ai/api/v1/auth/key",
+                headers={"Authorization": f"Bearer {key}"}
+            )
+            with ureq.urlopen(req, timeout=8) as r:
+                d = json.loads(r.read())["data"]
+            return {
+                "limit": d.get("limit"),
+                "limit_remaining": d.get("limit_remaining"),
+                "usage": d.get("usage"),
+                "usage_daily":   d.get("usage_daily"),
+                "usage_weekly":  d.get("usage_weekly"),
+                "usage_monthly": d.get("usage_monthly"),
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def _fetch_ds():
+        key = os.environ.get("DEEPSEEK_API_KEY", "")
+        if not key:
+            return {"error": "No DEEPSEEK_API_KEY"}
+        try:
+            req = ureq.Request(
+                "https://api.deepseek.com/user/balance",
+                headers={"Authorization": f"Bearer {key}"}
+            )
+            with ureq.urlopen(req, timeout=8) as r:
+                d = json.loads(r.read())
+            infos = d.get("balance_infos", [])
+            usd = next((x for x in infos if x.get("currency") == "USD"), None)
+            return {
+                "available": d.get("is_available", False),
+                "balance": float(usd["total_balance"]) if usd else None,
+                "granted": float(usd.get("granted_balance", 0)) if usd else None,
+                "topped_up": float(usd.get("topped_up_balance", 0)) if usd else None,
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    return jsonify({
+        "openrouter": _fetch_or(),
+        "deepseek":   _fetch_ds(),
+    })
+
+
 @app.route("/api/pcb/trace")
 def api_pcb_trace():
     """IPC-2221 trace width calculator."""
@@ -583,6 +655,7 @@ DEFAULT_CONFIG = {
         "rcalc":     {"enabled": True, "nav": "electronics", "label": "⫼ R / LED Calc"},
         "db":        {"enabled": True, "nav": "electronics", "label": "📶 dB/dBm"},
         "freq":      {"enabled": True, "nav": "electronics", "label": "∿ RC/LC/Freq"},
+        "credits":   {"enabled": True, "nav": "tools",       "label": "💳 API Credits"},
     },
     "navigation": {
         "electronics": "⚡ Electronics",
