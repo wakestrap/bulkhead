@@ -1,54 +1,120 @@
 <style>
 /* ── dB Converter ───────────────────────────────────────────────── */
 .db-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-.db-input-row { display: flex; gap: 0.5rem; align-items: flex-end; margin-bottom: 0.75rem; }
-.db-input-row select {
+.db-section-title {
+  font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase;
+  font-weight: 600; margin-bottom: 0.5rem; letter-spacing: 0.3px;
+}
+.db-field { margin-bottom: 0.75rem; }
+.db-field label {
+  display: block; font-size: 0.7rem; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+.db-field input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-family: var(--font);
+  font-size: 0.95rem; padding: 0.5rem 0.75rem;
+}
+.db-field input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(88,166,255,0.12); }
+.db-impedance-row {
+  display: flex; gap: 0.4rem; align-items: center; margin-top: 0.25rem;
+}
+.db-impedance-row select {
   background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
-  color: var(--text); font-family: var(--font); font-size: 0.85rem; padding: 0.5rem;
+  color: var(--text); font-family: var(--font); font-size: 0.85rem; padding: 0.45rem;
   width: 80px;
 }
-.db-cascade-inputs { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.35rem; }
+.db-impedance-row select:focus { outline: none; border-color: var(--cyan); }
+.db-impedance-row span { font-size: 0.75rem; color: var(--text-dim); }
+
+.db-cascade-wrap { margin-top: 1rem; }
+.db-cascade-inputs {
+  display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.35rem;
+}
 .db-cascade-inputs input {
-  width: 70px; background: var(--bg); border: 1px solid var(--border);
+  width: 64px; background: var(--bg); border: 1px solid var(--border);
   border-radius: 4px; color: var(--text); font-family: var(--font);
   font-size: 0.85rem; padding: 0.35rem 0.5rem; text-align: center;
 }
 .db-cascade-inputs input:focus { outline: none; border-color: var(--cyan); }
+.db-cascade-btn {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text-dim);
+  border-radius: 4px; padding: 0.3rem 0.6rem; font-size: 0.72rem;
+  cursor: pointer; margin-top: 0.3rem; font-family: var(--font-ui);
+}
+.db-cascade-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.db-cascade-result {
+  font-family: var(--font); font-size: 0.9rem; color: var(--cyan); margin-top: 0.5rem;
+}
 
+@media (max-width: 700px) {
+  .db-grid { grid-template-columns: 1fr; gap: 1rem; }
+}
+@media (max-width: 420px) {
+  .db-field input { font-size: 0.85rem; padding: 0.4rem 0.6rem; }
+  .db-cascade-inputs { gap: 0.25rem; }
+  .db-cascade-inputs input { width: 56px; font-size: 0.8rem; padding: 0.3rem 0.4rem; }
+  .db-cascade-result { font-size: 0.8rem; }
+}
 </style>
 
 <div class="tab-content" id="tab-db">
   <div class="card">
-    <h3>📶 dB/dBm Converter</h3>
+    <h3>📶 dB / dBm / Ratio</h3>
+
     <div class="db-grid">
+      <!-- dBm ↔ Watts ↔ Volts -->
       <div>
-        <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;font-weight:600;margin-bottom:0.5rem;">dBm ↔ Watts ↔ Volts</div>
-        <div class="ohms-field"><label>dBm</label><input type="number" id="db-dbm" step="any" placeholder="dBm" oninput="calcDB_from('dbm')"></div>
-        <div class="ohms-field"><label>Power (Watts)</label><input type="number" id="db-watts" step="any" placeholder="Watts" oninput="calcDB_from('watts')"></div>
-        <div class="ohms-field"><label>Voltage</label><input type="number" id="db-volts" step="any" placeholder="Volts" oninput="calcDB_from('volts')"></div>
-        <div class="db-input-row">
+        <div class="db-section-title">dBm ↔ Watts ↔ Volts</div>
+        <div class="db-field">
+          <label>dBm</label>
+          <input type="number" id="db-dbm" step="any" placeholder="dBm" oninput="calcDB_from('dbm')">
+        </div>
+        <div class="db-field">
+          <label>Power (W)</label>
+          <input type="number" id="db-watts" step="any" placeholder="Watts" oninput="calcDB_from('watts')">
+        </div>
+        <div class="db-field">
+          <label>Voltage</label>
+          <input type="number" id="db-volts" step="any" placeholder="Volts" oninput="calcDB_from('volts')">
+        </div>
+        <div class="db-impedance-row">
           <select id="db-impedance" onchange="calcDB_from('impedance')">
             <option value="50" selected>50 Ω</option>
             <option value="75">75 Ω</option>
             <option value="600">600 Ω</option>
           </select>
-          <span style="font-size:0.75rem;color:var(--text-dim);">impedance</span>
+          <span>Reference impedance</span>
         </div>
       </div>
+
+      <!-- dB ↔ Ratio + Cascade -->
       <div>
-        <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;font-weight:600;margin-bottom:0.5rem;">dB ↔ Ratio</div>
-        <div class="ohms-field"><label>dB</label><input type="number" id="db-ratio-db" step="any" placeholder="dB" oninput="calcDBRatio_from('db')"></div>
-        <div class="ohms-field"><label>Power Ratio</label><input type="number" id="db-ratio-power" step="any" placeholder="×" oninput="calcDBRatio_from('power')"></div>
-        <div class="ohms-field"><label>Voltage Ratio</label><input type="number" id="db-ratio-volt" step="any" placeholder="×" oninput="calcDBRatio_from('volt')"></div>
-        
-        <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;font-weight:600;margin-top:1rem;margin-bottom:0.35rem;">Cascaded Gain</div>
-        <div class="db-cascade-inputs" id="db-cascade-inputs">
-          <input type="number" value="3" step="any" placeholder="dB" oninput="calcDBCascade()">
-          <input type="number" value="-1" step="any" placeholder="dB" oninput="calcDBCascade()">
-          <input type="number" value="20" step="any" placeholder="dB" oninput="calcDBCascade()">
+        <div class="db-section-title">dB ↔ Ratio</div>
+        <div class="db-field">
+          <label>dB</label>
+          <input type="number" id="db-ratio-db" step="any" placeholder="dB" oninput="calcDBRatio_from('db')">
         </div>
-        <button onclick="addDBCascadeStage()" style="background:var(--bg);border:1px solid var(--border);color:var(--text-dim);border-radius:4px;padding:0.2rem 0.5rem;font-size:0.7rem;cursor:pointer;margin-top:0.25rem;">+ Add Stage</button>
-        <div style="font-family:var(--font);font-size:0.9rem;color:var(--cyan);margin-top:0.5rem;" id="db-cascade-result">Total: 22 dB (158.5× power)</div>
+        <div class="db-field">
+          <label>Power Ratio</label>
+          <input type="number" id="db-ratio-power" step="any" placeholder="× multiplier" oninput="calcDBRatio_from('power')">
+        </div>
+        <div class="db-field">
+          <label>Voltage Ratio</label>
+          <input type="number" id="db-ratio-volt" step="any" placeholder="× multiplier" oninput="calcDBRatio_from('volt')">
+        </div>
+
+        <div class="db-cascade-wrap">
+          <div class="db-section-title">Cascaded Gain</div>
+          <div class="db-cascade-inputs" id="db-cascade-inputs">
+            <input type="number" value="3" step="any" placeholder="dB" oninput="calcDBCascade()">
+            <input type="number" value="-1" step="any" placeholder="dB" oninput="calcDBCascade()">
+            <input type="number" value="20" step="any" placeholder="dB" oninput="calcDBCascade()">
+          </div>
+          <button class="db-cascade-btn" onclick="addDBCascadeStage()">+ Add Stage</button>
+          <div class="db-cascade-result" id="db-cascade-result">Total: 22 dB (158.5× power)</div>
+        </div>
       </div>
     </div>
   </div>
@@ -138,9 +204,7 @@ function calcDBCascade() {
 function addDBCascadeStage() {
   const container = document.getElementById('db-cascade-inputs');
   const inp = document.createElement('input');
-  inp.type = 'number';
-  inp.value = '0';
-  inp.step = 'any';
+  inp.type = 'number'; inp.value = '0'; inp.step = 'any';
   inp.placeholder = 'dB';
   inp.addEventListener('input', calcDBCascade);
   container.appendChild(inp);
