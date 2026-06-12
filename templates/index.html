@@ -680,17 +680,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadConfig();
   buildNavbar();
 
-  // Find default tab
-  const tabs = appConfig.tabs || {};
-  let defaultTab = 'clock';
-  for (const [id, tab] of Object.entries(tabs)) {
-    if (id === 'settings') continue;
-    const enabled = (typeof tab === 'object') ? (tab.enabled !== false) : !!tab;
-    if (enabled) { defaultTab = id; break; }
-  }
-
-  // Load and show ONLY the default tab
-  await switchTab(defaultTab);
+  // Load and show the default tab (always clock)
+  await switchTab('clock');
   populateSettings();
 });
 </script>
