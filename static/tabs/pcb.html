@@ -187,4 +187,10 @@ function calcPCB() {
     });
 }
 
+calcPCB();
+document.getElementById('pcb-current').addEventListener('input', calcPCB);
+document.getElementById('pcb-temp').addEventListener('input', calcPCB);
+document.getElementById('pcb-copper').addEventListener('change', calcPCB);
+document.getElementById('pcb-layer').addEventListener('change', calcPCB);
+
 </script>

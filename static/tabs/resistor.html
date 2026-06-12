@@ -324,4 +324,10 @@ function reverseLookup() {
     });
 }
 
+buildRefTable();
+buildColorRef();
+buildESeriesTables();
+setBands(4);
+document.getElementById('lookup-value').addEventListener('keydown', e => { if (e.key === 'Enter') reverseLookup(); });
+
 </script>

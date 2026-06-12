@@ -188,4 +188,8 @@ function calculateDepth() {
     .catch(() => {}); // silent
 }
 
+calculateDepth();
+document.getElementById('depth-input').addEventListener('input', calculateDepth);
+document.getElementById('water-type').addEventListener('change', calculateDepth);
+
 </script>

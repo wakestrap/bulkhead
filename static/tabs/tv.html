@@ -478,4 +478,7 @@ function tvWake() {
     .catch(err => flashFeedback('Wake failed', true));
 }
 
+updateTVStatus();
+setInterval(updateTVStatus, 10000);
+
 </script>

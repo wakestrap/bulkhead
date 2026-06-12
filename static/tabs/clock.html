@@ -102,7 +102,7 @@
 
 <script>
 // ── Clock ─────────────────────────────────────────────────────────
-let TIMEZONES = [];
+let TIMEZONES = (typeof appConfig !== "undefined" && appConfig.timezones && appConfig.timezones.length) ? appConfig.timezones : ALL_TIMEZONES.slice(0, 4);
 
 // All available timezones for the picker
 const ALL_TIMEZONES = [
@@ -243,5 +243,9 @@ function buildOverlaps(now) {
     }
   }
 }
+
+buildClocks();
+updateClocks();
+setInterval(updateClocks, 1000);
 
 </script>
