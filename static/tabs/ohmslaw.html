@@ -106,7 +106,7 @@
             <option value="20.95">30 (20.95 Ω/km)</option>
           </select>
         </div>
-        <div class="ohms-field"><label>Distance (one-way)</label><input type="number" id="vd-dist" value="30" step="any" placeholder="meters" oninput="calcVoltDrop()"></div>
+        <div class="ohms-field"><label>Distance (one-way, meters)</label><input type="number" id="vd-dist" value="30" step="any" placeholder="meters" oninput="calcVoltDrop()"></div>
         <div class="ohms-field">
           <label>Current Draw</label>
           <input type="number" id="vd-current" value="10" step="any" placeholder="Amps" oninput="calcVoltDrop()">
@@ -141,8 +141,8 @@
     <div class="ohms-grid">
       <div>
         <div class="ohms-field"><label>Input Voltage (Vin)</label><input type="number" id="div-vin" value="5" step="any" placeholder="Volts" oninput="calcDivider()"></div>
-        <div class="ohms-field"><label>R1 (top)</label><input type="number" id="div-r1" value="10000" step="any" placeholder="Ohms" oninput="calcDivider()"></div>
-        <div class="ohms-field"><label>R2 (bottom)</label><input type="number" id="div-r2" value="10000" step="any" placeholder="Ohms" oninput="calcDivider()"></div>
+        <div class="ohms-field"><label>R1 (top)</label><div class="unit-row"><input type="number" id="div-r1" value="10" step="any" oninput="calcDivider()"><select id="div-r1-unit" onchange="calcDivider()"><option value="1">Ω</option><option value="1000" selected>kΩ</option><option value="1000000">MΩ</option></select></div></div>
+        <div class="ohms-field"><label>R2 (bottom)</label><div class="unit-row"><input type="number" id="div-r2" value="10" step="any" oninput="calcDivider()"><select id="div-r2-unit" onchange="calcDivider()"><option value="1">Ω</option><option value="1000" selected>kΩ</option><option value="1000000">MΩ</option></select></div></div>
       </div>
       <div>
         <div class="card" style="background:var(--bg);">
@@ -263,8 +263,10 @@ function calcVoltDrop() {
 
 function calcDivider() {
   const vin = parseFloat(document.getElementById('div-vin').value) || 0;
-  const r1 = parseFloat(document.getElementById('div-r1').value) || 0;
-  const r2 = parseFloat(document.getElementById('div-r2').value) || 0;
+  const r1u = parseFloat(document.getElementById('div-r1-unit')?.value || 1);
+  const r2u = parseFloat(document.getElementById('div-r2-unit')?.value || 1);
+  const r1 = (parseFloat(document.getElementById('div-r1').value) || 0) * r1u;
+  const r2 = (parseFloat(document.getElementById('div-r2').value) || 0) * r2u;
 
   if (r1 <= 0 || r2 <= 0) {
     document.getElementById('div-vout').textContent = '—';

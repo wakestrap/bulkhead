@@ -63,13 +63,13 @@
         <div class="ohms-field"><label>LED Forward Voltage (Vf)</label><input type="number" id="led-vf" value="2.0" step="any" oninput="calcLED()"></div>
         <div class="ohms-field"><label>LED Current (mA)</label><input type="number" id="led-if" value="20" step="any" oninput="calcLED()"></div>
         <div class="led-colors">
-          <span class="led-color-chip active" onclick="setLED(2.0,20)" style="background:#ff000033;color:#ff4444;">🔴 Red 2.0V</span>
-          <span class="led-color-chip" onclick="setLED(2.1,20)" style="background:#ffaa0033;color:#ffaa00;">🟠 Amber 2.1V</span>
-          <span class="led-color-chip" onclick="setLED(2.2,20)" style="background:#ffff0033;color:#cccc00;">🟡 Yellow 2.2V</span>
-          <span class="led-color-chip" onclick="setLED(3.2,20)" style="background:#00ff0033;color:#44ff44;">🟢 Green 3.2V</span>
-          <span class="led-color-chip" onclick="setLED(3.3,20)" style="background:#0088ff33;color:#44aaff;">🔵 Blue 3.3V</span>
-          <span class="led-color-chip" onclick="setLED(3.4,20)" style="background:#ffffff33;color:#cccccc;">⚪ White 3.4V</span>
-          <span class="led-color-chip" onclick="setLED(1.7,20)" style="background:#ff000033;color:#ff6666;">🔴 IR 1.7V</span>
+          <span class="led-color-chip active" onclick="setLED(2.0,20,this)" style="background:#ff000033;color:#ff4444;">🔴 Red 2.0V</span>
+          <span class="led-color-chip" onclick="setLED(2.1,20,this)" style="background:#ffaa0033;color:#ffaa00;">🟠 Amber 2.1V</span>
+          <span class="led-color-chip" onclick="setLED(2.2,20,this)" style="background:#ffff0033;color:#cccc00;">🟡 Yellow 2.2V</span>
+          <span class="led-color-chip" onclick="setLED(3.2,20,this)" style="background:#00ff0033;color:#44ff44;">🟢 Green 3.2V</span>
+          <span class="led-color-chip" onclick="setLED(3.3,20,this)" style="background:#0088ff33;color:#44aaff;">🔵 Blue 3.3V</span>
+          <span class="led-color-chip" onclick="setLED(3.4,20,this)" style="background:#ffffff33;color:#cccccc;">⚪ White 3.4V</span>
+          <span class="led-color-chip" onclick="setLED(1.7,20,this)" style="background:#ff000033;color:#ff6666;">🔴 IR 1.7V</span>
         </div>
       </div>
       <div>
@@ -187,11 +187,11 @@ function calcSeries() {
 
 // ── LED Resistor ──────────────────────────────────────────────────
 
-function setLED(vf, ifMa) {
+function setLED(vf, ifMa, chipEl) {
   document.getElementById('led-vf').value = vf;
   document.getElementById('led-if').value = ifMa;
   document.querySelectorAll('.led-color-chip').forEach(c => c.classList.remove('active'));
-  event.target.classList.add('active');
+  if (chipEl) chipEl.classList.add("active");
   calcLED();
 }
 

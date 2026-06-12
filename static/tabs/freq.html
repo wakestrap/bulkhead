@@ -1,17 +1,6 @@
 <style>
 /* ── Freq Calc ──────────────────────────────────────────────────── */
 .freq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.freq-field { margin-bottom: 0.5rem; }
-.freq-field label {
-  display: block; font-size: 0.7rem; color: var(--text-dim);
-  text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 0.15rem;
-}
-.freq-field input {
-  width: 100%; background: var(--bg); border: 1px solid var(--border);
-  border-radius: 4px; color: var(--text); font-family: var(--font);
-  font-size: 0.95rem; padding: 0.45rem 0.65rem;
-}
-.freq-field input:focus { outline: none; border-color: var(--cyan); }
 .freq-result {
   background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
   padding: 0.5rem 0.75rem; margin-bottom: 0.35rem;
@@ -19,44 +8,40 @@
 }
 .freq-result .freq-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; }
 .freq-result .freq-value { font-family: var(--font); font-size: 1rem; color: var(--cyan); }
-
-@media (max-width: 700px) {
-  .db-grid, .rc-solver, .freq-grid { grid-template-columns: 1fr; }
+.unit-row { display: flex; gap: 0.4rem; }
+.unit-row input { flex: 1; }
+.unit-row select {
+  width: 68px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-family: var(--font);
+  font-size: 0.8rem; padding: 0.4rem 0.3rem;
 }
-
-</style>
-</head>
-<body>
-
-<!-- ── Header ──────────────────────────────────────────────────── -->
-<div class="header">
-  <img src="/static/logo.png" alt="Bulkhead" style="width:80px;height:80px;margin-bottom:0.5rem;">
-  <h1>Bulkhead</h1>
-  <p>Subsea tools &amp; timezone sanity for the North Atlantic EE</p>
-</div>
-
-<!-- ── Navbar ────────────────────────────────────────────────────── -->
-<nav class="navbar">
-  <div class="nav-group">
-    <div class="nav-dropdown">
-      <button class="nav-dropdown-toggle">⚡ Electronics ▾</button>
-      <div class="nav-dropdown-menu">
-        <button class="tab-btn" data-tab="ohmslaw">🔌 Ohm's Law</button>
-        <button class="tab-btn" data-tab="rcalc">⫼ R / LED Calc</button>
-        <button class="tab-btn" data-tab="db">📶 dB/dBm</button>
-        <div class="dropdown-divider"></div>
-        <button class="tab-btn" data-tab="freq">∿ RC/LC/Freq</button>
+.unit-row select:focus { outline: none; border-color: var(--cyan); }
+@media (max-width: 700px) { .freq-grid { grid-template-columns: 1fr; } }
 </style>
 
 <div class="tab-content" id="tab-freq">
   <!-- RC Filter Card -->
   <div class="card">
     <h3>⏱ RC Time Constant &amp; Filter</h3>
-    <div class="rc-solver">
+    <div class="freq-grid">
       <div>
-        <div class="ohms-field"><label>Resistance (R)</label><input type="number" id="rc-r" value="10000" step="any" placeholder="Ω" oninput="calcRC()"></div>
-        <div class="ohms-field"><label>Capacitance (C)</label><input type="number" id="rc-c" value="0.0000001" step="any" placeholder="Farads" oninput="calcRC()"></div>
-        <div style="font-size:0.65rem;color:var(--text-dim);margin-top:-0.3rem;margin-bottom:0.5rem;">Default: 10kΩ, 100nF → τ = 1ms, fc = 159Hz</div>
+        <div class="ohms-field"><label>Resistance (R)</label>
+          <div class="unit-row">
+            <input type="number" id="rc-r" value="10" step="any" oninput="calcRC()">
+            <select id="rc-r-unit" onchange="calcRC()">
+              <option value="1">Ω</option><option value="1000" selected>kΩ</option><option value="1000000">MΩ</option>
+            </select>
+          </div>
+        </div>
+        <div class="ohms-field"><label>Capacitance (C)</label>
+          <div class="unit-row">
+            <input type="number" id="rc-c" value="100" step="any" oninput="calcRC()">
+            <select id="rc-c-unit" onchange="calcRC()">
+              <option value="0.001">mF</option><option value="0.000001">µF</option><option value="1e-9" selected>nF</option><option value="1e-12">pF</option>
+            </select>
+          </div>
+        </div>
+        <div style="font-size:0.65rem;color:var(--text-dim);">Default: 10kΩ, 100nF → τ=1ms, fc≈159Hz</div>
       </div>
       <div>
         <div class="freq-result"><span class="freq-label">τ (time constant)</span><span class="freq-value" id="rc-tau">—</span></div>
@@ -70,12 +55,31 @@
   <!-- LC Resonator Card -->
   <div class="card">
     <h3>〰️ LC Resonant Frequency</h3>
-    <div class="rc-solver">
+    <div class="freq-grid">
       <div>
-        <div class="ohms-field"><label>Inductance (L)</label><input type="number" id="lc-l" value="0.000010" step="any" placeholder="Henries" oninput="calcLC()"></div>
-        <div class="ohms-field"><label>Capacitance (C)</label><input type="number" id="lc-c" value="0.0000001" step="any" placeholder="Farads" oninput="calcLC()"></div>
-        <div class="ohms-field"><label>Series R (for Q, optional)</label><input type="number" id="lc-r" value="0" step="any" placeholder="Ω" oninput="calcLC()"></div>
-        <div style="font-size:0.65rem;color:var(--text-dim);">Default: 10µH, 100nF → f = 159kHz</div>
+        <div class="ohms-field"><label>Inductance (L)</label>
+          <div class="unit-row">
+            <input type="number" id="lc-l" value="10" step="any" oninput="calcLC()">
+            <select id="lc-l-unit" onchange="calcLC()">
+              <option value="1">H</option><option value="0.001">mH</option><option value="0.000001" selected>µH</option><option value="1e-9">nH</option>
+            </select>
+          </div>
+        </div>
+        <div class="ohms-field"><label>Capacitance (C)</label>
+          <div class="unit-row">
+            <input type="number" id="lc-c" value="100" step="any" oninput="calcLC()">
+            <select id="lc-c-unit" onchange="calcLC()">
+              <option value="0.001">mF</option><option value="0.000001">µF</option><option value="1e-9" selected>nF</option><option value="1e-12">pF</option>
+            </select>
+          </div>
+        </div>
+        <div class="ohms-field"><label>Series R (for Q, optional)</label>
+          <div class="unit-row">
+            <input type="number" id="lc-r" value="0" step="any" oninput="calcLC()">
+            <select id="lc-r-unit" onchange="calcLC()"><option value="1">Ω</option><option value="1000">kΩ</option></select>
+          </div>
+        </div>
+        <div style="font-size:0.65rem;color:var(--text-dim);">Default: 10µH, 100nF → f≈159kHz</div>
       </div>
       <div>
         <div class="freq-result"><span class="freq-label">Resonant Frequency</span><span class="freq-value" id="lc-f">—</span></div>
@@ -89,11 +93,32 @@
   <!-- Reactance Card -->
   <div class="card">
     <h3>∿ Reactance (XL / XC)</h3>
-    <div class="rc-solver">
+    <div class="freq-grid">
       <div>
-        <div class="ohms-field"><label>Frequency</label><input type="number" id="rx-freq" value="1000000" step="any" placeholder="Hz" oninput="calcReactance()"></div>
-        <div class="ohms-field"><label>Inductance (L)</label><input type="number" id="rx-l" value="0.000010" step="any" placeholder="Henries" oninput="calcReactance()"></div>
-        <div class="ohms-field"><label>Capacitance (C)</label><input type="number" id="rx-c" value="0.0000001" step="any" placeholder="Farads" oninput="calcReactance()"></div>
+        <div class="ohms-field"><label>Frequency</label>
+          <div class="unit-row">
+            <input type="number" id="rx-freq" value="1" step="any" oninput="calcReactance()">
+            <select id="rx-freq-unit" onchange="calcReactance()">
+              <option value="1">Hz</option><option value="1000">kHz</option><option value="1000000" selected>MHz</option><option value="1e9">GHz</option>
+            </select>
+          </div>
+        </div>
+        <div class="ohms-field"><label>Inductance (L)</label>
+          <div class="unit-row">
+            <input type="number" id="rx-l" value="10" step="any" oninput="calcReactance()">
+            <select id="rx-l-unit" onchange="calcReactance()">
+              <option value="1">H</option><option value="0.001">mH</option><option value="0.000001" selected>µH</option><option value="1e-9">nH</option>
+            </select>
+          </div>
+        </div>
+        <div class="ohms-field"><label>Capacitance (C)</label>
+          <div class="unit-row">
+            <input type="number" id="rx-c" value="100" step="any" oninput="calcReactance()">
+            <select id="rx-c-unit" onchange="calcReactance()">
+              <option value="0.001">mF</option><option value="0.000001">µF</option><option value="1e-9" selected>nF</option><option value="1e-12">pF</option>
+            </select>
+          </div>
+        </div>
       </div>
       <div>
         <div class="freq-result"><span class="freq-label">XL (inductive)</span><span class="freq-value" id="rx-xl">—</span></div>
@@ -104,64 +129,51 @@
   </div>
 </div>
 
-
 <script>
 // ── RC Filter ─────────────────────────────────────────────────────
+function readVal(id) {
+  const inp = document.getElementById(id);
+  const unit = document.getElementById(id + '-unit');
+  const v = parseFloat(inp.value) || 0;
+  const m = unit ? parseFloat(unit.value) : 1;
+  return v * m;
+}
 
 function calcRC() {
-  const r = parseFloat(document.getElementById('rc-r').value) || 0;
-  const c = parseFloat(document.getElementById('rc-c').value) || 0;
-
-  if (r <= 0 || c <= 0) {
-    ['rc-tau','rc-fc','rc-trise','rc-xc'].forEach(id => document.getElementById(id).textContent = '—');
-    return;
-  }
-
+  const r = readVal('rc-r');
+  const c = readVal('rc-c');
+  if (r <= 0 || c <= 0) { ['rc-tau','rc-fc','rc-trise','rc-xc'].forEach(id => document.getElementById(id).textContent = '—'); return; }
   const tau = r * c;
   const fc = 1 / (2 * Math.PI * tau);
   const trise = 2.2 * tau;
-  const xc = r; // at fc, Xc = R
-
   document.getElementById('rc-tau').textContent = fmtTime(tau);
   document.getElementById('rc-fc').textContent = fmtFreq(fc);
   document.getElementById('rc-trise').textContent = fmtTime(trise);
   document.getElementById('rc-xc').textContent = fmtR(r) + ' (Xc = R at fc)';
 }
 
-// ── LC Resonator ──────────────────────────────────────────────────
-
 function calcLC() {
-  const l = parseFloat(document.getElementById('lc-l').value) || 0;
-  const cap = parseFloat(document.getElementById('lc-c').value) || 0;
-  const r = parseFloat(document.getElementById('lc-r').value) || 0;
-
-  if (l <= 0 || cap <= 0) {
-    ['lc-f','lc-x','lc-q','lc-omega'].forEach(id => document.getElementById(id).textContent = '—');
-    return;
-  }
-
+  const l = readVal('lc-l');
+  const cap = readVal('lc-c');
+  const r = readVal('lc-r');
+  if (l <= 0 || cap <= 0) { ['lc-f','lc-x','lc-q','lc-omega'].forEach(id => document.getElementById(id).textContent = '—'); return; }
   const f = 1 / (2 * Math.PI * Math.sqrt(l * cap));
   const omega = 2 * Math.PI * f;
-  const x = omega * l; // XL = XC at resonance
+  const x = omega * l;
   const q = r > 0 ? x / r : 0;
-
   document.getElementById('lc-f').textContent = fmtFreq(f);
   document.getElementById('lc-omega').textContent = fmtFreq(omega) + ' rad/s';
   document.getElementById('lc-x').textContent = fmtR(x);
   document.getElementById('lc-q').textContent = r > 0 ? q.toFixed(1) : '∞ (lossless)';
 }
 
-// ── Reactance ─────────────────────────────────────────────────────
-
 function calcReactance() {
-  const f = parseFloat(document.getElementById('rx-freq').value) || 0;
-  const l = parseFloat(document.getElementById('rx-l').value) || 0;
-  const c = parseFloat(document.getElementById('rx-c').value) || 0;
-
+  const f = readVal('rx-freq');
+  const l = readVal('rx-l');
+  const c = readVal('rx-c');
   const xl = f > 0 && l > 0 ? 2 * Math.PI * f * l : 0;
   const xc = f > 0 && c > 0 ? 1 / (2 * Math.PI * f * c) : 0;
   const diff = Math.abs(xl - xc);
-
   document.getElementById('rx-xl').textContent = fmtR(xl);
   document.getElementById('rx-xc').textContent = fmtR(xc);
   document.getElementById('rx-diff').textContent = fmtR(diff);
@@ -170,5 +182,4 @@ function calcReactance() {
 calcRC();
 calcLC();
 calcReactance();
-
 </script>

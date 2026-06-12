@@ -102,8 +102,6 @@
 
 <script>
 // ── Clock ─────────────────────────────────────────────────────────
-let TIMEZONES = (typeof appConfig !== "undefined" && appConfig.timezones && appConfig.timezones.length) ? appConfig.timezones : ALL_TIMEZONES.slice(0, 4);
-
 // All available timezones for the picker
 const ALL_TIMEZONES = [
   {city:"St. John's", tz:"America/St_Johns", label:"NDT"},
@@ -124,6 +122,8 @@ const ALL_TIMEZONES = [
   {city:"Mumbai", tz:"Asia/Kolkata", label:"IST"},
   {city:"Moscow", tz:"Europe/Moscow", label:"MSK"},
 ];
+
+let TIMEZONES = (typeof appConfig !== "undefined" && appConfig.timezones && appConfig.timezones.length) ? appConfig.timezones : ALL_TIMEZONES.slice(0, 4);
 
 function buildClocks() {
   const container = document.getElementById('clocks');
