@@ -571,7 +571,7 @@ CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.j
 DEFAULT_CONFIG = {
     "tabs": {
         "clock":     {"enabled": True, "nav": "tools",       "label": "🕐 World Clock"},
-        "depth":     {"enabled": True,                       "label": "🌊 Depth ↔ Pressure"},
+        "depth":     {"enabled": True, "nav": "tools",       "label": "🌊 Depth ↔ Pressure"},
         "resistor":  {"enabled": True, "nav": "electronics", "label": "⚡ Resistor Decoder"},
         "tv":        {"enabled": True, "nav": "tools",       "label": "📺 TV Remote"},
         "pcb":       {"enabled": True, "nav": "electronics", "label": "🔌 PCB Trace"},

@@ -102,26 +102,8 @@
 
 <script>
 // ── Clock ─────────────────────────────────────────────────────────
-// All available timezones for the picker
-const ALL_TIMEZONES = [
-  {city:"St. John's", tz:"America/St_Johns", label:"NDT"},
-  {city:"Halifax", tz:"America/Halifax", label:"AT"},
-  {city:"Collingwood", tz:"America/Toronto", label:"ET"},
-  {city:"Vancouver", tz:"America/Vancouver", label:"PT"},
-  {city:"Anchorage", tz:"America/Anchorage", label:"AKT"},
-  {city:"Honolulu", tz:"Pacific/Honolulu", label:"HT"},
-  {city:"UTC", tz:"UTC", label:"UTC"},
-  {city:"London", tz:"Europe/London", label:"GMT"},
-  {city:"Paris", tz:"Europe/Paris", label:"CET"},
-  {city:"Tokyo", tz:"Asia/Tokyo", label:"JST"},
-  {city:"Shanghai", tz:"Asia/Shanghai", label:"CST"},
-  {city:"Singapore", tz:"Asia/Singapore", label:"SGT"},
-  {city:"Sydney", tz:"Australia/Sydney", label:"AET"},
-  {city:"Auckland", tz:"Pacific/Auckland", label:"NZST"},
-  {city:"Dubai", tz:"Asia/Dubai", label:"GST"},
-  {city:"Mumbai", tz:"Asia/Kolkata", label:"IST"},
-  {city:"Moscow", tz:"Europe/Moscow", label:"MSK"},
-];
+// ALL_TIMEZONES is global from the shell — DO NOT redeclare it here
+// (redeclaring a const in the same scope throws and kills the script)
 
 let TIMEZONES = (typeof appConfig !== "undefined" && appConfig.timezones && appConfig.timezones.length) ? appConfig.timezones : ALL_TIMEZONES.slice(0, 4);
 
