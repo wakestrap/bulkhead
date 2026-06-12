@@ -77,64 +77,6 @@
     </div>
   </div>
 
-  <!-- Voltage Drop Card -->
-  <div class="card">
-    <h3>📏 Voltage Drop Over Distance</h3>
-    <div class="ohms-grid">
-      <div>
-        <div class="ohms-field">
-          <label>Wire Gauge</label>
-          <select id="vd-awg" class="awg-select" onchange="calcVoltDrop()">
-            <option value="0.3224">0000 (0.3224 Ω/km)</option>
-            <option value="0.4066">000 (0.4066 Ω/km)</option>
-            <option value="0.5127">00 (0.5127 Ω/km)</option>
-            <option value="0.6465">0 (0.6465 Ω/km)</option>
-            <option value="0.8152">2 (0.8152 Ω/km)</option>
-            <option value="1.028">4 (1.028 Ω/km)</option>
-            <option value="1.296">6 (1.296 Ω/km)</option>
-            <option value="1.634">8 (1.634 Ω/km)</option>
-            <option value="2.061" selected>10 (2.061 Ω/km)</option>
-            <option value="2.599">12 (2.599 Ω/km)</option>
-            <option value="3.277">14 (3.277 Ω/km)</option>
-            <option value="4.133">16 (4.133 Ω/km)</option>
-            <option value="5.211">18 (5.211 Ω/km)</option>
-            <option value="6.571">20 (6.571 Ω/km)</option>
-            <option value="8.286">22 (8.286 Ω/km)</option>
-            <option value="10.45">24 (10.45 Ω/km)</option>
-            <option value="13.17">26 (13.17 Ω/km)</option>
-            <option value="16.61">28 (16.61 Ω/km)</option>
-            <option value="20.95">30 (20.95 Ω/km)</option>
-          </select>
-        </div>
-        <div class="ohms-field"><label>Distance (one-way, meters)</label><input type="number" id="vd-dist" value="30" step="any" placeholder="meters" oninput="calcVoltDrop()"></div>
-        <div class="ohms-field">
-          <label>Current Draw</label>
-          <input type="number" id="vd-current" value="10" step="any" placeholder="Amps" oninput="calcVoltDrop()">
-        </div>
-        <div class="ohms-field"><label>Source Voltage</label><input type="number" id="vd-vsrc" value="12" step="any" placeholder="Volts" oninput="calcVoltDrop()"></div>
-        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
-          <label class="toggle-switch" style="position:relative;display:inline-block;width:44px;height:24px;">
-            <input type="checkbox" id="vd-roundtrip" checked onchange="calcVoltDrop()" style="opacity:0;width:0;height:0;">
-            <span class="toggle-slider" style="border-radius:24px;"></span>
-          </label>
-          <span style="font-size:0.8rem;color:var(--text-dim);">Round-trip (×2)</span>
-        </div>
-      </div>
-      <div>
-        <div class="card" style="background:var(--bg);">
-          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.5rem;">Voltage Drop Results</div>
-          <div id="vd-results">
-            <div class="ohms-result-row"><span class="label">V<sub>drop</sub></span><span class="value">—</span><span class="unit">V</span></div>
-            <div class="ohms-result-row"><span class="label">V<sub>load</sub></span><span class="value">—</span><span class="unit">V</span></div>
-            <div class="ohms-result-row"><span class="label">%</span><span class="value">—</span><span class="unit">% loss</span></div>
-            <div class="ohms-result-row"><span class="label">P<sub>loss</sub></span><span class="value">—</span><span class="unit">W</span></div>
-            <div class="ohms-result-row"><span class="label">R<sub>wire</sub></span><span class="value">—</span><span class="unit">Ω</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Resistor Divider Card -->
   <div class="card">
     <h3>⊢⊣ Resistor Divider</h3>
@@ -233,30 +175,6 @@ function calcOhmsLaw() {
     <div class="ohms-result-row"><span class="label">P</span><span class="value">${fmt(P,'W')}</span><span class="unit">W</span></div>`;
 
   derivedEl.innerHTML = `P = I²R = ${fmt(I*I*R,'W')}W &nbsp;|&nbsp; P = V²/R = ${fmt(V*V/R,'W')}W`;
-}
-
-// ── Voltage Drop ──────────────────────────────────────────────────
-
-function calcVoltDrop() {
-  const rPerKm = parseFloat(document.getElementById('vd-awg').value);
-  let dist = parseFloat(document.getElementById('vd-dist').value) || 0;
-  const current = parseFloat(document.getElementById('vd-current').value) || 0;
-  const vsrc = parseFloat(document.getElementById('vd-vsrc').value) || 0;
-  const roundTrip = document.getElementById('vd-roundtrip').checked;
-
-  if (roundTrip) dist *= 2;
-  const rWire = rPerKm * dist / 1000;
-  const vDrop = current * rWire;
-  const vLoad = vsrc - vDrop;
-  const pLoss = vDrop * current;
-  const pctLoss = vsrc > 0 ? (vDrop / vsrc) * 100 : 0;
-
-  document.getElementById('vd-results').innerHTML = `
-    <div class="ohms-result-row"><span class="label">V<sub>drop</sub></span><span class="value">${vDrop.toFixed(2)}</span><span class="unit">V</span></div>
-    <div class="ohms-result-row"><span class="label">V<sub>load</sub></span><span class="value">${vLoad.toFixed(2)}</span><span class="unit">V</span></div>
-    <div class="ohms-result-row"><span class="label">%</span><span class="value">${pctLoss.toFixed(1)}</span><span class="unit">% loss</span></div>
-    <div class="ohms-result-row"><span class="label">P<sub>loss</sub></span><span class="value">${pLoss.toFixed(2)}</span><span class="unit">W</span></div>
-    <div class="ohms-result-row"><span class="label">R<sub>wire</sub></span><span class="value">${(rWire*1000).toFixed(1)}</span><span class="unit">mΩ</span></div>`;
 }
 
 // ── Resistor Divider ──────────────────────────────────────────────
